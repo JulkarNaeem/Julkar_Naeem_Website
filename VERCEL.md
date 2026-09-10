@@ -1,9 +1,9 @@
 # Vercel deployment
 
 This branch runs the website on Next.js and stores new enquiries in Neon Postgres.
-The main branch preserves the existing Sites/Cloudflare deployment.
+The original Sites/Cloudflare version remains in Git history and the existing Sites deployment.
 
-1. Import this GitHub repository into Vercel and select `deploy/vercel`.
+1. Import this GitHub repository into Vercel and deploy the latest `main` commit.
 2. Connect a Neon database to the project through Vercel Storage. Keep DATABASE_URL server-side and enable it for the deployment environment.
 3. Run `npm run db:migrate:vercel` with DATABASE_URL available in the local environment.
 4. Deploy and verify a clearly labelled enquiry, then inspect its row in Neon.
