@@ -3,7 +3,8 @@ import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {projects,cloud,services,deliverables,formats,config} from '@/lib/content';
-import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,ExternalLink,Play,Pause,RotateCcw} from 'lucide-react';
+import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,ExternalLink,Play,Pause} from 'lucide-react';
+
 
 
 
@@ -804,27 +805,36 @@ export function HeroVideoPlayer({
   const videoRef=useRef<HTMLVideoElement>(null);
   const [isPlaying,setIsPlaying]=useState(false);
   const [hasStarted,setHasStarted]=useState(false);
+  const [flashAction,setFlashAction]=useState<'play'|'pause'|null>(null);
+  const [flashKey,setFlashKey]=useState(0);
+  const flashTimer=useRef<NodeJS.Timeout|null>(null);
 
   const togglePlay=()=>{
     if(!videoRef.current) return;
+
+    if(flashTimer.current) clearTimeout(flashTimer.current);
+
     if(videoRef.current.paused){
       videoRef.current.play().catch(()=>{});
       setIsPlaying(true);
       setHasStarted(true);
+      setFlashAction('play');
+      setFlashKey(k=>k+1);
+      flashTimer.current=setTimeout(()=>setFlashAction(null), 450);
     } else {
       videoRef.current.pause();
       setIsPlaying(false);
+      setFlashAction('pause');
+      setFlashKey(k=>k+1);
+      flashTimer.current=setTimeout(()=>setFlashAction(null), 450);
     }
   };
 
-  const restart=(e:React.MouseEvent)=>{
-    e.stopPropagation();
-    if(!videoRef.current) return;
-    videoRef.current.currentTime=0;
-    videoRef.current.play().catch(()=>{});
-    setIsPlaying(true);
-    setHasStarted(true);
-  };
+  useEffect(()=>{
+    return ()=>{
+      if(flashTimer.current) clearTimeout(flashTimer.current);
+    };
+  },[]);
 
   return (
     <div className="hero-visual">
@@ -849,46 +859,35 @@ export function HeroVideoPlayer({
           playsInline
           loop
           preload="metadata"
-          onPlay={()=>setIsPlaying(true)}
+          onPlay={()=>{setIsPlaying(true); setHasStarted(true);}}
           onPause={()=>setIsPlaying(false)}
           className="hero-video"
           aria-label={`${title} Tekla model animation`}
         />
-        <div className="video-overlay-controls">
-          <button
-            type="button"
-            className="video-action-btn"
-            onClick={(e)=>{
-              e.stopPropagation();
-              togglePlay();
-            }}
-            aria-label={isPlaying ? 'Pause video' : (hasStarted ? 'Resume video' : 'Play 3D model video')}
-          >
-            {isPlaying ? (
-              <>
-                <Pause size={17} aria-hidden="true" fill="currentColor"/>
-                <span>Pause</span>
-              </>
-            ) : (
-              <>
-                <Play size={17} aria-hidden="true" fill="currentColor"/>
-                <span>{hasStarted ? 'Resume' : 'Play 3D Model'}</span>
-              </>
-            )}
-          </button>
-          {hasStarted && (
-            <button
-              type="button"
-              className="video-restart-btn"
-              onClick={restart}
-              aria-label="Restart video from beginning"
-              title="Restart video"
-            >
-              <RotateCcw size={15} aria-hidden="true"/>
-              <span>Restart</span>
-            </button>
-          )}
+
+        {/* Center action badge for Play and Resume */}
+        <div className={`video-center-badge ${isPlaying ? 'hidden' : 'visible'}`}>
+          <div className="video-badge-content">
+            <span className="video-badge-icon">
+              <Play size={18} aria-hidden="true" fill="currentColor"/>
+            </span>
+            <span className="video-badge-text">
+              {hasStarted ? 'Resume' : 'Play 3D Model'}
+            </span>
+          </div>
         </div>
+
+        {/* Transient flash ripple on toggle */}
+        {flashAction && (
+          <div className={`video-flash-ripple flash-${flashAction}`} key={flashKey}>
+            {flashAction==='play' ? (
+              <Play size={28} fill="currentColor" aria-hidden="true"/>
+            ) : (
+              <Pause size={28} fill="currentColor" aria-hidden="true"/>
+            )}
+          </div>
+        )}
+
       </div>
       <div className="hero-caption">
         <span>{title}</span>
