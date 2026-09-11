@@ -1,6 +1,7 @@
 import {projects,services,deliverables,formats,steps,homepagePhases,checks,config} from '@/lib/content';
-import {ProjectCard} from './site-interactive';
+import {ProjectCard,HeroVideoPlayer} from './site-interactive';
 import {ArrowUpRight} from 'lucide-react';
+
 
 
 
@@ -222,25 +223,14 @@ export function Hero(){
           </div>
           <p className="small hero-note">BASED IN DHAKA · INTERNATIONAL PROJECT SUPPORT</p>
         </div>
-        <a className="hero-visual" href={'/portfolio/'+p.slug}>
-          <div className="drawing-label">MODEL STUDY / MULTI-STOREY STRUCTURAL STEEL</div>
-          <video
-            src={videoUrl}
-            poster={p.cover}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-label="Multi-storey steel frame Tekla model — animated 3D model view"
-            className="hero-video"
-          />
-          <div className="hero-caption">
-            <span>Multi-storey Steel Frame</span>
-            <span>Explore the model ↗</span>
-          </div>
-        </a>
+        <HeroVideoPlayer
+          src={videoUrl}
+          poster={p.cover}
+          title="Multi-storey Steel Frame"
+          slug={p.slug}
+        />
       </section>
+
       <div className="trust wrap">
         {['Tekla Structures','AutoCAD','Fabrication Documentation','Model Coordination','International Project Support'].map(x=>(
           <span key={x}>{x}</span>

@@ -3,7 +3,10 @@ import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {projects,cloud,services,deliverables,formats,config} from '@/lib/content';
-import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,ExternalLink} from 'lucide-react';
+import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,ExternalLink,Play,Pause,RotateCcw} from 'lucide-react';
+
+
+
 
 
 export function Header(){
@@ -785,3 +788,113 @@ export function QuickContactDrawer({open,onClose}:{open:boolean,onClose:()=>void
     </>
   );
 }
+
+/* ─── 6. HERO VIDEO PLAYER ─────────────────────────────────────── */
+export function HeroVideoPlayer({
+  src,
+  poster,
+  title,
+  slug,
+}:{
+  src:string;
+  poster:string;
+  title:string;
+  slug:string;
+}){
+  const videoRef=useRef<HTMLVideoElement>(null);
+  const [isPlaying,setIsPlaying]=useState(false);
+  const [hasStarted,setHasStarted]=useState(false);
+
+  const togglePlay=()=>{
+    if(!videoRef.current) return;
+    if(videoRef.current.paused){
+      videoRef.current.play().catch(()=>{});
+      setIsPlaying(true);
+      setHasStarted(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const restart=(e:React.MouseEvent)=>{
+    e.stopPropagation();
+    if(!videoRef.current) return;
+    videoRef.current.currentTime=0;
+    videoRef.current.play().catch(()=>{});
+    setIsPlaying(true);
+    setHasStarted(true);
+  };
+
+  return (
+    <div className="hero-visual">
+      <div className="drawing-label">MODEL STUDY / MULTI-STOREY STRUCTURAL STEEL</div>
+      <div 
+        className={`hero-video-container ${isPlaying ? 'is-playing' : 'is-paused'}`}
+        onClick={togglePlay}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e)=>{
+          if(e.key===' ' || e.key==='Enter'){
+            e.preventDefault();
+            togglePlay();
+          }
+        }}
+        aria-label={isPlaying ? 'Pause video' : (hasStarted ? 'Resume video' : 'Play 3D model video')}
+      >
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          playsInline
+          loop
+          preload="metadata"
+          onPlay={()=>setIsPlaying(true)}
+          onPause={()=>setIsPlaying(false)}
+          className="hero-video"
+          aria-label={`${title} Tekla model animation`}
+        />
+        <div className="video-overlay-controls">
+          <button
+            type="button"
+            className="video-action-btn"
+            onClick={(e)=>{
+              e.stopPropagation();
+              togglePlay();
+            }}
+            aria-label={isPlaying ? 'Pause video' : (hasStarted ? 'Resume video' : 'Play 3D model video')}
+          >
+            {isPlaying ? (
+              <>
+                <Pause size={17} aria-hidden="true" fill="currentColor"/>
+                <span>Pause</span>
+              </>
+            ) : (
+              <>
+                <Play size={17} aria-hidden="true" fill="currentColor"/>
+                <span>{hasStarted ? 'Resume' : 'Play 3D Model'}</span>
+              </>
+            )}
+          </button>
+          {hasStarted && (
+            <button
+              type="button"
+              className="video-restart-btn"
+              onClick={restart}
+              aria-label="Restart video from beginning"
+              title="Restart video"
+            >
+              <RotateCcw size={15} aria-hidden="true"/>
+              <span>Restart</span>
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="hero-caption">
+        <span>{title}</span>
+        <a href={'/portfolio/'+slug} className="hero-explore-link">Explore the model ↗</a>
+      </div>
+    </div>
+  );
+}
+
