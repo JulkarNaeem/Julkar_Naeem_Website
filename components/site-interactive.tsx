@@ -2,7 +2,7 @@
 import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {projects,cloud,services,deliverables,formats,config} from '@/lib/content';
+import {projects,cloud,services,deliverables,formats,config,type PortfolioProject} from '@/lib/content';
 import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause,ArrowUp} from 'lucide-react';
 import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
@@ -109,7 +109,7 @@ export function ProjectImage({
   );
 }
 
-export function ProjectCard({project:p,index=0}:{project:typeof projects[number],index?:number}){
+export function ProjectCard({project:p,index=0}:{project:PortfolioProject,index?:number}){
   // Build a concise scope summary from project facts
   const scopeTag = [p.type, p.category].filter(Boolean).join(' · ');
   const keyFact = p.glance?.[2]?.[1] || p.glance?.[3]?.[1] || '';
@@ -137,20 +137,20 @@ export function ProjectCard({project:p,index=0}:{project:typeof projects[number]
   );
 }
 
-export function PortfolioGrid(){
-  const categories = ['All', ...Array.from(new Set(projects.map(p => p.category)))];
+export function PortfolioGrid({items=projects}:{items?:PortfolioProject[]}){
+  const categories = ['All', ...Array.from(new Set(items.map(p => p.category)))];
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filteredProjects = activeCategory === 'All'
-    ? projects
-    : projects.filter(p => p.category === activeCategory);
+    ? items
+    : items.filter(p => p.category === activeCategory);
 
   return (
     <>
       <div className="category-chips-container" role="toolbar" aria-label="Portfolio category filter">
         <div className="category-chips">
           {categories.map(cat => {
-            const count = cat === 'All' ? projects.length : projects.filter(p => p.category === cat).length;
+            const count = cat === 'All' ? items.length : items.filter(p => p.category === cat).length;
             const isSelected = activeCategory === cat;
             return (
               <button
@@ -173,7 +173,7 @@ export function PortfolioGrid(){
 
       <div className="project-grid">
         {filteredProjects.map(p => (
-          <ProjectCard key={p.code} project={p} index={projects.indexOf(p)} />
+          <ProjectCard key={p.code} project={p} index={items.indexOf(p)} />
         ))}
       </div>
 
@@ -190,7 +190,7 @@ export function PortfolioGrid(){
   );
 }
 
-export function Gallery({project:p}:{project:typeof projects[number]}){
+export function Gallery({project:p}:{project:PortfolioProject}){
   const[active,setActive]=useState<number|null>(null);
   const move=(delta:number)=>setActive(n=>n===null?null:(n+delta+p.images.length)%p.images.length);
 

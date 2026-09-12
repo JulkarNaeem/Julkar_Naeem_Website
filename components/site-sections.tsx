@@ -1,4 +1,5 @@
 import {projects,services,deliverables,formats,steps,homepagePhases,config} from '@/lib/content';
+import {getPortfolioProjects} from '@/lib/portfolio-feed';
 import {ProjectCard,HeroVideoPlayer} from './site-interactive';
 import {ArrowUpRight} from 'lucide-react';
 import {FaEnvelope,FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
@@ -121,8 +122,8 @@ export function Differentiator(){
   );
 }
 
-export function SelectedProjects(){
-
+export async function SelectedProjects(){
+  const portfolioProjects=await getPortfolioProjects();
   return (
     <section className="section light">
       <div className="wrap">
@@ -131,10 +132,10 @@ export function SelectedProjects(){
             <p className="eyebrow">03 / PROJECT EXPERIENCE</p>
             <h2>The work, in detail.</h2>
           </div>
-          <a className="textlink" href="/portfolio">Explore all five case studies ↗</a>
+          <a className="textlink" href="/portfolio">Explore all case studies ↗</a>
         </div>
         <div className="project-grid selected">
-          {projects.map((p,i)=>(
+          {portfolioProjects.map((p,i)=>(
             <ProjectCard project={p} key={p.code} index={i}/>
           ))}
         </div>

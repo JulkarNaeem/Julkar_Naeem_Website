@@ -3,21 +3,23 @@ import {config,projects,pageInfo,services,cloud} from '@/lib/content';
 import {CTA,ServiceSection,Deliverables,ProcessSteps} from '@/components/site-sections';
 import {PortfolioGrid,Gallery,Share,EnquiryForm,ProjectImage,AlternativeContactLinks} from '@/components/site-interactive';
 import {ApprovedDrawingCrop} from '@/components/case-study-media';
+import {getPortfolioProjects} from '@/lib/portfolio-feed';
 type Props={params:Promise<{slug:string[]}>};
 export function generateStaticParams(){return [...Object.keys(pageInfo).map(x=>({slug:[x]})),...projects.map(x=>({slug:['portfolio',x.slug]}))]}
-export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const project=slug[0]==='portfolio'&&slug.length===2?projects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
+export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const portfolioProjects=slug[0]==='portfolio'?await getPortfolioProjects():projects;const project=slug[0]==='portfolio'&&slug.length===2?portfolioProjects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
 function Breadcrumb({items}:{items:{label:string,path:string}[]}){return <><nav className="breadcrumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a>{items.map((x,i)=><span key={x.path}> / {i===items.length-1?<span aria-current="page">{x.label}</span>:<a href={x.path}>{x.label}</a>}</span>)}</nav><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{label:'Home',path:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.label,item:config.origin+x.path}))})}}/></>}
 function PageHead({eyebrow,title,text}:{eyebrow:string,title:string,text:string}){return <section className="page-head wrap"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro">{text}</p></section>}
 
 export default async function Page({params}:Props){
   const{slug}=await params;
   const key=slug.join('/');
-  const p=slug.length===2&&slug[0]==='portfolio'?projects.find(x=>x.slug===slug[1]):undefined;
+  const portfolioProjects=slug[0]==='portfolio'?await getPortfolioProjects():projects;
+  const p=slug.length===2&&slug[0]==='portfolio'?portfolioProjects.find(x=>x.slug===slug[1]):undefined;
 
   if(p){
-    const index=projects.indexOf(p);
-    const previous=projects[(index+projects.length-1)%projects.length];
-    const next=projects[(index+1)%projects.length];
+    const index=portfolioProjects.indexOf(p);
+    const previous=portfolioProjects[(index+portfolioProjects.length-1)%portfolioProjects.length];
+    const next=portfolioProjects[(index+1)%portfolioProjects.length];
 
     return (
       <main>
@@ -188,11 +190,11 @@ export default async function Page({params}:Props){
           <PageHead 
             eyebrow="SELECTED PROJECT EXPERIENCE" 
             title="Proof in the model." 
-            text="Five structural-steel case studies. Explore the framing, interfaces and practical detailing considerations through authentic project views."
+            text={`${portfolioProjects.length} structural-steel case studies. Explore the framing, interfaces and practical detailing considerations through authentic project views.`}
           />
           <section className="section light">
             <div className="wrap">
-              <PortfolioGrid/>
+              <PortfolioGrid items={portfolioProjects}/>
               <p className="confidential">
                 Public views are limited to selected 3D screenshots and 3D drawings. Client names and restricted technical drawing sheets are not displayed.
               </p>
