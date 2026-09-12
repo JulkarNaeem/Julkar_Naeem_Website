@@ -256,11 +256,12 @@ export default async function Page({params}:Props){
             <div className="wrap about-page">
               <figure>
                 <img 
-                  src="https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto,c_limit,w_900/v1788973885/Julkar_Naeem_DP" 
+                  src="/julkar-naeem-dp.webp" 
                   alt="Julkar Naeem, Senior Structural Steel Detailer" 
-                  width={900} 
-                  height={900}
-                  loading="lazy"
+                  width={768} 
+                  height={1024}
+                  fetchPriority="high"
+                  loading="eager"
                   decoding="async"
                 />
                 <figcaption>Julkar Naeem · Dhaka, Bangladesh</figcaption>

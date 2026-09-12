@@ -58,7 +58,7 @@ export function ServiceSection(){
                   src={'/services/'+s.image+'.webp'} 
                   alt={'Editorial illustration for '+s.title} 
                   width={640} 
-                  height={640} 
+                  height={360} 
                   loading="lazy" 
                   decoding="async"
                 />
