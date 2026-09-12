@@ -38,11 +38,6 @@ export function Footer(){
           </span>
         </a>
         <p>Steel Detailer for Fabricators<br/> & Engineering Teams<br/><span className="muted">Dhaka, Bangladesh</span></p>
-        <nav aria-label="Footer navigation">
-          {['Services','Portfolio','Process','About','Credentials','Contact'].map(x=>(
-            <a key={x} href={'/'+x.toLowerCase()}>{x}</a>
-          ))}
-        </nav>
         {(config.professionalEmails.length>0||config.whatsapp||config.linkedInUrl||config.upworkUrl||config.instagramUrl)&&(
           <div className="footer-contact" aria-label="Professional contact links">
             {config.professionalEmails.map((email,index)=><a href={`mailto:${email}`} aria-label={`Email ${email}`} title={email} key={email}><FaEnvelope aria-hidden="true"/><span className="sr-only">{index===0?'Project email':'Direct email'}</span></a>)}

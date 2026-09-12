@@ -308,10 +308,6 @@ export default async function Page({params}:Props){
                   <li>When do you need the issue package?</li>
                 </ul>
                 <p className="contact-location">Dhaka, Bangladesh<br/>International project support</p>
-                <div className="commercial-note">
-                  <strong>Commercial detailing support</strong>
-                  <p>Julkar also operates CivSteel for commercial project delivery and outsourced detailing capacity. Commercial arrangements are discussed against your project scope.</p>
-                </div>
                 <AlternativeContactLinks />
               </aside>
               <EnquiryForm/>
