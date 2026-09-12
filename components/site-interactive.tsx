@@ -3,7 +3,7 @@ import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {projects,cloud,services,deliverables,formats,config} from '@/lib/content';
-import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause} from 'lucide-react';
+import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause,ArrowUp} from 'lucide-react';
 import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
 
@@ -944,3 +944,38 @@ export function HeroVideoPlayer({
   );
 }
 
+/* ─── Back to Top Button ─────────────────────────────────────── */
+export function BackToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setVisible(window.scrollY > 350);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      className={`back-to-top${visible ? ' visible' : ''}`}
+      onClick={scrollToTop}
+      aria-label="Back to top"
+      title="Back to top"
+      tabIndex={visible ? 0 : -1}
+      aria-hidden={!visible}
+    >
+      <ArrowUp size={20} strokeWidth={2.4} aria-hidden="true" />
+    </button>
+  );
+}

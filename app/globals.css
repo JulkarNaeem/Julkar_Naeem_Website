@@ -338,4 +338,10 @@ a:hover.textlink{color:#c39326}
 .mobile-cta-bar.hidden{display:none}
 }
 @media(max-width:650px){.home-page .section{padding-top:43px;padding-bottom:43px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}.blueprint-divider svg path,.blueprint-divider svg line,.blueprint-divider svg polyline{stroke-dasharray:none;stroke-dashoffset:0;transition:none}}
+/* ─── Back to Top Button ─────────────────────────────────────── */
+.back-to-top{position:fixed;bottom:28px;right:28px;z-index:40;width:46px;height:46px;border-radius:4px;background:rgba(16,28,38,0.92);border:1.5px solid #3a4b59;color:#e7b846;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;transform:translateY(14px) scale(0.92);transition:opacity .25s ease,transform .25s cubic-bezier(0.2,0,0,1),visibility .25s,background-color .15s ease,border-color .15s ease,color .15s ease}
+.back-to-top.visible{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.back-to-top:hover{background:#e7b846;color:#101c26;border-color:#f7ce69;transform:translateY(-3px) scale(1.02);box-shadow:0 8px 28px rgba(231,184,70,0.3)}
+.back-to-top:active{transform:translateY(0) scale(0.98)}
+@media(max-width:650px){.back-to-top{bottom:80px;right:18px;width:42px;height:42px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}.blueprint-divider svg path,.blueprint-divider svg line,.blueprint-divider svg polyline{stroke-dasharray:none;stroke-dashoffset:0;transition:none}.back-to-top{transition:none!important}}
