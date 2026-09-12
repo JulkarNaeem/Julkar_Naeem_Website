@@ -22,7 +22,20 @@ export function Footer(){
   return (
     <footer className="footer wrap">
       <div className="footer-main">
-        <a className="brand" href="/">JULKAR NAEEM<span>STRUCTURAL STEEL DETAILER</span></a>
+        <a className="brand" href="/" aria-label="Julkar Naeem Structural Steel Detailer">
+          <img 
+            src="/jn-logo-mark.png" 
+            alt="Julkar Naeem JN Monogram" 
+            width={74} 
+            height={54} 
+            className="brand-mark" 
+            decoding="async" 
+          />
+          <span className="brand-text">
+            JULKAR NAEEM
+            <span className="brand-sub">STRUCTURAL STEEL DETAILER</span>
+          </span>
+        </a>
         <p>Steel Detailer for Fabricators<br/> & Engineering Teams<br/><span className="muted">Dhaka, Bangladesh</span></p>
         <nav aria-label="Footer navigation">
           {['Services','Portfolio','Process','About','Credentials','Contact'].map(x=>(
@@ -186,12 +199,23 @@ export function ProcessSection(){
 export function AboutIntro(){
   return (
     <section className="section wrap about-intro">
+      <div className="about-intro-media">
+        <figure>
+          <img 
+            src="/julkar-naeem-dp.webp" 
+            alt="Julkar Naeem, Senior Structural Steel Detailer" 
+            width={768} 
+            height={1024}
+            loading="lazy" 
+            decoding="async"
+          />
+          <figcaption>Julkar Naeem · Dhaka, Bangladesh</figcaption>
+        </figure>
+      </div>
       <div>
         <p className="eyebrow">06 / THE DETAILER BEHIND THE MODEL</p>
         <h2>Julkar Naeem</h2>
         <p className="role">{config.title}</p>
-      </div>
-      <div>
         <p className="intro">Based in Dhaka, Bangladesh, I bring around nine years across steel, construction, production, QA and operations, including more than four years focused on structural-steel detailing.</p>
         <p className="intro">That background informs a practical approach to model coordination and fabrication documentation using Tekla Structures and AutoCAD.</p>
         <div className="credential-strip">

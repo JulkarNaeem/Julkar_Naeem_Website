@@ -16,7 +16,20 @@ export function Header(){
   return (
     <>
       <header className="header wrap">
-        <a className="brand" href="/">JULKAR NAEEM<span>STRUCTURAL STEEL DETAILER</span></a>
+        <a className="brand" href="/" aria-label="Julkar Naeem Structural Steel Detailer">
+          <img 
+            src="/jn-logo-mark.png" 
+            alt="Julkar Naeem JN Monogram" 
+            width={74} 
+            height={54} 
+            className="brand-mark" 
+            decoding="async" 
+          />
+          <span className="brand-text">
+            JULKAR NAEEM
+            <span className="brand-sub">STRUCTURAL STEEL DETAILER</span>
+          </span>
+        </a>
         <nav aria-label="Main navigation">
           <a href="/services">Services</a>
           <a href="/portfolio">Portfolio</a>
