@@ -1,6 +1,7 @@
-import {projects,services,deliverables,formats,steps,homepagePhases,checks,config} from '@/lib/content';
+import {projects,services,deliverables,formats,steps,homepagePhases,config} from '@/lib/content';
 import {ProjectCard,HeroVideoPlayer} from './site-interactive';
 import {ArrowUpRight} from 'lucide-react';
+import {FaEnvelope,FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
 
 
@@ -42,6 +43,15 @@ export function Footer(){
             <a key={x} href={'/'+x.toLowerCase()}>{x}</a>
           ))}
         </nav>
+        {(config.professionalEmails.length>0||config.whatsapp||config.linkedInUrl||config.upworkUrl||config.instagramUrl)&&(
+          <div className="footer-contact" aria-label="Professional contact links">
+            {config.professionalEmails.map((email,index)=><a href={`mailto:${email}`} aria-label={`Email ${email}`} title={email} key={email}><FaEnvelope aria-hidden="true"/><span className="sr-only">{index===0?'Project email':'Direct email'}</span></a>)}
+            {config.whatsapp&&<a href={config.whatsapp} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${config.whatsappNumber}`} title={`WhatsApp ${config.whatsappNumber}`}><FaWhatsapp aria-hidden="true"/></a>}
+            {config.linkedInUrl&&<a href={config.linkedInUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile" title="LinkedIn"><FaLinkedin aria-hidden="true"/></a>}
+            {config.upworkUrl&&<a href={config.upworkUrl} target="_blank" rel="noopener noreferrer" aria-label="Upwork profile" title="Upwork"><FaUpwork aria-hidden="true"/></a>}
+            {config.instagramUrl&&<a href={config.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram profile" title="Instagram"><FaInstagram aria-hidden="true"/></a>}
+          </div>
+        )}
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} Julkar Naeem</span>
@@ -91,6 +101,13 @@ export function ServiceSection(){
 }
 
 export function Differentiator(){
+  const checkGroups=[
+    'Fabrication and welding access',
+    'Bolt installation, tightening and tool clearance',
+    'Member orientation, dimensions and levels',
+    'Clashes and erection feasibility',
+    'Drawing clarity and conflicting information'
+  ];
   return (
     <section className="section differentiator wrap">
       <div>
@@ -100,9 +117,10 @@ export function Differentiator(){
       </div>
       <div className="checks">
         <p className="small">WHAT I CHECK</p>
-        {checks.map((c,i)=>(
+        {checkGroups.map((c,i)=>(
           <div key={c}><span>{String(i+1).padStart(2,'0')}</span>{c}</div>
         ))}
+        <a className="textlink" href="/services">View detailed services ↗</a>
       </div>
     </section>
   );
@@ -131,7 +149,15 @@ export function SelectedProjects(){
   );
 }
 
-export function Deliverables(){
+export function Deliverables({compact=false}:{compact?:boolean}){
+  const displayed=compact?[
+    '3D Tekla models and GA drawings',
+    'Assembly and single-part drawings',
+    'Shop and fabrication drawings',
+    'Erection and anchor-bolt drawings',
+    'Connection details and bolt lists',
+    'MTO and BOM reports'
+  ]:deliverables;
   return (
     <section className="section deliverables wrap">
       <div>
@@ -141,9 +167,10 @@ export function Deliverables(){
       </div>
       <div>
         <ul className="deliverable-list">
-          {deliverables.map(x=><li key={x}>{x}</li>)}
+          {displayed.map(x=><li key={x}>{x}</li>)}
         </ul>
         <p className="format-line">WHEN REQUIRED <span>{formats.join(' · ')}</span></p>
+        {compact&&<a className="textlink" href="/services">Review services and deliverables ↗</a>}
       </div>
     </section>
   );

@@ -3,7 +3,8 @@ import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {projects,cloud,services,deliverables,formats,config} from '@/lib/content';
-import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,ExternalLink,Play,Pause} from 'lucide-react';
+import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause} from 'lucide-react';
+import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
 
 
@@ -12,9 +13,20 @@ import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,M
 
 export function Header(){
   const [open,setOpen]=useState(false);
-  const [drawerOpen,setDrawerOpen]=useState(false);
+  const menuButtonRef=useRef<HTMLButtonElement>(null);
+
+  useEffect(()=>{
+    if(!open) return;
+    const closeOnEscape=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){
+        setOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown',closeOnEscape);
+    return ()=>document.removeEventListener('keydown',closeOnEscape);
+  },[open]);
   return (
-    <>
       <header className="header wrap">
         <a className="brand" href="/" aria-label="Julkar Naeem Structural Steel Detailer">
           <img 
@@ -35,11 +47,12 @@ export function Header(){
           <a href="/portfolio">Portfolio</a>
           <a href="/process">Process</a>
           <a href="/about">About</a>
-          <button className="nav-cta" onClick={()=>setDrawerOpen(true)} aria-haspopup="dialog" aria-expanded={drawerOpen}>
+          <a className="nav-cta" href="/contact">
             Request a Project Review <ArrowUpRight size={15} aria-hidden="true"/>
-          </button>
+          </a>
         </nav>
         <button 
+          ref={menuButtonRef}
           className="menu-toggle" 
           aria-label={open?'Close menu':'Open menu'} 
           aria-expanded={open} 
@@ -58,8 +71,6 @@ export function Header(){
           </nav>
         )}
       </header>
-      <QuickContactDrawer open={drawerOpen} onClose={()=>setDrawerOpen(false)}/>
-    </>
   );
 }
 
@@ -244,31 +255,42 @@ export function Share({url}:{url:string}){
 }
 
 export function AlternativeContactLinks(){
-  const hasEmail = Boolean(config.email && config.email.trim());
+  const hasEmail = config.professionalEmails.length>0;
+  const hasWhatsapp = Boolean(config.whatsapp && config.whatsappNumber);
   const hasSocials = config.socials && config.socials.length > 0;
 
-  if (!hasEmail && !hasSocials) return null;
+  if (!hasEmail && !hasWhatsapp && !hasSocials) return null;
 
   return (
     <div className="alt-contact-links">
       <p className="small muted">DIRECT & ALTERNATIVE CONTACT</p>
       <div className="alt-contact-cards">
-        {hasEmail && (
-          <a href={`mailto:${config.email}`} className="alt-contact-card">
+        {config.professionalEmails.map((email,index)=>(
+          <a href={`mailto:${email}`} className="alt-contact-card" key={email}>
             <Mail size={18} aria-hidden="true" />
             <div>
-              <strong>Professional Email</strong>
-              <span>{config.email}</span>
+              <strong>{index===0?'Project Email':'Direct Email'}</strong>
+              <span>{email}</span>
+            </div>
+            <ArrowUpRight size={16} aria-hidden="true" className="alt-contact-icon" />
+          </a>
+        ))}
+        {hasWhatsapp && (
+          <a href={config.whatsapp} target="_blank" rel="noopener noreferrer" className="alt-contact-card">
+            <FaWhatsapp size={20} aria-hidden="true" className="brand-contact-icon whatsapp-icon" />
+            <div>
+              <strong>WhatsApp</strong>
+              <span>{config.whatsappNumber}</span>
             </div>
             <ArrowUpRight size={16} aria-hidden="true" className="alt-contact-icon" />
           </a>
         )}
         {hasSocials && config.socials.map(s => (
           <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" className="alt-contact-card">
-            <ExternalLink size={18} aria-hidden="true" />
+            {s.name==='LinkedIn'?<FaLinkedin size={19} aria-hidden="true" className="brand-contact-icon linkedin-icon"/>:s.name==='Upwork'?<FaUpwork size={21} aria-hidden="true" className="brand-contact-icon upwork-icon"/>:<FaInstagram size={20} aria-hidden="true" className="brand-contact-icon instagram-icon"/>}
             <div>
               <strong>{s.name}</strong>
-              <span>View professional profile</span>
+              <span>View {s.name} profile</span>
             </div>
             <ArrowUpRight size={16} aria-hidden="true" className="alt-contact-icon" />
           </a>
@@ -827,7 +849,16 @@ export function HeroVideoPlayer({
 
     if(flashTimer.current) clearTimeout(flashTimer.current);
 
-    if(videoRef.current.paused){
+    if(!hasStarted){
+      videoRef.current.src=src;
+      videoRef.current.load();
+      videoRef.current.play().catch(()=>setIsPlaying(false));
+      setIsPlaying(true);
+      setHasStarted(true);
+      setFlashAction('play');
+      setFlashKey(k=>k+1);
+      flashTimer.current=setTimeout(()=>setFlashAction(null),450);
+    } else if(videoRef.current.paused){
       videoRef.current.play().catch(()=>{});
       setIsPlaying(true);
       setHasStarted(true);
@@ -852,29 +883,32 @@ export function HeroVideoPlayer({
   return (
     <div className="hero-visual">
       <div className="drawing-label">MODEL STUDY / MULTI-STOREY STRUCTURAL STEEL</div>
-      <div 
+      <button
+        type="button"
         className={`hero-video-container ${isPlaying ? 'is-playing' : 'is-paused'}`}
         onClick={togglePlay}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e)=>{
-          if(e.key===' ' || e.key==='Enter'){
-            e.preventDefault();
-            togglePlay();
-          }
-        }}
         aria-label={isPlaying ? 'Pause video' : (hasStarted ? 'Resume video' : 'Play 3D model video')}
       >
+        {!hasStarted&&(
+          <ProjectImage
+            url={poster}
+            alt={`${title} Tekla model video poster`}
+            eager
+            fetchPriority="high"
+            sizes="(max-width: 900px) 92vw, 48vw"
+            width={1080}
+            height={1080}
+            className="hero-video-poster"
+          />
+        )}
         <video
           ref={videoRef}
-          src={src}
-          poster={poster}
           playsInline
           loop
           preload="metadata"
           onPlay={()=>{setIsPlaying(true); setHasStarted(true);}}
           onPause={()=>setIsPlaying(false)}
-          className="hero-video"
+          className={`hero-video${hasStarted?' is-loaded':''}`}
           aria-label={`${title} Tekla model animation`}
         />
 
@@ -901,7 +935,7 @@ export function HeroVideoPlayer({
           </div>
         )}
 
-      </div>
+      </button>
       <div className="hero-caption">
         <span>{title}</span>
         <a href={'/portfolio/'+slug} className="hero-explore-link">Explore the model ↗</a>

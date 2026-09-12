@@ -1,5 +1,25 @@
 import media from './media.json';
-export const config={name:'Julkar Naeem',title:'Senior Structural Steel Detailer / Detailing Engineer',origin:'https://julkarnaeem.com',email:'',phone:'',whatsapp:'',socials:[] as {name:string,url:string}[]};
+const professionalEmails=['contact@julkarnaeem.com','julkarnaeem.me@gmail.com'];
+const professionalEmail=professionalEmails[0];
+const linkedInUrl=process.env.NEXT_PUBLIC_LINKEDIN_URL?.trim()||'https://www.linkedin.com/in/julkarnaeem/';
+const whatsappNumber='+8801739411586';
+const upworkUrl='https://www.upwork.com/freelancers/~018c36d510164a2e73';
+const instagramUrl='https://www.instagram.com/julkarnaeem.me/';
+export const config={
+  name:'Julkar Naeem',
+  title:'Senior Structural Steel Detailer / Detailing Engineer',
+  origin:'https://julkarnaeem.com',
+  professionalEmail,
+  professionalEmails,
+  linkedInUrl,
+  whatsappNumber,
+  upworkUrl,
+  instagramUrl,
+  email:professionalEmail,
+  phone:'',
+  whatsapp:'https://wa.me/8801739411586',
+  socials:[{name:'LinkedIn',url:linkedInUrl},{name:'Upwork',url:upworkUrl},{name:'Instagram',url:instagramUrl}] as {name:string,url:string}[]
+};
 export const services=[
 {id:'tekla-modelling',title:'Tekla 3D modelling',text:'Coordinated structural-steel models with clear member orientation, levels and interfaces before drawing production.',image:'tekla'},
 {id:'fabrication-drawings',title:'Shop & fabrication drawings',text:'Assembly and single-part drawings that communicate how each piece is cut, welded, bolted and assembled.',image:'shop'},
@@ -41,7 +61,7 @@ const seeds=[
   type:'Commercial',
   category:'PEB & portal frames',
   summary:'A single-storey PEB restaurant shed beside a resort swimming pool in Bangladesh. Main structural steelwork was modelled in Tekla Structures 2025, with fabrication and erection documentation.',
-  overview:'A single-storey PEB commercial shed structure situated adjacent to a resort swimming pool in Bangladesh. The detailing scope covered the main structural steel frame, modelled accurately in Tekla Structures 2025 with complete fabrication and erection documentation.',
+  overview:'A single-storey PEB commercial shed beside a resort swimming pool in Bangladesh. The confirmed detailing scope covered the main structural steelwork, modelled in Tekla Structures 2025.',
   glance:[
     ['Building type','PEB commercial building'],
     ['Location','Bangladesh'],
@@ -51,18 +71,16 @@ const seeds=[
     ['Detailer role','Structural-steel detailing'],
     ['Scope','Main structural steelwork']
   ],
-  challenge:'Ensuring adequate fabrication access, bolt-tightening clearance around tapered portal frame connections, and verifying unambiguous member orientation so site erection teams assemble without confusion.',
-  approach:'A practical bay-by-bay review tracing the primary portal frame from foundation anchor interfaces to eaves and ridge joints, verifying connection clearances before translating geometry into clear erection views.',
-  checks:'Checked fabrication access, welding access, bolt installation and tightening clearance, tool clearances, member orientation, clash verification between primary frame and secondary elements, anchor-bolt layout, and drawing clarity.',
+  challenge:'The detailing review focused on fabrication access, bolt-tightening access, member orientation and clear erection information around the main structural steelwork.',
+  approach:'The main frame geometry was coordinated in Tekla Structures, with practical attention to member orientation, access and how the model information would be communicated in the drawings.',
+  checks:'The review considered fabrication access, welding access, bolt installation and tightening access, tool clearance, member orientation, clashes and erection-drawing clarity.',
   deliverables:[
     'Coordinated 3D Tekla model',
-    'General arrangement (GA) and erection drawings',
-    'Shop assembly and single-part fabrication drawings',
-    'Connection detail sheets',
-    'Anchor-bolt plans and bolt lists',
-    'Material quantity takeoffs (MTO / BOM)'
+    'Erection drawings',
+    'Shop drawings',
+    'Connection details'
   ],
-  takeaway:'A coordinated model must translate into equally clear erection documentation. Verifying member orientation, tool clearance and joint access early prevents costly site delays during erection.',
+  takeaway:'A coordinated model needs equally clear fabrication and erection information. Reviewing member orientation, tool clearance and access early helps reduce avoidable fabrication or erection questions.',
   facts:[['Building type','PEB commercial building'],['Location','Bangladesh'],['Area','Approximately 385 m²'],['Steel quantity','Approximately 17 tonnes'],['Software','Tekla Structures 2025']],
   hero:'3D-SCREENSHOT-02'
 },
@@ -73,24 +91,18 @@ const seeds=[
   type:'Multi-storey',
   category:'Beam & column frames',
   summary:'A multi-level beam-and-column model with repeated floor framing and a pitched roof. The open model views make the relationship between primary members and secondary framing easy to examine.',
-  overview:'A multi-level beam-and-column steel frame model featuring repetitive floor framing grids topped with a pitched structural roof. Model views allow clear inspection of primary column-to-beam connectivity and secondary framing transitions.',
+  overview:'The public model views show a multi-level beam-and-column steel frame with repeated floor framing and a pitched roof. They allow the relationship between the vertical frame, floor members and roof geometry to be reviewed together.',
   glance:[
     ['Visible structure','Multi-level beam-and-column frame'],
     ['Roof form','Pitched steel roof framing'],
     ['Framing system','Repeated floor beam bays'],
     ['Model environment','Tekla Structures']
   ],
-  challenge:'Coordinating floor-to-floor member alignment, maintaining repetitive beam interface consistency across levels, and managing the geometric transition between orthogonal floor beams and sloping roof framing.',
-  approach:'Review one framing bay in rigorous detail to establish baseline tolerances, then compare repeated conditions across the model to ensure consistent member references and level offsets before drawing production.',
-  checks:'Verified column splice alignment, beam-to-column tool clearances, floor level tolerances, bolt tightening access, member orientation, and drawing clarity against design information.',
-  deliverables:[
-    'Coordinated 3D Tekla structural model views',
-    'Floor framing GA drawings',
-    'Standardized beam-to-column connection details',
-    'Assembly and single-part fabrication drawings',
-    'Bolt lists and material summary reports'
-  ],
-  takeaway:'Bay-by-bay interface review prevents repetitive errors across multiple floors and guarantees consistent member marks and clear level references before shop drawing issue.',
+  challenge:'Repeated floor bays and the transition to sloping roof framing create visible coordination points across levels, member lines and changes in geometry.',
+  approach:'A practical detailing approach would review representative bays and compare repeated conditions while keeping levels, member orientation and roof transitions clear in the model.',
+  checks:'The visible geometry calls for attention to floor-to-floor alignment, repeated framing interfaces, member orientation, roof transitions, access and drawing clarity.',
+  deliverables:[],
+  takeaway:'A bay-by-bay model review supports consistent member references and clear level information before drawings are prepared. The exact project deliverables are not publicly confirmed.',
   facts:[['Visible structure','Multi-level beam-and-column frame'],['Roof form','Pitched steel roof framing']],
   hero:'3D-SCREENSHOT-01'
 },
@@ -101,24 +113,17 @@ const seeds=[
   type:'Multi-storey',
   category:'Braced frames',
   summary:'A multi-storey steel model with repeated floor framing, diagonal bracing and internal stairs. The overall view brings the vertical circulation and bracing interfaces into the same coordination picture.',
-  overview:'A multi-storey steel frame structure incorporating vertical diagonal bracing systems for lateral stability alongside integrated internal egress stairs and repeated composite floor framing.',
+  overview:'The public model views show a multi-storey steel frame with repeated floor framing, diagonal bracing and internal stairs. These visible elements create several interfaces that need to remain clear in the coordinated model.',
   glance:[
     ['Visible structure','Braced multi-storey frame'],
     ['Visible elements','Floor beams, diagonal bracing and stairs'],
-    ['Lateral system','Vertical diagonal bracing'],
     ['Model environment','Tekla Structures']
   ],
-  challenge:'Congested framing nodes where vertical diagonal braces, primary floor beams, columns, and internal stair stringers converge, demanding meticulous tool clearance and erection sequence checks.',
-  approach:'Combine overall structural framing views to maintain global alignment with isolated node studies at congested interfaces to track clearances, gusset geometry, and RFI queries with the structural engineering team.',
-  checks:'Gusset plate welding and bolting access, brace work point alignment, stair stringer connection clearances, member orientation, clash avoidance, and RFI tracking for conflicting dimensions.',
-  deliverables:[
-    'Coordinated 3D Tekla model',
-    'Bracing elevations and framing GA drawings',
-    'Stair layout and stair stringer fabrication details',
-    'Bracing connection details and gusset plate drawings',
-    'Bill of materials and bolt reports'
-  ],
-  takeaway:'Congested multi-member joints demand localized 3D verification and proactive RFI documentation early to ensure erection feasibility on site.',
+  challenge:'The visible intersections between floor framing, diagonal bracing, columns and internal stairs create areas where geometry and access need careful coordination.',
+  approach:'Overall model views can establish alignment, while closer model review can help identify crowded interfaces, member orientation issues and information that may need clarification.',
+  checks:'The visible model suggests checking brace and floor-frame interfaces, stair clearances, member orientation, clashes, access and consistency of dimensions and levels.',
+  deliverables:[],
+  takeaway:'Local 3D review of crowded interfaces helps identify coordination questions before fabrication information is prepared. The exact project deliverables are not publicly confirmed.',
   facts:[['Visible structure','Braced multi-storey frame'],['Visible elements','Floor beams, diagonal bracing and stairs']],
   hero:'3D-SCREENSHOT-01'
 },
@@ -129,24 +134,18 @@ const seeds=[
   type:'Industrial',
   category:'PEB & portal frames',
   summary:'A rectangular industrial building model with a pitched roof and smaller entrance canopies. Model views allow the primary steel arrangement and secondary roof and wall members to be explored together.',
-  overview:'A large-span industrial building model with pitched portal frames, secondary roof and wall cladding support members, and cantilevered entrance canopies integrated into the building perimeter.',
+  overview:'The public model views show a rectangular industrial steel building with a pitched roof, secondary roof and wall members, and smaller entrance canopies around the perimeter.',
   glance:[
     ['Visible structure','Pitched-roof industrial building'],
     ['Visible interfaces','Main building and entrance canopies'],
     ['Secondary systems','Roof purlins and wall girts'],
     ['Model environment','Tekla Structures']
   ],
-  challenge:'Harmonizing primary clear-span portal frame geometry with secondary purlins, girts, and entrance canopies while maintaining consistent cladding line references and fastener clearances.',
-  approach:'Hierarchical detailing approach: coordinate the primary frames and anchor layouts first, followed by secondary framing, canopy tie-backs, and perimeter member orientations to maintain clear repetitive bay spacing.',
-  checks:'Portal knee and ridge connection fit-up, purlin/girt cleat clearances, canopy connection access, member orientation, cladding line alignment, and dimensional checks against engineering drawings.',
-  deliverables:[
-    'Coordinated 3D Tekla model',
-    'Roof and wall framing GA plans',
-    'Portal frame assembly shop drawings',
-    'Canopy framing and connection details',
-    'Purlin/girt schedules and MTO reports'
-  ],
-  takeaway:'Separating primary frame coordination from secondary canopy interfaces ensures repetitive bays remain standardized while local perimeter conditions receive focused detailing attention.',
+  challenge:'The visible primary frame, secondary members and entrance canopies create repeating bays together with local perimeter conditions that need coordinated geometry.',
+  approach:'A practical model review can establish the main frame geometry first, then examine secondary framing, canopy interfaces and perimeter member orientation against the supplied project information.',
+  checks:'The visible geometry suggests checking main-frame and secondary-member interfaces, canopy access, member orientation, alignment, clashes and dimensional clarity.',
+  deliverables:[],
+  takeaway:'Separating the review of repeated main frames from local canopy interfaces supports clear coordination. The exact project deliverables are not publicly confirmed.',
   facts:[['Visible structure','Pitched-roof industrial building'],['Visible interfaces','Main building and entrance canopies']],
   hero:'3D-SCREENSHOT-02'
 },
@@ -157,24 +156,17 @@ const seeds=[
   type:'Access steel',
   category:'Platforms & walkways',
   summary:'An elevated access walkway model with a change in direction, handrails, support steel and caged ladders. The views highlight the relationship between the access route and its supporting frame.',
-  overview:'An elevated industrial access platform and walkway system featuring directional changes, continuous handrails, kick-plates, structural support framing, and safety-caged vertical access ladders.',
+  overview:'The public model views show an elevated maintenance walkway with changes in direction, handrails, support steel and caged ladders. The views make the relationship between the access route and supporting frame visible.',
   glance:[
     ['Visible structure','Elevated maintenance walkway'],
     ['Visible elements','Handrails, support steel and caged ladders'],
-    ['Safety features','Caged ladders and continuous handrails'],
     ['Model environment','Tekla Structures']
   ],
-  challenge:'Maintaining required safety and human-access clearances, handrail continuity around direction changes, safety cage hoops, and ensuring practical bolt access for field assembly onto supporting structures.',
-  approach:'Walk-through detailing methodology: follow the operational access path from grade up the caged ladder, across walkway platforms, and through corners to check grating boundaries, support orientation, and splice locations.',
-  checks:'Ladder cage climb clearances and hoop spacing, handrail continuity and height, kick-plate fit-up, grating panel spans, bolt installation and tightening clearance, and erection practicality.',
-  deliverables:[
-    'Coordinated 3D Tekla model',
-    'Platform GA plans and elevation views',
-    'Caged ladder fabrication assembly drawings',
-    'Handrail, kick-plate and walkway shop drawings',
-    'Grating layout schedules and bolt lists'
-  ],
-  takeaway:'Miscellaneous steel detailing succeeds on ergonomic and safety checks: following the actual maintenance path in the model reveals interface issues before fabrication.',
+  challenge:'Changes in direction and the visible interfaces among walkway framing, handrails, support steel and caged ladders require close geometric coordination.',
+  approach:'A practical model review can follow the visible access route through ladders, platforms and corners to examine continuity, support orientation, interfaces and potential clashes.',
+  checks:'The visible geometry suggests checking access clearances, handrail continuity, walkway and support interfaces, member orientation, bolt access, clashes and drawing clarity against approved information.',
+  deliverables:[],
+  takeaway:'Following the access route through the model helps reveal geometric and coordination questions before fabrication information is prepared. The exact project deliverables are not publicly confirmed.',
   facts:[['Visible structure','Elevated maintenance walkway'],['Visible elements','Handrails, support steel and caged ladders']],
   hero:'3D-SCREENSHOT-01'
 }

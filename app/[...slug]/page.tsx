@@ -2,34 +2,12 @@ import {notFound} from 'next/navigation';
 import {config,projects,pageInfo,services,cloud} from '@/lib/content';
 import {CTA,ServiceSection,Deliverables,ProcessSteps} from '@/components/site-sections';
 import {PortfolioGrid,Gallery,Share,EnquiryForm,ProjectImage,AlternativeContactLinks} from '@/components/site-interactive';
+import {ApprovedDrawingCrop} from '@/components/case-study-media';
 type Props={params:Promise<{slug:string[]}>};
 export function generateStaticParams(){return [...Object.keys(pageInfo).map(x=>({slug:[x]})),...projects.map(x=>({slug:['portfolio',x.slug]}))]}
 export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const project=slug[0]==='portfolio'&&slug.length===2?projects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
 function Breadcrumb({items}:{items:{label:string,path:string}[]}){return <><nav className="breadcrumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a>{items.map((x,i)=><span key={x.path}> / {i===items.length-1?<span aria-current="page">{x.label}</span>:<a href={x.path}>{x.label}</a>}</span>)}</nav><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{label:'Home',path:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.label,item:config.origin+x.path}))})}}/></>}
 function PageHead({eyebrow,title,text}:{eyebrow:string,title:string,text:string}){return <section className="page-head wrap"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro">{text}</p></section>}
-
-function SanitizedDrawingSlot({
-  title = "Sanitized Drawing Crop",
-  caption = "Restricted technical drawing sheets remain outside the public portfolio. Sanitized drawing crops can be added here upon authorized clearance."
-}:{
-  title?: string;
-  caption?: string;
-}){
-  return (
-    <figure className="drawing-slot-container" aria-label={title}>
-      <div className="drawing-slot-box">
-        <div className="drawing-slot-top">
-          <span className="small">{title.toUpperCase()}</span>
-          <span className="privacy-badge">CONFIDENTIAL DRAWINGS PROTECTED</span>
-        </div>
-        <p className="drawing-slot-desc">
-          Restricted shop, connection and erection drawings are maintained privately to protect client confidentiality. Sanitized, unbranded drawing crops will be published here upon authorization.
-        </p>
-      </div>
-      <figcaption className="drawing-slot-caption">{caption}</figcaption>
-    </figure>
-  );
-}
 
 export default async function Page({params}:Props){
   const{slug}=await params;
@@ -82,21 +60,21 @@ export default async function Page({params}:Props){
               {/* Section 1: Project Overview */}
               <article className="case-block">
                 <p className="eyebrow">01 / PROJECT OVERVIEW</p>
-                <h2>From 3D coordination to fabrication-ready deliverables.</h2>
+                <h2>{p.code==='001'?'Confirmed project scope and model context.':'Visible model geometry and detailing considerations.'}</h2>
                 <p>{p.overview}</p>
               </article>
 
               {/* Section 3: Challenge / Constraint */}
               <article className="case-block">
                 <p className="eyebrow">02 / CHALLENGE & CONSTRAINTS</p>
-                <h3>Geometry, Access & Interface Complexities</h3>
+                <h3>Geometry, access and interfaces</h3>
                 <p>{p.challenge}</p>
               </article>
 
               {/* Section 4: Detailing Approach */}
               <article className="case-block">
                 <p className="eyebrow">03 / DETAILING APPROACH</p>
-                <h3>Model Coordination & Bay Verification</h3>
+                <h3>Model coordination approach</h3>
                 <p>{p.approach}</p>
                 {p.code!=='001'&&(
                   <p className="editorial-note">
@@ -108,24 +86,22 @@ export default async function Page({params}:Props){
               {/* Section 5: Fabrication and Constructability Checks */}
               <article className="case-block">
                 <p className="eyebrow">04 / FABRICATION & CONSTRUCTABILITY CHECKS</p>
-                <h3>Shop Access, Bolt Clearances & Erection Feasibility</h3>
+                <h3>Practical checks guided by the model</h3>
                 <p>{p.checks}</p>
-                {/* Reusable sanitized drawing slot */}
-                <SanitizedDrawingSlot 
-                  title={`Sanitized Drawing Crop · ${p.title}`}
-                  caption="Restricted engineering sheets and shop details are kept confidential. Sanitized drawing crops can be added here without altering page structure."
-                />
+                <ApprovedDrawingCrop/>
               </article>
 
               {/* Section 6: Deliverables */}
               <article className="case-block">
                 <p className="eyebrow">05 / DELIVERABLES</p>
-                <h3>Agreed Project Issue Package</h3>
-                <ul className="case-deliverables-list">
-                  {p.deliverables.map((item)=>(
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+                <h3>{p.code==='001'?'Agreed Project Issue Package':'Typical Detailing Outputs'}</h3>
+                {p.code==='001'?(
+                  <ul className="case-deliverables-list">
+                    {p.deliverables.map((item)=><li key={item}>{item}</li>)}
+                  </ul>
+                ):(
+                  <p>The exact project deliverables are not publicly confirmed. Depending on an agreed scope, typical outputs for this type of steelwork may include a coordinated Tekla model, relevant drawings and material reports.</p>
+                )}
               </article>
 
               {/* Section 7: Practical Takeaway */}
