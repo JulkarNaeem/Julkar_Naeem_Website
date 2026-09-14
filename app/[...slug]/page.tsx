@@ -1,19 +1,24 @@
 import {notFound} from 'next/navigation';
-import {config,projects,pageInfo,services,cloud} from '@/lib/content';
+import {config,projects,pageInfo,cloud} from '@/lib/content';
 import {CTA,ServiceSection,Deliverables,ProcessSteps} from '@/components/site-sections';
 import {PortfolioGrid,Gallery,Share,EnquiryForm,ProjectImage,AlternativeContactLinks} from '@/components/site-interactive';
 import {ApprovedDrawingCrop} from '@/components/case-study-media';
+import {getPublishedContent} from '@/lib/managed-content';
+import {contactConfig} from '@/lib/cms-model';
 import {getPortfolioProjects} from '@/lib/portfolio-feed';
 type Props={params:Promise<{slug:string[]}>};
 export function generateStaticParams(){return [...Object.keys(pageInfo).map(x=>({slug:[x]})),...projects.map(x=>({slug:['portfolio',x.slug]}))]}
-export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const portfolioProjects=slug[0]==='portfolio'?await getPortfolioProjects():projects;const project=slug[0]==='portfolio'&&slug.length===2?portfolioProjects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
-function Breadcrumb({items}:{items:{label:string,path:string}[]}){return <><nav className="breadcrumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a>{items.map((x,i)=><span key={x.path}> / {i===items.length-1?<span aria-current="page">{x.label}</span>:<a href={x.path}>{x.label}</a>}</span>)}</nav><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{label:'Home',path:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.label,item:config.origin+x.path}))})}}/></>}
+export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const pageInfo=(await getPublishedContent()).settings.pageInfo;const portfolioProjects=await getPortfolioProjects();const project=slug[0]==='portfolio'&&slug.length===2?portfolioProjects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
+function Breadcrumb({items}:{items:{label:string,path:string}[]}){return <><nav className="breadcrumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a>{items.map((x,i)=><span key={x.path}> / {i===items.length-1?<span aria-current="page">{x.label}</span>:<a href={x.path}>{x.label}</a>}</span>)}</nav><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{label:'Home',path:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.label,item:config.origin+x.path}))}).replace(/</g,'\\u003c')}}/></>}
 function PageHead({eyebrow,title,text}:{eyebrow:string,title:string,text:string}){return <section className="page-head wrap"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro">{text}</p></section>}
 
 export default async function Page({params}:Props){
   const{slug}=await params;
   const key=slug.join('/');
-  const portfolioProjects=slug[0]==='portfolio'?await getPortfolioProjects():projects;
+  const {settings}=await getPublishedContent();
+  const pageInfo=settings.pageInfo;
+  const services=settings.services;
+  const portfolioProjects=await getPortfolioProjects();
   const p=slug.length===2&&slug[0]==='portfolio'?portfolioProjects.find(x=>x.slug===slug[1]):undefined;
 
   if(p){
@@ -62,42 +67,42 @@ export default async function Page({params}:Props){
               {/* Section 1: Project Overview */}
               <article className="case-block">
                 <p className="eyebrow">01 / PROJECT OVERVIEW</p>
-                <h2>{p.code==='001'?'Confirmed project scope and model context.':'Visible model geometry and detailing considerations.'}</h2>
+                <h2>{p.scopeVerified?'Confirmed project scope and model context.':'Visible model geometry and detailing considerations.'}</h2>
                 <p>{p.overview}</p>
               </article>
 
               {/* Section 3: Challenge / Constraint */}
-              <article className="case-block">
+              {p.challenge&&(<article className="case-block">
                 <p className="eyebrow">02 / CHALLENGE & CONSTRAINTS</p>
                 <h3>Geometry, access and interfaces</h3>
                 <p>{p.challenge}</p>
-              </article>
+              </article>)}
 
               {/* Section 4: Detailing Approach */}
-              <article className="case-block">
+              {p.approach&&(<article className="case-block">
                 <p className="eyebrow">03 / DETAILING APPROACH</p>
                 <h3>Model coordination approach</h3>
                 <p>{p.approach}</p>
-                {p.code!=='001'&&(
+                {!p.scopeVerified&&(
                   <p className="editorial-note">
                     This is a model-based review of visible geometry and the detailing methodology it calls for. It does not assert an unverified project scope or client outcome.
                   </p>
                 )}
-              </article>
+              </article>)}
 
               {/* Section 5: Fabrication and Constructability Checks */}
-              <article className="case-block">
+              {p.checks&&(<article className="case-block">
                 <p className="eyebrow">04 / FABRICATION & CONSTRUCTABILITY CHECKS</p>
                 <h3>Practical checks guided by the model</h3>
                 <p>{p.checks}</p>
                 <ApprovedDrawingCrop/>
-              </article>
+              </article>)}
 
               {/* Section 6: Deliverables */}
               <article className="case-block">
                 <p className="eyebrow">05 / DELIVERABLES</p>
-                <h3>{p.code==='001'?'Agreed Project Issue Package':'Typical Detailing Outputs'}</h3>
-                {p.code==='001'?(
+                <h3>{p.deliverablesVerified?'Agreed Project Issue Package':'Typical Detailing Outputs'}</h3>
+                {p.scopeVerified?(
                   <ul className="case-deliverables-list">
                     {p.deliverables.map((item)=><li key={item}>{item}</li>)}
                   </ul>
@@ -107,13 +112,13 @@ export default async function Page({params}:Props){
               </article>
 
               {/* Section 7: Practical Takeaway */}
-              <article className="case-block takeaway-block">
+              {p.takeaway&&(<article className="case-block takeaway-block">
                 <p className="eyebrow">06 / PRACTICAL TAKEAWAY</p>
                 <h3>Fabrication-First Insight</h3>
                 <blockquote className="takeaway-quote">
                   <p>{p.takeaway}</p>
                 </blockquote>
-              </article>
+              </article>)}
             </div>
           </div>
         </section>
@@ -247,7 +252,7 @@ export default async function Page({params}:Props){
               <div className="prose">
                 <p className="eyebrow">FABRICATION-DRIVEN STRUCTURAL STEEL DETAILER</p>
                 <h2>The model is only part of the work.</h2>
-                <p>I am Julkar Naeem, based in Dhaka, Bangladesh. I bring around nine years across steel, construction, production, QA and operations, with more than four years specifically focused on structural-steel detailing.</p>
+                <p>{settings.aboutIntro}</p>
                 <p>My primary tools are Tekla Structures and AutoCAD. My experience covers PEB buildings, portal frames, industrial structures, multi-storey steel buildings, platforms, walkways, maintenance-access structures, stairs, handrails and grating.</p>
                 <p>I focus on model coordination, connection detailing and fabrication documentation. Clear member orientation, practical access and readable drawings are central to how I approach a detailing package.</p>
                 <a className="textlink" href="/credentials">View training & credentials ↗</a>
@@ -310,9 +315,9 @@ export default async function Page({params}:Props){
                   <li>When do you need the issue package?</li>
                 </ul>
                 <p className="contact-location">Dhaka, Bangladesh<br/>International project support</p>
-                <AlternativeContactLinks />
+                <AlternativeContactLinks contacts={contactConfig(settings)}/>
               </aside>
-              <EnquiryForm/>
+              <EnquiryForm serviceItems={services}/>
             </div>
           </section>
         </>

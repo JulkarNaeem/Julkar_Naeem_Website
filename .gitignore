@@ -44,3 +44,7 @@ next-env.d.ts
 /outputs/
 /work/
 *.tsbuildinfo
+
+# Private local control-panel data
+/.local-data/
+!.env.example

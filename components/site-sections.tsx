@@ -1,17 +1,20 @@
-import {projects,services,deliverables,formats,steps,homepagePhases,config} from '@/lib/content';
+import {deliverables,formats,steps,homepagePhases,config} from '@/lib/content';
+import {getPublishedContent} from '@/lib/managed-content';
+import {contactConfig} from '@/lib/cms-model';
 import {getPortfolioProjects} from '@/lib/portfolio-feed';
-import {ProjectCard,HeroVideoPlayer} from './site-interactive';
+import {ProjectCard,HeroVideoPlayer,ProjectImage} from './site-interactive';
 import {ArrowUpRight} from 'lucide-react';
 import {FaEnvelope,FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
 
 
 
-export function CTA(){
+export async function CTA(){
+  const {settings}=await getPublishedContent();
   return (
     <section className="cta wrap">
       <p className="eyebrow">LET’S REVIEW THE STEELWORK</p>
-      <h2>Need reliable detailing capacity for an upcoming steel project?</h2>
+      <h2>{settings.ctaTitle}</h2>
       <div className="actions">
         <a className="button" href="/contact">Request a Project Review <ArrowUpRight size={18} aria-hidden="true"/></a>
         <a className="textlink" href="/contact?intent=rfq">Send an RFQ ↗</a>
@@ -20,7 +23,8 @@ export function CTA(){
   );
 }
 
-export function Footer(){
+export async function Footer(){
+  const config=contactConfig((await getPublishedContent()).settings);
   return (
     <footer className="footer wrap">
       <div className="footer-main">
@@ -58,7 +62,8 @@ export function Footer(){
   );
 }
 
-export function ServiceSection(){
+export async function ServiceSection(){
+  const {services}=(await getPublishedContent()).settings;
   return (
     <section className="section light">
       <div className="wrap">
@@ -219,7 +224,8 @@ export function ProcessSection(){
   );
 }
 
-export function AboutIntro(){
+export async function AboutIntro(){
+  const {settings}=await getPublishedContent();
   return (
     <section className="section wrap about-intro">
       <div className="about-intro-media">
@@ -239,7 +245,7 @@ export function AboutIntro(){
         <p className="eyebrow">06 / THE DETAILER BEHIND THE MODEL</p>
         <h2>Julkar Naeem</h2>
         <p className="role">{config.title}</p>
-        <p className="intro">Based in Dhaka, Bangladesh, I bring around nine years across steel, construction, production, QA and operations, including more than four years focused on structural-steel detailing.</p>
+        <p className="intro">{settings.aboutIntro}</p>
         <p className="intro">That background informs a practical approach to model coordination and fabrication documentation using Tekla Structures and AutoCAD.</p>
         <div className="credential-strip">
           <span>AISC Detailer Training Series</span>
@@ -254,28 +260,30 @@ export function AboutIntro(){
   );
 }
 
-export function Hero(){
-  const p=projects[1]; // JN-PRJ-002 Multi-storey Steel Frame
+export async function Hero(){
+  const {settings}=await getPublishedContent();
+  const portfolioProjects=await getPortfolioProjects();
+  const p=portfolioProjects.find(p=>p.code==="002")||portfolioProjects[0];
   const videoUrl='https://res.cloudinary.com/julkarnaeem/video/upload/v1789141556/JN-PRJ-002-Multi-storey-Steel-Frame.mp4';
   return (
     <>
       <section className="hero wrap">
         <div>
           <p className="eyebrow">Structural Steel Detailer · Tekla Structures</p>
-          <h1>Fabrication-ready steel detailing for teams that need <em>clear, coordinated deliverables.</em></h1>
-          <p className="intro">I support steel fabricators, engineering teams and contractors with coordinated Tekla models, shop drawings, erection drawings, connection detailing and material reports.</p>
+          <h1>{settings.heroLead} <em>{settings.heroAccent}</em></h1>
+          <p className="intro">{settings.heroIntro}</p>
           <div className="actions">
             <a className="button" href="/contact">Request a Project Review <ArrowUpRight size={18} aria-hidden="true"/></a>
             <a className="textlink" href="/portfolio">View Project Experience ↗</a>
           </div>
           <p className="small hero-note">BASED IN DHAKA · INTERNATIONAL PROJECT SUPPORT</p>
         </div>
-        <HeroVideoPlayer
+        {p?.code==='002'?<HeroVideoPlayer
           src={videoUrl}
           poster={p.cover}
-          title="Multi-storey Steel Frame"
+          title={p.title}
           slug={p.slug}
-        />
+        />:p?<a href={'/portfolio/'+p.slug} className="case-cover"><ProjectImage url={p.cover} alt={p.title+' structural model'} eager fetchPriority="high" sizes="(max-width: 900px) 92vw, 48vw"/></a>:null}
       </section>
 
       <div className="trust wrap">

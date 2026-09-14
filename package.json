@@ -12,7 +12,11 @@
     "start": "next start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:vercel": "node scripts/migrate-vercel.mjs"
+    "db:migrate:vercel": "node scripts/migrate-vercel.mjs",
+    "typecheck": "tsc --noEmit",
+    "admin:setup": "node scripts/setup-admin.mjs",
+    "db:migrate:admin": "node scripts/migrate-admin.mjs",
+    "test:admin": "node --test --test-isolation=none scripts/admin-security.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

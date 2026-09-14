@@ -254,7 +254,8 @@ export function Share({url}:{url:string}){
   );
 }
 
-export function AlternativeContactLinks(){
+export function AlternativeContactLinks({contacts=config}:{contacts?:typeof config}){
+  const config=contacts;
   const hasEmail = config.professionalEmails.length>0;
   const hasWhatsapp = Boolean(config.whatsapp && config.whatsappNumber);
   const hasSocials = config.socials && config.socials.length > 0;
@@ -300,7 +301,8 @@ export function AlternativeContactLinks(){
   );
 }
 
-export function EnquiryForm(){
+export function EnquiryForm({serviceItems=services}:{serviceItems?:typeof services}){
+  const services=serviceItems;
   const[status,setStatus]=useState('');
   const[pending,setPending]=useState(false);
   const[done,setDone]=useState(false);

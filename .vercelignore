@@ -1,0 +1,11 @@
+.local-data
+.env*
+.agents
+.codex
+.sites-runtime
+.wrangler
+node_modules
+.next
+dist
+outputs
+work

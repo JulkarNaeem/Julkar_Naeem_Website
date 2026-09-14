@@ -1,5 +1,6 @@
 import {database} from '@/lib/database';
-import {services,deliverables,formats} from '@/lib/content';
+import {deliverables,formats} from '@/lib/content';
+import {getPublishedContent} from '@/lib/managed-content';
 interface EnquiryPayload {
   website?: unknown;
   name?: unknown;
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
     return reply({ error: 'Please keep the file-sharing link under 1000 characters.' }, 400);
   }
 
+  const {services}=(await getPublishedContent()).settings;
   const allowedCollections: [string, string[]][] = [
     ['services', services.map((x) => x.title)],
     ['deliverables', deliverables],
