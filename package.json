@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit",
     "admin:setup": "node scripts/setup-admin.mjs",
     "db:migrate:admin": "node scripts/migrate-admin.mjs",
-    "test:admin": "node --test --test-isolation=none scripts/admin-security.test.mjs"
+    "test:admin": "node --test --test-isolation=none scripts/admin-security.test.mjs scripts/admin-oauth.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -33,6 +33,7 @@
     "lucide-react": "^1.31.0",
     "next": "16.2.6",
     "next-themes": "^0.4.6",
+    "oauth4webapi": "3.8.8",
     "radix-ui": "^1.6.7",
     "react": "19.2.6",
     "react-day-picker": "^10.0.1",

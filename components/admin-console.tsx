@@ -21,15 +21,6 @@ function LineField({label,value,onChange,hint}:{label:string;value:string;onChan
  const [buffer,setBuffer]=useState(value);
  return <Field label={label} value={buffer} multiline hint={hint} onChange={v=>{setBuffer(v);onChange(v)}}/>;
 }
-export function AdminLogin({configured}:{configured:boolean}){
- const [password,setPassword]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState(false);
- const router=useRouter();
- async function login(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");
-  try{const r=await fetch("/api/admin/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password})});const d=await r.json() as CMSState & {error:string;enquiries:Enquiry[]};if(!r.ok)throw new Error(d.error);setPassword("");router.refresh()}
-  catch(e){setError(e instanceof Error?e.message:"Unable to sign in.")}finally{setBusy(false)}
- }
- return <main className="cp-login cp"><div className="cp-login-brand"><img src="/jn-logo-mark.png" width={86} height={63} alt="Julkar Naeem"/><span>JULKAR NAEEM<small>WEBSITE CONTROL PANEL</small></span></div><section className="cp-login-card"><ShieldCheck size={28}/><p className="cp-eyebrow">PRIVATE WORKSPACE</p><h1>Your website.<br/><em>Under control.</em></h1><p>Manage project stories, approved model views and the information your clients see.</p>{configured?<form onSubmit={login}><label className="cp-field"><span>Administrator password</span><input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)} aria-describedby={error?"signin-error":undefined}/></label>{error&&<p id="signin-error" className="cp-error" role="alert">{error}</p>}<button className="cp-button" disabled={busy}>{busy?"Signing in…":"Sign in to control panel"}<ArrowUpRight size={18}/></button></form>:<div className="cp-notice"><strong>Administrator setup required</strong><p>The panel is locked until secure credentials and the website database are configured. Contact the website administrator to complete setup.</p></div>}<a className="cp-subtle-link" href="https://julkarnaeem.com/">Visit public website <ArrowUpRight size={15}/></a></section><p className="cp-login-foot">Portfolio approval stays in your hands.</p></main>
-}
 export function AdminConsole({local}:{local:boolean}){
  const [state,setState]=useState<CMSState|null>(null),[draft,setDraft]=useState<CMSDocument|null>(null);
  const [section,setSection]=useState("overview"),[selected,setSelected]=useState("001"),[query,setQuery]=useState(""),[filter,setFilter]=useState("all");

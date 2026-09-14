@@ -58,6 +58,23 @@ export async function writeCMS(doc:CMSDocument,revision:number,publish:boolean):
   writing=job.catch(()=>{});
   await job;return result;
 }
+export async function consumeOAuthState(key:string,expiresAt:number):Promise<boolean>{
+  if(!/^[a-f0-9]{64}$/.test(key)||!Number.isFinite(expiresAt)||expiresAt<=Date.now())return false;
+  if(process.env.DATABASE_URL){
+    const sql=neon(process.env.DATABASE_URL);
+    await sql.query("DELETE FROM website_admin_oauth_states WHERE expires_at < $1",[Date.now()]);
+    const rows=await sql.query("INSERT INTO website_admin_oauth_states(key,expires_at) VALUES($1,$2) ON CONFLICT(key) DO NOTHING RETURNING key",[key,expiresAt]);
+    return rows.length===1;
+  }
+  if(!localStoreEnabled())return false;
+  const folder=path.join(process.cwd(),".local-data","oauth-states");
+  await fs.mkdir(folder,{recursive:true});
+  try{
+    // Exclusive creation also rejects parallel callbacks in local verification.
+    await fs.writeFile(path.join(folder,key),String(expiresAt),{flag:"wx",mode:0o600});
+    return true;
+  }catch(error){if((error as NodeJS.ErrnoException).code==="EEXIST")return false;throw error}
+}
 export async function loginAttempt(key:string):Promise<boolean>{
   const bucket=Math.floor(Date.now()/900000);
   if(process.env.DATABASE_URL){
@@ -73,4 +90,3 @@ export async function loginAttempt(key:string):Promise<boolean>{
   await fs.writeFile(attemptsFile,JSON.stringify(data),{mode:0o600});
   return data[key].count<=10;
 }
-

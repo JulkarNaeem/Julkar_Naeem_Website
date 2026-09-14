@@ -4,5 +4,5 @@ const sql=neon(process.env.DATABASE_URL);
 await sql.query("CREATE TABLE IF NOT EXISTS website_cms(id integer PRIMARY KEY CHECK(id=1),revision integer NOT NULL DEFAULT 0,draft text NOT NULL,published text NOT NULL,updated_at text NOT NULL,published_at text)");
 await sql.query("CREATE TABLE IF NOT EXISTS website_cms_history(id text PRIMARY KEY,revision integer NOT NULL,payload text NOT NULL,created_at text NOT NULL)");
 await sql.query("CREATE TABLE IF NOT EXISTS website_admin_attempts(key text PRIMARY KEY,bucket bigint NOT NULL,attempts integer NOT NULL)");
+await sql.query("CREATE TABLE IF NOT EXISTS website_admin_oauth_states(key text PRIMARY KEY,expires_at bigint NOT NULL)");
 console.log("Website control-panel tables are ready. Existing enquiries were not modified.");
-

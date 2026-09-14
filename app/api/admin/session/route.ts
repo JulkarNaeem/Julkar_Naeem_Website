@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { cookieName,passwordMatches,signSession } from "@/lib/admin-security.mjs";
 import { authConfigured,sameOrigin,privateHeaders } from "@/lib/admin-auth";
 import { loginAttempt,storageReady } from "@/lib/cms-store";
+import { sessionSigningHash } from "@/lib/admin-oauth.mjs";
 export const runtime="nodejs";
 export async function POST(request:Request){
   if(!sameOrigin(request))return NextResponse.json({error:"Use this website to sign in."},{status:403,headers:privateHeaders});
@@ -16,7 +17,7 @@ export async function POST(request:Request){
     if(!await loginAttempt(key))return NextResponse.json({error:"Too many attempts. Try again in 15 minutes."},{status:429,headers:privateHeaders});
     if(!passwordMatches(password,process.env.ADMIN_PASSWORD_HASH))return NextResponse.json({error:"The password is incorrect."},{status:401,headers:privateHeaders});
     const response=NextResponse.json({ok:true},{headers:privateHeaders});
-    response.cookies.set(cookieName,signSession(process.env.ADMIN_SESSION_SECRET,process.env.ADMIN_PASSWORD_HASH),{httpOnly:true,secure:new URL(request.url).protocol==="https:",sameSite:"strict",path:"/",maxAge:8*60*60});
+    response.cookies.set(cookieName,signSession(process.env.ADMIN_SESSION_SECRET,sessionSigningHash()),{httpOnly:true,secure:new URL(request.url).protocol==="https:",sameSite:"strict",path:"/",maxAge:8*60*60});
     return response;
   }catch{return NextResponse.json({error:"Sign-in is temporarily unavailable."},{status:503,headers:privateHeaders})}
 }
@@ -26,4 +27,3 @@ export async function DELETE(request:Request){
   response.cookies.set(cookieName,"",{path:"/",maxAge:0,httpOnly:true,secure:new URL(request.url).protocol==="https:",sameSite:"strict"});
   return response;
 }
-
