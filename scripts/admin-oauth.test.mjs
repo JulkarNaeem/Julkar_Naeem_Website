@@ -109,6 +109,15 @@ test("GitHub exchanges the code server-side and authenticates the immutable acco
   await assert.rejects(finishOAuth(github, tx, callback, async () => { throw new Error("offline"); }), error => error instanceof AdminOAuthError && error.stage === "token-request");
 });
 
+test("GitHub accepts its documented code and state even when an incidental issuer is serialized differently", async () => {
+  const { tx, callback } = await transaction(github);
+  callback.searchParams.set("iss", "https://github.com/");
+  const transport = async url => String(url).includes("access_token")
+    ? json({ access_token: "test-token", token_type: "bearer", scope: "" })
+    : json({ id: 123456, login: "owner" });
+  assert.equal(await finishOAuth(github, tx, callback, transport), true);
+});
+
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const jwk = { ...publicKey.export({ format: "jwk" }), kid: "oauth-isolated-test-key", alg: "RS256", use: "sig" };
 function idToken(claims) {
