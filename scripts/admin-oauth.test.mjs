@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
-import { allowedIdentity, beginOAuth, finishOAuth, oauthAvailability, oauthCookieName, oauthRequestOrigin, providerConfig, readOAuthTransaction, sessionSigningHash } from "../lib/admin-oauth.mjs";
+import { AdminOAuthError, allowedIdentity, beginOAuth, finishOAuth, oauthAvailability, oauthCookieName, oauthRequestOrigin, providerConfig, readOAuthTransaction, sessionSigningHash } from "../lib/admin-oauth.mjs";
 import { signSession, verifySession } from "../lib/admin-security.mjs";
 
 const secret = "isolated-test-secret-at-least-32-characters";
@@ -106,7 +106,7 @@ test("GitHub exchanges the code server-side and authenticates the immutable acco
   assert.equal(calls, 2);
   assert.equal(await finishOAuth(github, tx, callback, async url => String(url).includes("access_token")
     ? json({ access_token: "test-token", token_type: "bearer" }) : json({ id: 999 })), false);
-  await assert.rejects(finishOAuth(github, tx, callback, async () => { throw new Error("offline"); }));
+  await assert.rejects(finishOAuth(github, tx, callback, async () => { throw new Error("offline"); }), error => error instanceof AdminOAuthError && error.stage === "token-request");
 });
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });

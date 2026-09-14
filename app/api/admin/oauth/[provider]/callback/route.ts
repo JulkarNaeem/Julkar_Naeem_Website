@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { authConfigured, privateHeaders } from "@/lib/admin-auth";
 import { cookieName, signSession } from "@/lib/admin-security.mjs";
-import { finishOAuth, oauthCookieName, oauthRequestOrigin, providerConfig, readOAuthTransaction, sessionSigningHash } from "@/lib/admin-oauth.mjs";
+import { AdminOAuthError, finishOAuth, oauthCookieName, oauthRequestOrigin, providerConfig, readOAuthTransaction, sessionSigningHash } from "@/lib/admin-oauth.mjs";
 import { consumeOAuthState, storageReady } from "@/lib/cms-store";
 
 export const runtime = "nodejs";
@@ -34,8 +34,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
       httpOnly: true, secure: origin.startsWith("https:"), sameSite: "lax", path: "/", maxAge: 8 * 60 * 60,
     });
     return response;
-  } catch {
-    // Never log authorization codes, provider tokens, identity data or raw provider errors.
+  } catch (error) {
+    // Record only the provider, failed protocol stage and library error code. Never log
+    // authorization codes, provider tokens, identity data, secrets or raw provider bodies.
+    console.error("admin_oauth_callback_failed", {
+      provider,
+      stage: error instanceof AdminOAuthError ? error.stage : "callback",
+      code: error instanceof AdminOAuthError ? error.code || "unspecified" : "unspecified",
+    });
     return redirect("unavailable");
   }
 }
