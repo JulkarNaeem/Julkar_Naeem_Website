@@ -1,20 +1,24 @@
 import { z } from "zod";
 import { config, projects, services, pageInfo, type PortfolioProject } from "./content";
 
+export const isVideoUrl = (value: string) => {
+  if (!value || typeof value !== "string") return false;
+  return /\.(mp4|webm|mov|ogg|m4v|mkv)(\?.*)?$/i.test(value) || /\/video\/upload\//i.test(value);
+};
+
 export const approvedMediaUrl = (value: string) => {
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return true;
   try {
-    const u = new URL(value);
-    const path = decodeURIComponent(u.pathname);
-    return u.protocol === "https:" && u.hostname === "res.cloudinary.com" && !u.username && !u.password
-      && path.startsWith("/julkarnaeem/image/upload/") && !u.search && !u.hash
-      && /3D-SCREENSHOT|3D-DRAWING/i.test(path)
-      && !/ERECTION|CONNECTION|SHOP-DRAWING|2D-PLAN/i.test(path);
+    const u = new URL(trimmed);
+    return (u.protocol === "https:" || u.protocol === "http:") && !u.username && !u.password;
   } catch { return false; }
 };
 const text = z.string().trim().max(8000);
 const short = z.string().trim().max(200);
 const pair = z.tuple([short.min(1), short.min(1)]);
-const image = z.object({name:short.min(1),url:z.string().max(1500).refine(approvedMediaUrl,"Use an approved 3D Cloudinary image URL.")});
+const image = z.object({name:short.min(1),url:z.string().max(2000).refine(approvedMediaUrl,"Use a valid image or video URL.")});
 export const cmsProjectSchema = z.object({
   code:z.string().regex(/^\d{3,6}$/,"Use a numeric project code, e.g. 006."),
   slug:z.string().max(120).regex(/^(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/),
@@ -22,7 +26,7 @@ export const cmsProjectSchema = z.object({
   summary:text,overview:text,challenge:text,approach:text,checks:text,takeaway:text,
   glance:z.array(pair).max(20),facts:z.array(pair).max(20),
   deliverables:z.array(short.min(1)).max(30),
-  hero:short,images:z.array(image).max(40),cover:z.string().max(1500),
+  hero:short,images:z.array(image).max(40),cover:z.string().max(2000),
   approved:z.boolean(),visibility:z.enum(["draft","published","archived"]),
   scopeVerified:z.boolean(),deliverablesVerified:z.boolean()
 }).superRefine((p,ctx)=>{
@@ -30,7 +34,7 @@ export const cmsProjectSchema = z.object({
     ctx.addIssue({code:"custom",message:"Published projects need a title, URL, type, category, summary and overview."});
   }
   if(p.visibility==="published" && (!p.approved||!p.images.length||!approvedMediaUrl(p.cover)||!p.images.some(x=>x.url===p.cover))){
-    ctx.addIssue({code:"custom",path:["approved"],message:"Publishing requires approval and a cover selected from the approved 3D gallery."});
+    ctx.addIssue({code:"custom",path:["approved"],message:"Publishing requires approval and a cover selected from the gallery."});
   }
 });
 const social=(domain:string)=>z.string().max(1000).refine(v=>!v||(()=>{try{const u=new URL(v);return u.protocol==="https:"&&(u.hostname===domain||u.hostname==="www."+domain)&&!u.username&&!u.password}catch{return false}})(),"Use the correct HTTPS profile URL.");

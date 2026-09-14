@@ -15,6 +15,7 @@
     "db:migrate:vercel": "node scripts/migrate-vercel.mjs",
     "typecheck": "tsc --noEmit",
     "admin:setup": "node scripts/setup-admin.mjs",
+    "admin:password": "node scripts/change-password.mjs",
     "db:migrate:admin": "node scripts/migrate-admin.mjs",
     "test:admin": "node --test --test-isolation=none scripts/admin-security.test.mjs scripts/admin-oauth.test.mjs"
   },

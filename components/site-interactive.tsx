@@ -3,6 +3,7 @@ import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {projects,cloud,services,deliverables,formats,config,type PortfolioProject} from '@/lib/content';
+import {isVideoUrl} from '@/lib/cms-model';
 import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause,ArrowUp} from 'lucide-react';
 import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
@@ -93,10 +94,25 @@ export function ProjectImage({
   height?:number;
   className?:string;
 }){
+  if (isVideoUrl(url)) {
+    return (
+      <video
+        src={url}
+        muted
+        playsInline
+        loop
+        autoPlay
+        width={width}
+        height={height}
+        className={className}
+        aria-label={alt}
+      />
+    );
+  }
   return (
     <img 
       src={cloud(url)} 
-      srcSet={[480,800,1080,1400].map(w=>`${cloud(url,w)} ${w}w`).join(', ')} 
+      srcSet={url && url.includes('f_auto,q_auto') ? [480,800,1080,1400].map(w=>`${cloud(url,w)} ${w}w`).join(', ') : undefined} 
       sizes={sizes} 
       alt={alt} 
       loading={eager?'eager':'lazy'} 
@@ -200,13 +216,20 @@ export function Gallery({project:p}:{project:PortfolioProject}){
         {p.images.map((m,i)=>(
           <button 
             className="gallery-thumb" 
-            key={m.name} 
+            key={m.name || m.url || i} 
             onClick={()=>setActive(i)} 
-            aria-label={`Open ${p.title} image ${i+1}`}
+            aria-label={`Open ${p.title} media ${i+1}`}
           >
-            <ProjectImage url={m.url} alt={`${p.title}: ${m.name.includes('3D-DRAWING')?'isometric 3D drawing':'Tekla model view'} ${i+1}`}/>
+            {isVideoUrl(m.url) ? (
+              <div style={{position:'relative',width:'100%',height:'100%',minHeight:'180px',display:'flex',alignItems:'center',justifyContent:'center',background:'#101c26'}}>
+                <video src={m.url} muted playsInline preload="metadata" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
+                <div style={{position:'absolute',background:'rgba(0,0,0,0.65)',borderRadius:'50%',padding:'10px',color:'#e6b84b',display:'flex'}}><Play size={20} fill="currentColor" aria-hidden="true"/></div>
+              </div>
+            ) : (
+              <ProjectImage url={m.url} alt={`${p.title}: view ${i+1}`}/>
+            )}
             <span>
-              <span>VIEW {String(i+1).padStart(2,'0')} · {m.name.includes('3D-DRAWING')?'3D DRAWING':'TEKLA MODEL'}</span>
+              <span>VIEW {String(i+1).padStart(2,'0')} · {isVideoUrl(m.url)?'VIDEO':(m.name.includes('3D-DRAWING')?'3D DRAWING':'PROJECT VIEW')}</span>
               <Expand size={17} aria-hidden="true"/>
             </span>
           </button>
@@ -222,7 +245,19 @@ export function Gallery({project:p}:{project:PortfolioProject}){
         >
           <DialogTitle>{p.title}</DialogTitle>
           <DialogDescription>Use the arrow keys to change views. Escape closes the gallery.</DialogDescription>
-          {active!==null&&<img src={cloud(p.images[active].url,2000)} alt={`${p.title}, enlarged model view ${active+1}`}/>}
+          {active!==null&&(
+            isVideoUrl(p.images[active].url) ? (
+              <video 
+                src={p.images[active].url} 
+                controls 
+                autoPlay 
+                playsInline 
+                style={{maxWidth:'100%', maxHeight:'75vh', margin:'0 auto', display:'block'}} 
+              />
+            ) : (
+              <img src={cloud(p.images[active].url,2000)} alt={`${p.title}, enlarged view ${active+1}`}/>
+            )
+          )}
           <div className="lightbox-controls">
             <button aria-label="Previous image" onClick={()=>move(-1)}><ArrowLeft aria-hidden="true"/></button>
             <span aria-live="polite">{(active??0)+1} / {p.images.length}</span>

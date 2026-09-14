@@ -17,6 +17,12 @@ The hostname rewrite is in `proxy.ts`. The administration pages are excluded fro
 
 Local changes persist in `.local-data/website-cms.json`. Previous saves are retained beside it. They affect only this local website. No example enquiries are created.
 
+### Changing the admin password
+
+- **From Control Panel:** Navigate to **Publishing & access** (Settings) in `/admin` and use the **Change admin password** panel. Enter the current password, then specify and confirm the new password (minimum 8 characters). When running locally, `.env.local` and `.local-data/admin-access.txt` are updated automatically.
+- **From Command Line:** Run `npm run admin:password <newPassword>` to update `.env.local` and `.local-data/admin-access.txt` directly. If no password is provided, a secure 24-character password will be generated.
+
+
 ## Production activation
 
 1. Connect a Neon PostgreSQL database to the existing `julkar_naeem_website` Vercel project. Set its connection string as `DATABASE_URL`. Use the existing enquiries database if one is available; do not replace a populated database.
@@ -33,7 +39,7 @@ The panel remains locked when credentials or durable storage are absent. The pub
 - Add and edit portfolio projects, their facts, narrative sections and Cloudinary gallery. New incomplete projects can be saved privately as drafts.
 - Only approved projects marked Published appear publicly. Publishing replaces the public snapshot atomically. Archive a project to remove it from the portfolio while retaining its private record.
 - Existing published URLs stay fixed. The sitemap and category filters use the current public project list.
-- Approved portfolio images must be `3D-SCREENSHOT` or `3D-DRAWING` URLs in the Julkar Naeem Cloudinary account. Restricted shop, connection, erection and 2D-plan drawing filenames are rejected.
+- Portfolio media gallery accepts any image (JPG, PNG, WebP, SVG, etc.) and video (MP4, WebM, MOV, etc.). You can paste delivery URLs (Cloudinary, web links) or click "Upload image or video" to upload files directly.
 - Mark scope and deliverables verified only when supported by records. Unverified deliverables retain the public qualification.
 - Edit homepage copy, service descriptions, verified contact links and existing page SEO copy. Routes, service illustrations and credentials remain controlled by the repository.
 - Read the latest 100 genuine enquiries. The panel does not send email or replies and does not change the form's delivery mechanism.
