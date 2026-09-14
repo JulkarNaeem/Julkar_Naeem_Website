@@ -220,16 +220,20 @@ export function Gallery({project:p}:{project:PortfolioProject}){
             onClick={()=>setActive(i)} 
             aria-label={`Open ${p.title} media ${i+1}`}
           >
-            {isVideoUrl(m.url) ? (
-              <div style={{position:'relative',width:'100%',height:'100%',minHeight:'180px',display:'flex',alignItems:'center',justifyContent:'center',background:'#101c26'}}>
-                <video src={m.url} muted playsInline preload="metadata" style={{width:'100%',height:'100%',objectFit:'contain'}}/>
-                <div style={{position:'absolute',background:'rgba(0,0,0,0.65)',borderRadius:'50%',padding:'10px',color:'#e6b84b',display:'flex'}}><Play size={20} fill="currentColor" aria-hidden="true"/></div>
-              </div>
-            ) : (
-              <ProjectImage url={m.url} alt={`${p.title}: view ${i+1}`}/>
-            )}
+            <div className="gallery-media-box">
+              {isVideoUrl(m.url) ? (
+                <>
+                  <video src={m.url} muted playsInline preload="metadata" />
+                  <div className="gallery-play-icon" aria-hidden="true">
+                    <Play size={20} fill="currentColor" />
+                  </div>
+                </>
+              ) : (
+                <ProjectImage url={m.url} alt={`${p.title}: view ${i+1}`}/>
+              )}
+            </div>
             <span>
-              <span>VIEW {String(i+1).padStart(2,'0')} · {isVideoUrl(m.url)?'VIDEO':(m.name.includes('3D-DRAWING')?'3D DRAWING':'PROJECT VIEW')}</span>
+              <span>VIEW {String(i+1).padStart(2,'0')} · {isVideoUrl(m.url)?'VIDEO':(m.name?.includes('3D-DRAWING')?'3D DRAWING':'PROJECT VIEW')}</span>
               <Expand size={17} aria-hidden="true"/>
             </span>
           </button>
