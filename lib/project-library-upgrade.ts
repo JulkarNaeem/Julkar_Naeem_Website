@@ -42,7 +42,6 @@ export function upgradeProjectLibrary(document: CMSDocument): CMSDocument {
   const settings = {
     ...document.settings,
     ...(previousHero ? {heroLead:initialDocument.settings.heroLead,heroAccent:initialDocument.settings.heroAccent} : {}),
-    ...(missingNewProject && document.settings.featuredProjectCode === "002" ? {featuredProjectCode:"006"} : {}),
     ...(document.settings.pageInfo.portfolio.description === previousPortfolioDescription ? {
       pageInfo:{...document.settings.pageInfo,portfolio:initialDocument.settings.pageInfo.portfolio}
     } : {})

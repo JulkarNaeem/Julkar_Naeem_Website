@@ -23,7 +23,6 @@ function oldDocument() {
     ...project,
     ...structuredClone(previous.find(old => old.code === project.code))
   })).filter(project => project.code !== '006');
-  document.settings.featuredProjectCode = '002';
   document.settings.pageInfo.portfolio.description = 'Explore five structural-steel modelling case studies: PEB framing, multi-storey structures, industrial steel and maintenance walkways.';
   return document;
 }
