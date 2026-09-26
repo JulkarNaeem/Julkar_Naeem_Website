@@ -1,0 +1,314 @@
+[
+  {
+    "code": "001",
+    "title": "Poolside Restaurant Shed",
+    "type": "Commercial",
+    "category": "PEB & portal frames",
+    "summary": "A single-storey PEB restaurant shed beside a resort swimming pool in Bangladesh. Main structural steelwork was modelled in Tekla Structures 2025, with fabrication and erection documentation.",
+    "overview": "A single-storey PEB commercial shed beside a resort swimming pool in Bangladesh. The confirmed detailing scope covered the main structural steelwork, modelled in Tekla Structures 2025.",
+    "glance": [
+      [
+        "Building type",
+        "PEB commercial building"
+      ],
+      [
+        "Location",
+        "Bangladesh"
+      ],
+      [
+        "Area",
+        "Approximately 385 m²"
+      ],
+      [
+        "Steel quantity",
+        "Approximately 17 tonnes"
+      ],
+      [
+        "Software",
+        "Tekla Structures 2025"
+      ],
+      [
+        "Detailer role",
+        "Structural-steel detailing"
+      ],
+      [
+        "Scope",
+        "Main structural steelwork"
+      ]
+    ],
+    "challenge": "The detailing review focused on fabrication access, bolt-tightening access, member orientation and clear erection information around the main structural steelwork.",
+    "approach": "The main frame geometry was coordinated in Tekla Structures, with practical attention to member orientation, access and how the model information would be communicated in the drawings.",
+    "checks": "The review considered fabrication access, welding access, bolt installation and tightening access, tool clearance, member orientation, clashes and erection-drawing clarity.",
+    "takeaway": "A coordinated model needs equally clear fabrication and erection information. Reviewing member orientation, tool clearance and access early helps reduce avoidable fabrication or erection questions.",
+    "facts": [
+      [
+        "Building type",
+        "PEB commercial building"
+      ],
+      [
+        "Location",
+        "Bangladesh"
+      ],
+      [
+        "Area",
+        "Approximately 385 m²"
+      ],
+      [
+        "Steel quantity",
+        "Approximately 17 tonnes"
+      ],
+      [
+        "Software",
+        "Tekla Structures 2025"
+      ]
+    ],
+    "images": [
+      {
+        "name": "JN-PRJ-001-3D-DRAWING-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788703247/JN-PRJ-001-3D-DRAWING-01"
+      },
+      {
+        "name": "JN-PRJ-001-3D-SCREENSHOT-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788703348/JN-PRJ-001-3D-SCREENSHOT-01"
+      },
+      {
+        "name": "JN-PRJ-001-3D-SCREENSHOT-02",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788703349/JN-PRJ-001-3D-SCREENSHOT-02"
+      },
+      {
+        "name": "JN-PRJ-001-3D-SCREENSHOT-03",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788703348/JN-PRJ-001-3D-SCREENSHOT-03"
+      }
+    ],
+    "cover": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788703349/JN-PRJ-001-3D-SCREENSHOT-02",
+    "scopeVerified": true
+  },
+  {
+    "code": "002",
+    "title": "Multi-storey Steel Frame",
+    "type": "Multi-storey",
+    "category": "Beam & column frames",
+    "summary": "A multi-level beam-and-column model with repeated floor framing and a pitched roof. The open model views make the relationship between primary members and secondary framing easy to examine.",
+    "overview": "The public model views show a multi-level beam-and-column steel frame with repeated floor framing and a pitched roof. They allow the relationship between the vertical frame, floor members and roof geometry to be reviewed together.",
+    "glance": [
+      [
+        "Visible structure",
+        "Multi-level beam-and-column frame"
+      ],
+      [
+        "Roof form",
+        "Pitched steel roof framing"
+      ],
+      [
+        "Framing system",
+        "Repeated floor beam bays"
+      ],
+      [
+        "Model environment",
+        "Tekla Structures"
+      ]
+    ],
+    "challenge": "Repeated floor bays and the transition to sloping roof framing create visible coordination points across levels, member lines and changes in geometry.",
+    "approach": "A practical detailing approach would review representative bays and compare repeated conditions while keeping levels, member orientation and roof transitions clear in the model.",
+    "checks": "The visible geometry calls for attention to floor-to-floor alignment, repeated framing interfaces, member orientation, roof transitions, access and drawing clarity.",
+    "takeaway": "A bay-by-bay model review supports consistent member references and clear level information before drawings are prepared. The exact project deliverables are not publicly confirmed.",
+    "facts": [
+      [
+        "Visible structure",
+        "Multi-level beam-and-column frame"
+      ],
+      [
+        "Roof form",
+        "Pitched steel roof framing"
+      ]
+    ],
+    "images": [
+      {
+        "name": "JN-PRJ-002-3D-DRAWING-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971910/JN-PRJ-002-3D-DRAWING-01"
+      },
+      {
+        "name": "JN-PRJ-002-3D-SCREENSHOT-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971910/JN-PRJ-002-3D-SCREENSHOT-01"
+      }
+    ],
+    "cover": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971910/JN-PRJ-002-3D-SCREENSHOT-01",
+    "scopeVerified": false
+  },
+  {
+    "code": "003",
+    "title": "Braced Multi-storey Steel Building",
+    "type": "Multi-storey",
+    "category": "Braced frames",
+    "summary": "A multi-storey steel model with repeated floor framing, diagonal bracing and internal stairs. The overall view brings the vertical circulation and bracing interfaces into the same coordination picture.",
+    "overview": "The public model views show a multi-storey steel frame with repeated floor framing, diagonal bracing and internal stairs. These visible elements create several interfaces that need to remain clear in the coordinated model.",
+    "glance": [
+      [
+        "Visible structure",
+        "Braced multi-storey frame"
+      ],
+      [
+        "Visible elements",
+        "Floor beams, diagonal bracing and stairs"
+      ],
+      [
+        "Model environment",
+        "Tekla Structures"
+      ]
+    ],
+    "challenge": "The visible intersections between floor framing, diagonal bracing, columns and internal stairs create areas where geometry and access need careful coordination.",
+    "approach": "Overall model views can establish alignment, while closer model review can help identify crowded interfaces, member orientation issues and information that may need clarification.",
+    "checks": "The visible model suggests checking brace and floor-frame interfaces, stair clearances, member orientation, clashes, access and consistency of dimensions and levels.",
+    "takeaway": "Local 3D review of crowded interfaces helps identify coordination questions before fabrication information is prepared. The exact project deliverables are not publicly confirmed.",
+    "facts": [
+      [
+        "Visible structure",
+        "Braced multi-storey frame"
+      ],
+      [
+        "Visible elements",
+        "Floor beams, diagonal bracing and stairs"
+      ]
+    ],
+    "images": [
+      {
+        "name": "JN-PRJ-003-3D-DRAWING-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971918/JN-PRJ-003-3D-DRAWING-01"
+      },
+      {
+        "name": "JN-PRJ-003-3D-SCREENSHOT-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971925/JN-PRJ-003-3D-SCREENSHOT-01"
+      },
+      {
+        "name": "JN-PRJ-003-3D-SCREENSHOT-02",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971924/JN-PRJ-003-3D-SCREENSHOT-02"
+      },
+      {
+        "name": "JN-PRJ-003-3D-SCREENSHOT-03",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971919/JN-PRJ-003-3D-SCREENSHOT-03"
+      },
+      {
+        "name": "JN-PRJ-003-3D-SCREENSHOT-04",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971917/JN-PRJ-003-3D-SCREENSHOT-04"
+      }
+    ],
+    "cover": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971925/JN-PRJ-003-3D-SCREENSHOT-01",
+    "scopeVerified": false
+  },
+  {
+    "code": "004",
+    "title": "Industrial Portal-frame Building",
+    "type": "Industrial",
+    "category": "PEB & portal frames",
+    "summary": "A rectangular industrial building model with a pitched roof and smaller entrance canopies. Model views allow the primary steel arrangement and secondary roof and wall members to be explored together.",
+    "overview": "The public model views show a rectangular industrial steel building with a pitched roof, secondary roof and wall members, and smaller entrance canopies around the perimeter.",
+    "glance": [
+      [
+        "Visible structure",
+        "Pitched-roof industrial building"
+      ],
+      [
+        "Visible interfaces",
+        "Main building and entrance canopies"
+      ],
+      [
+        "Secondary systems",
+        "Roof purlins and wall girts"
+      ],
+      [
+        "Model environment",
+        "Tekla Structures"
+      ]
+    ],
+    "challenge": "The visible primary frame, secondary members and entrance canopies create repeating bays together with local perimeter conditions that need coordinated geometry.",
+    "approach": "A practical model review can establish the main frame geometry first, then examine secondary framing, canopy interfaces and perimeter member orientation against the supplied project information.",
+    "checks": "The visible geometry suggests checking main-frame and secondary-member interfaces, canopy access, member orientation, alignment, clashes and dimensional clarity.",
+    "takeaway": "Separating the review of repeated main frames from local canopy interfaces supports clear coordination. The exact project deliverables are not publicly confirmed.",
+    "facts": [
+      [
+        "Visible structure",
+        "Pitched-roof industrial building"
+      ],
+      [
+        "Visible interfaces",
+        "Main building and entrance canopies"
+      ]
+    ],
+    "images": [
+      {
+        "name": "JN-PRJ-004-3D-DRAWING-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971920/JN-PRJ-004-3D-DRAWING-01"
+      },
+      {
+        "name": "JN-PRJ-004-3D-SCREENSHOT-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971919/JN-PRJ-004-3D-SCREENSHOT-01"
+      },
+      {
+        "name": "JN-PRJ-004-3D-SCREENSHOT-02",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971926/JN-PRJ-004-3D-SCREENSHOT-02"
+      },
+      {
+        "name": "JN-PRJ-004-3D-SCREENSHOT-03",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971923/JN-PRJ-004-3D-SCREENSHOT-03"
+      }
+    ],
+    "cover": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971926/JN-PRJ-004-3D-SCREENSHOT-02",
+    "scopeVerified": false
+  },
+  {
+    "code": "005",
+    "title": "Maintenance Walkway & Caged Ladders",
+    "type": "Access steel",
+    "category": "Platforms & walkways",
+    "summary": "An elevated access walkway model with a change in direction, handrails, support steel and caged ladders. The views highlight the relationship between the access route and its supporting frame.",
+    "overview": "The public model views show an elevated maintenance walkway with changes in direction, handrails, support steel and caged ladders. The views make the relationship between the access route and supporting frame visible.",
+    "glance": [
+      [
+        "Visible structure",
+        "Elevated maintenance walkway"
+      ],
+      [
+        "Visible elements",
+        "Handrails, support steel and caged ladders"
+      ],
+      [
+        "Model environment",
+        "Tekla Structures"
+      ]
+    ],
+    "challenge": "Changes in direction and the visible interfaces among walkway framing, handrails, support steel and caged ladders require close geometric coordination.",
+    "approach": "A practical model review can follow the visible access route through ladders, platforms and corners to examine continuity, support orientation, interfaces and potential clashes.",
+    "checks": "The visible geometry suggests checking access clearances, handrail continuity, walkway and support interfaces, member orientation, bolt access, clashes and drawing clarity against approved information.",
+    "takeaway": "Following the access route through the model helps reveal geometric and coordination questions before fabrication information is prepared. The exact project deliverables are not publicly confirmed.",
+    "facts": [
+      [
+        "Visible structure",
+        "Elevated maintenance walkway"
+      ],
+      [
+        "Visible elements",
+        "Handrails, support steel and caged ladders"
+      ]
+    ],
+    "images": [
+      {
+        "name": "JN-PRJ-005-3D-DRAWING-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971921/JN-PRJ-005-3D-DRAWING-01"
+      },
+      {
+        "name": "JN-PRJ-005-3D-SCREENSHOT-01",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971920/JN-PRJ-005-3D-SCREENSHOT-01"
+      },
+      {
+        "name": "JN-PRJ-005-3D-SCREENSHOT-02",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971921/JN-PRJ-005-3D-SCREENSHOT-02"
+      },
+      {
+        "name": "JN-PRJ-005-3D-SCREENSHOT-03",
+        "url": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971921/JN-PRJ-005-3D-SCREENSHOT-03"
+      }
+    ],
+    "cover": "https://res.cloudinary.com/julkarnaeem/image/upload/f_auto,q_auto/v1788971920/JN-PRJ-005-3D-SCREENSHOT-01",
+    "scopeVerified": false
+  }
+]

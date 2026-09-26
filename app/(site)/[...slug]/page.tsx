@@ -45,6 +45,23 @@ export default async function Page({params,searchParams}:Props){
           </figure>
         </section>
 
+        {/* Authentic Cloudinary Model Gallery */}
+        <section className="section light gallery-section">
+          <div className="wrap">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">MODEL GALLERY</p>
+                <h2>Explore the authentic geometry.</h2>
+              </div>
+              <p>{p.images.length} verified 3D views. Select any image to inspect model details.</p>
+            </div>
+            <Gallery project={p}/>
+            <p className="confidential">
+              Only selected 3D screenshots and 3D drawings are shared here. Detailed fabrication, connection and erection drawing sheets remain private. Project files are shared only through agreed, authorised arrangements.
+            </p>
+          </div>
+        </section>
+
         {/* 7-Section Structured Case Study */}
         <section className="section light">
           <div className="wrap case-body">
@@ -105,7 +122,7 @@ export default async function Page({params,searchParams}:Props){
               <article className="case-block">
                 <p className="eyebrow">05 / DELIVERABLES</p>
                 <h3>{p.deliverablesVerified?'Agreed Project Issue Package':'Typical Detailing Outputs'}</h3>
-                {p.scopeVerified?(
+                {p.deliverablesVerified&&p.deliverables.length?(
                   <ul className="case-deliverables-list">
                     {p.deliverables.map((item)=><li key={item}>{item}</li>)}
                   </ul>
@@ -123,23 +140,6 @@ export default async function Page({params,searchParams}:Props){
                 </blockquote>
               </article>)}
             </div>
-          </div>
-        </section>
-
-        {/* Authentic Cloudinary Model Gallery */}
-        <section className="section light gallery-section">
-          <div className="wrap">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">MODEL GALLERY</p>
-                <h2>Explore the authentic geometry.</h2>
-              </div>
-              <p>{p.images.length} verified 3D views. Select any image to inspect model details.</p>
-            </div>
-            <Gallery project={p}/>
-            <p className="confidential">
-              Only selected 3D screenshots and 3D drawings are shared here. Detailed fabrication, connection and erection drawing sheets remain private. Project files are shared only through agreed, authorised arrangements.
-            </p>
           </div>
         </section>
 

@@ -2,8 +2,10 @@
 import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {projects,cloud,cloudVideoPoster,isCloudinaryImage,services,deliverables,formats,config,type PortfolioProject} from '@/lib/content';
-import {isVideoUrl} from '@/lib/cms-model';
+import {cloud,cloudVideoPoster,isCloudinaryImage} from '@/lib/cloudinary';
+import {deliverables,formats} from '@/lib/form-options';
+import {isVideoUrl} from '@/lib/media-url';
+import type {PortfolioProject,services,config} from '@/lib/content';
 import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause,ArrowUp} from 'lucide-react';
 import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
 
@@ -157,7 +159,7 @@ export function ProjectCard({project:p,index=0}:{project:PortfolioProject,index?
   );
 }
 
-export function PortfolioGrid({items=projects}:{items?:PortfolioProject[]}){
+export function PortfolioGrid({items}:{items:PortfolioProject[]}){
   const categories = ['All', ...Array.from(new Set(items.map(p => p.category)))];
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -212,8 +214,26 @@ export function PortfolioGrid({items=projects}:{items?:PortfolioProject[]}){
 
 export function Gallery({project:p}:{project:PortfolioProject}){
   const[active,setActive]=useState<number|null>(null);
+  const[slide,setSlide]=useState<{from:number;to:number;direction:"next"|"previous";id:number}|null>(null);
   const triggerRef=useRef<HTMLButtonElement|null>(null);
-  const move=(delta:number)=>setActive(n=>n===null?null:(n+delta+p.images.length)%p.images.length);
+  const activeRef=useRef<number|null>(null);
+  const slideId=useRef(0);
+  const move=(delta:number)=>{
+    const current=activeRef.current;
+    if(current===null||p.images.length<2)return;
+    const next=(current+delta+p.images.length)%p.images.length;
+    activeRef.current=next;
+    setActive(next);
+    setSlide({from:current,to:next,direction:delta>0?"next":"previous",id:++slideId.current});
+  };
+  const close=()=>{
+    setSlide(null);
+    setActive(null);
+    activeRef.current=null;
+  };
+  const media=(index:number,playVideo:boolean)=>isVideoUrl(p.images[index].url)
+    ? <video src={p.images[index].url} controls={playVideo} autoPlay={playVideo} playsInline width={1350} height={1080}/>
+    : <img src={cloud(p.images[index].url,2000)} width={1350} height={1080} alt={`${p.title}, enlarged view ${index+1}`}/>;
 
   return (
     <>
@@ -222,7 +242,7 @@ export function Gallery({project:p}:{project:PortfolioProject}){
           <button 
             className="gallery-thumb" 
             key={m.name || m.url || i} 
-            onClick={event=>{triggerRef.current=event.currentTarget;setActive(i)}}
+            onClick={event=>{triggerRef.current=event.currentTarget;activeRef.current=i;setActive(i)}}
             aria-label={`Open ${p.title} media ${i+1}`}
           >
             <div className="gallery-media-box">
@@ -244,7 +264,7 @@ export function Gallery({project:p}:{project:PortfolioProject}){
           </button>
         ))}
       </div>
-      <Dialog open={active!==null} onOpenChange={open=>{if(!open)setActive(null)}}>
+      <Dialog open={active!==null} onOpenChange={open=>{if(!open)close()}}>
         <DialogContent 
           className="lightbox" 
           onCloseAutoFocus={event=>{
@@ -259,26 +279,18 @@ export function Gallery({project:p}:{project:PortfolioProject}){
           }}
         >
           <DialogTitle>{p.title}</DialogTitle>
-          <DialogDescription>Use the arrow keys to change views. Escape closes the gallery.</DialogDescription>
-          {active!==null&&(
-            isVideoUrl(p.images[active].url) ? (
-              <video 
-                src={p.images[active].url} 
-                controls 
-                autoPlay 
-                playsInline 
-                width={1350}
-                height={1080}
-              />
-            ) : (
-              <img src={cloud(p.images[active].url,2000)} width={1350} height={1080} alt={`${p.title}, enlarged view ${active+1}`}/>
-            )
-          )}
-          <div className="lightbox-controls">
-            <button aria-label="Previous image" onClick={()=>move(-1)}><ArrowLeft aria-hidden="true"/></button>
-            <span aria-live="polite">{(active??0)+1} / {p.images.length}</span>
-            <button aria-label="Next image" onClick={()=>move(1)}><ArrowRight aria-hidden="true"/></button>
-          </div>
+          <DialogDescription className="sr-only">Use the arrow keys to change views. Escape closes the gallery.</DialogDescription>
+          {active!==null&&<div className="lightbox-media" aria-live="off">
+            {slide?<div key={slide.id} className={`lightbox-track ${slide.direction}`}>
+              <div className="lightbox-frame leaving" aria-hidden="true">{media(slide.from,false)}</div>
+              <div className="lightbox-frame entering">{media(slide.to,true)}</div>
+            </div>:<div className="lightbox-frame">{media(active,true)}</div>}
+            <div className="lightbox-controls">
+              <button type="button" aria-label="Previous image" onClick={()=>move(-1)}><ArrowLeft aria-hidden="true"/></button>
+              <span aria-live="polite">{active+1} / {p.images.length}</span>
+              <button type="button" aria-label="Next image" onClick={()=>move(1)}><ArrowRight aria-hidden="true"/></button>
+            </div>
+          </div>}
         </DialogContent>
       </Dialog>
     </>
@@ -305,7 +317,7 @@ export function Share({url}:{url:string}){
   );
 }
 
-export function AlternativeContactLinks({contacts=config}:{contacts?:typeof config}){
+export function AlternativeContactLinks({contacts}:{contacts:typeof config}){
   const config=contacts;
   const hasEmail = config.professionalEmails.length>0;
   const hasWhatsapp = Boolean(config.whatsapp && config.whatsappNumber);
@@ -352,7 +364,7 @@ export function AlternativeContactLinks({contacts=config}:{contacts?:typeof conf
   );
 }
 
-export function EnquiryForm({serviceItems=services,initialService,initialDetailsOpen=false}:{serviceItems?:typeof services;initialService?:string;initialDetailsOpen?:boolean}){
+export function EnquiryForm({serviceItems,initialService,initialDetailsOpen=false}:{serviceItems:typeof services;initialService?:string;initialDetailsOpen?:boolean}){
   const services=serviceItems;
   const[status,setStatus]=useState('');
   const[pending,setPending]=useState(false);

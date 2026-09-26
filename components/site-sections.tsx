@@ -264,7 +264,7 @@ export async function Hero(){
   const {settings}=await getPublishedContent();
   const portfolioProjects=await getPortfolioProjects();
   const p=portfolioProjects.find(p=>p.code===settings.featuredProjectCode)||portfolioProjects[0];
-  const videoUrl='https://res.cloudinary.com/julkarnaeem/video/upload/v1789141556/JN-PRJ-002-Multi-storey-Steel-Frame.mp4';
+  const videoUrl='https://res.cloudinary.com/julkarnaeem/video/upload/v1789711061/JN-PRJ-002-Multi-storey-Steel-Frame.mp4';
   return (
     <>
       <section className="hero wrap">

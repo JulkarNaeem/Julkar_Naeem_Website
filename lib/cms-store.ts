@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { initialDocument, cmsDocumentSchema, type CMSDocument } from "./cms-model";
+import { upgradeProjectLibrary } from "./project-library-upgrade";
 
 export type CMSState={revision:number;draft:CMSDocument;published:CMSDocument;updatedAt:string;publishedAt:string|null};
 const localFile=path.join(process.cwd(),".local-data","website-cms.json");
@@ -16,10 +17,13 @@ export async function readCMS():Promise<CMSState>{
     const rows=await sql.query("SELECT revision,draft,published,updated_at,published_at FROM website_cms WHERE id=1");
     if(!rows.length)return initialState();
     const r=rows[0];
-    return {revision:Number(r.revision),draft:cmsDocumentSchema.parse(JSON.parse(r.draft)),published:cmsDocumentSchema.parse(JSON.parse(r.published)),updatedAt:r.updated_at,publishedAt:r.published_at};
+    return {revision:Number(r.revision),draft:upgradeProjectLibrary(cmsDocumentSchema.parse(JSON.parse(r.draft))),published:upgradeProjectLibrary(cmsDocumentSchema.parse(JSON.parse(r.published))),updatedAt:r.updated_at,publishedAt:r.published_at};
   }
   if(!localStoreEnabled())throw new Error("Website database is not configured.");
-  try{return JSON.parse(await fs.readFile(localFile,"utf8")) as CMSState}
+  try{
+    const state=JSON.parse(await fs.readFile(localFile,"utf8")) as CMSState;
+    return {...state,draft:upgradeProjectLibrary(cmsDocumentSchema.parse(state.draft)),published:upgradeProjectLibrary(cmsDocumentSchema.parse(state.published))};
+  }
   catch(e){if((e as NodeJS.ErrnoException).code==="ENOENT")return initialState();throw e}
 }
 let writing=Promise.resolve();

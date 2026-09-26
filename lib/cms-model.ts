@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { config, projects, services, pageInfo, type PortfolioProject } from "./content";
-
-export const isVideoUrl = (value: string) => {
-  if (!value || typeof value !== "string") return false;
-  return /\.(mp4|webm|mov|ogg|m4v|mkv)(\?.*)?$/i.test(value) || /\/video\/upload\//i.test(value);
-};
+export {isVideoUrl} from './media-url';
 
 export const approvedMediaUrl = (value: string) => {
   if (!value || typeof value !== "string") return false;
@@ -56,7 +52,7 @@ export const cmsDocumentSchema=z.object({projects:z.array(cmsProjectSchema).max(
 export type CMSProject=z.infer<typeof cmsProjectSchema>;
 export type CMSDocument=z.infer<typeof cmsDocumentSchema>;
 export const initialDocument:CMSDocument={
-  projects:projects.map(p=>({...p,glance:p.glance.map(([a,b]):[string,string]=>[a,b]),facts:p.facts.map(([a,b]):[string,string]=>[a,b]),approved:true,visibility:"published",scopeVerified:p.code==="001",deliverablesVerified:p.code==="001"})),
+  projects:projects.map(p=>({...p,glance:p.glance.map(([a,b]):[string,string]=>[a,b]),facts:p.facts.map(([a,b]):[string,string]=>[a,b]),approved:true,visibility:"published",scopeVerified:true,deliverablesVerified:p.code==="001"})),
   settings:{
     heroLead:"Fabrication-ready steel detailing for teams that need",
     heroAccent:"clear, coordinated deliverables.",
