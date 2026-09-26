@@ -6,18 +6,21 @@ import {ApprovedDrawingCrop} from '@/components/case-study-media';
 import {getPublishedContent} from '@/lib/managed-content';
 import {contactConfig} from '@/lib/cms-model';
 import {getPortfolioProjects} from '@/lib/portfolio-feed';
-type Props={params:Promise<{slug:string[]}>};
+type Props={params:Promise<{slug:string[]}>;searchParams:Promise<Record<string,string|string[]|undefined>>};
 export function generateStaticParams(){return [...Object.keys(pageInfo).map(x=>({slug:[x]})),...projects.map(x=>({slug:['portfolio',x.slug]}))]}
 export async function generateMetadata({params}:Props){const{slug}=await params;const path=slug.join('/');const pageInfo=(await getPublishedContent()).settings.pageInfo;const portfolioProjects=await getPortfolioProjects();const project=slug[0]==='portfolio'&&slug.length===2?portfolioProjects.find(x=>x.slug===slug[1]):undefined;const info=slug.length===1?pageInfo[path]:undefined;const title=project?.title||info?.title||'Page not found';const description=project?.summary||info?.description||'Find structural-steel detailing services and project experience.';const url=config.origin+'/'+path;return {title:title+' | Julkar Naeem',description,alternates:{canonical:url},openGraph:{title:title+' | Julkar Naeem',description,url,images:[project?cloud(project.cover,1200):config.origin+'/og.png']},twitter:{card:'summary_large_image' as const,title:title+' | Julkar Naeem',description,images:[project?cloud(project.cover,1200):config.origin+'/og.png']}}}
 function Breadcrumb({items}:{items:{label:string,path:string}[]}){return <><nav className="breadcrumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a>{items.map((x,i)=><span key={x.path}> / {i===items.length-1?<span aria-current="page">{x.label}</span>:<a href={x.path}>{x.label}</a>}</span>)}</nav><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{label:'Home',path:'/'},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.label,item:config.origin+x.path}))}).replace(/</g,'\\u003c')}}/></>}
 function PageHead({eyebrow,title,text}:{eyebrow:string,title:string,text:string}){return <section className="page-head wrap"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro">{text}</p></section>}
 
-export default async function Page({params}:Props){
+export default async function Page({params,searchParams}:Props){
   const{slug}=await params;
   const key=slug.join('/');
   const {settings}=await getPublishedContent();
   const pageInfo=settings.pageInfo;
   const services=settings.services;
+  const query=key==='contact'?await searchParams:{};
+  const initialService=typeof query.service==='string'?services.find(s=>s.id===query.service)?.title:undefined;
+  const initialDetailsOpen=query.intent==='rfq'||Boolean(initialService);
   const portfolioProjects=await getPortfolioProjects();
   const p=slug.length===2&&slug[0]==='portfolio'?portfolioProjects.find(x=>x.slug===slug[1]):undefined;
 
@@ -317,7 +320,7 @@ export default async function Page({params}:Props){
                 <p className="contact-location">Dhaka, Bangladesh<br/>International project support</p>
                 <AlternativeContactLinks contacts={contactConfig(settings)}/>
               </aside>
-              <EnquiryForm serviceItems={services}/>
+              <EnquiryForm serviceItems={services} initialService={initialService} initialDetailsOpen={initialDetailsOpen}/>
             </div>
           </section>
         </>

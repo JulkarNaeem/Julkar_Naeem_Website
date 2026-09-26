@@ -81,7 +81,7 @@ export function ProjectImage({
   eager=false,
   fetchPriority,
   sizes="(max-width: 760px) 92vw, (max-width: 1100px) 48vw, 560px",
-  width=1080,
+  width=1350,
   height=1080,
   className
 }:{
@@ -208,6 +208,7 @@ export function PortfolioGrid({items=projects}:{items?:PortfolioProject[]}){
 
 export function Gallery({project:p}:{project:PortfolioProject}){
   const[active,setActive]=useState<number|null>(null);
+  const triggerRef=useRef<HTMLButtonElement|null>(null);
   const move=(delta:number)=>setActive(n=>n===null?null:(n+delta+p.images.length)%p.images.length);
 
   return (
@@ -217,7 +218,7 @@ export function Gallery({project:p}:{project:PortfolioProject}){
           <button 
             className="gallery-thumb" 
             key={m.name || m.url || i} 
-            onClick={()=>setActive(i)} 
+            onClick={event=>{triggerRef.current=event.currentTarget;setActive(i)}}
             aria-label={`Open ${p.title} media ${i+1}`}
           >
             <div className="gallery-media-box">
@@ -242,6 +243,12 @@ export function Gallery({project:p}:{project:PortfolioProject}){
       <Dialog open={active!==null} onOpenChange={open=>{if(!open)setActive(null)}}>
         <DialogContent 
           className="lightbox" 
+          onCloseAutoFocus={event=>{
+            if(triggerRef.current?.isConnected){
+              event.preventDefault();
+              triggerRef.current.focus();
+            }
+          }}
           onKeyDown={e=>{
             if(e.key==='ArrowRight'){e.preventDefault();move(1)}
             if(e.key==='ArrowLeft'){e.preventDefault();move(-1)}
@@ -256,10 +263,11 @@ export function Gallery({project:p}:{project:PortfolioProject}){
                 controls 
                 autoPlay 
                 playsInline 
-                style={{maxWidth:'100%', maxHeight:'75vh', margin:'0 auto', display:'block'}} 
+                width={1350}
+                height={1080}
               />
             ) : (
-              <img src={cloud(p.images[active].url,2000)} alt={`${p.title}, enlarged view ${active+1}`}/>
+              <img src={cloud(p.images[active].url,2000)} width={1350} height={1080} alt={`${p.title}, enlarged view ${active+1}`}/>
             )
           )}
           <div className="lightbox-controls">
@@ -340,28 +348,15 @@ export function AlternativeContactLinks({contacts=config}:{contacts?:typeof conf
   );
 }
 
-export function EnquiryForm({serviceItems=services}:{serviceItems?:typeof services}){
+export function EnquiryForm({serviceItems=services,initialService,initialDetailsOpen=false}:{serviceItems?:typeof services;initialService?:string;initialDetailsOpen?:boolean}){
   const services=serviceItems;
   const[status,setStatus]=useState('');
   const[pending,setPending]=useState(false);
   const[done,setDone]=useState(false);
   const[consent,setConsent]=useState(false);
   const[projectType,setProjectType]=useState('');
-  const[detailsOpen,setDetailsOpen]=useState(()=>{
-    if(typeof window==='undefined') return false;
-    const params=new URLSearchParams(window.location.search);
-    return params.get('intent')==='rfq' || Boolean(params.get('service'));
-  });
-  const[selectedServices,setSelectedServices]=useState<string[]>(()=>{
-    if(typeof window==='undefined') return [];
-    const params=new URLSearchParams(window.location.search);
-    const serviceParam=params.get('service');
-    if(serviceParam){
-      const matched=services.find(s=>s.id===serviceParam);
-      return matched ? [matched.title] : [];
-    }
-    return [];
-  });
+  const[detailsOpen,setDetailsOpen]=useState(initialDetailsOpen);
+  const[selectedServices,setSelectedServices]=useState<string[]>(()=>initialService?[initialService]:[]);
   const key=useRef('');
 
   useEffect(()=>{
@@ -937,13 +932,15 @@ export function HeroVideoPlayer({
             eager
             fetchPriority="high"
             sizes="(max-width: 900px) 92vw, 48vw"
-            width={1080}
+            width={1350}
             height={1080}
             className="hero-video-poster"
           />
         )}
         <video
           ref={videoRef}
+          width={1350}
+          height={1080}
           playsInline
           loop
           preload="metadata"
