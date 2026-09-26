@@ -40,7 +40,7 @@ export default async function Page({params,searchParams}:Props){
             <Share url={config.origin+'/portfolio/'+p.slug}/>
           </div>
           <figure className="case-cover">
-            <ProjectImage url={p.cover} alt={p.title+' overall structural model view'} eager fetchPriority="high" sizes="(max-width: 900px) 92vw, 48vw"/>
+            <ProjectImage url={p.cover} alt={p.title+' overall structural model view'} eager fetchPriority="high" sizes="(max-width: 900px) 92vw, 48vw" videoControls/>
             <figcaption>SELECTED MODEL VIEW · {p.category.toUpperCase()}</figcaption>
           </figure>
         </section>

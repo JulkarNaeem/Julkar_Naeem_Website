@@ -40,6 +40,7 @@ export const cmsProjectSchema = z.object({
 const social=(domain:string)=>z.string().max(1000).refine(v=>!v||(()=>{try{const u=new URL(v);return u.protocol==="https:"&&(u.hostname===domain||u.hostname==="www."+domain)&&!u.username&&!u.password}catch{return false}})(),"Use the correct HTTPS profile URL.");
 export const cmsSettingsSchema=z.object({
   heroLead:text.min(1),heroAccent:text.min(1),heroIntro:text.min(1),
+  featuredProjectCode:z.string().regex(/^\d{3,6}$/).default("002"),
   aboutIntro:text.min(1),ctaTitle:text.min(1),
   professionalEmails:z.array(z.string().email()).max(3),
   whatsappNumber:z.string().regex(/^(\+[1-9]\d{7,14})?$/,"Use an international number, e.g. +880…"),
@@ -60,6 +61,7 @@ export const initialDocument:CMSDocument={
     heroLead:"Fabrication-ready steel detailing for teams that need",
     heroAccent:"clear, coordinated deliverables.",
     heroIntro:"I support steel fabricators, engineering teams and contractors with coordinated Tekla models, shop drawings, erection drawings, connection detailing and material reports.",
+    featuredProjectCode:"002",
     aboutIntro:"Based in Dhaka, Bangladesh, I bring around nine years across steel, construction, production, QA and operations, including more than four years focused on structural-steel detailing.",
     ctaTitle:"Need reliable detailing capacity for an upcoming steel project?",
     professionalEmails:config.professionalEmails,whatsappNumber:config.whatsappNumber,

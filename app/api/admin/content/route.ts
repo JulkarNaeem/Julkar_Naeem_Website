@@ -1,7 +1,8 @@
 import { isAdmin,sameOrigin,privateHeaders } from "@/lib/admin-auth";
 import { readCMS,writeCMS,ConflictError } from "@/lib/cms-store";
-import { cmsDocumentSchema } from "@/lib/cms-model";
-import { revalidatePath } from "next/cache";
+import { cmsDocumentSchema,publicProjects } from "@/lib/cms-model";
+import { revalidatePath,revalidateTag } from "next/cache";
+import { publishedContentTag } from "@/lib/managed-content";
 export const runtime="nodejs";
 export async function GET(){
   if(!await isAdmin())return Response.json({error:"Sign in to continue."},{status:401,headers:privateHeaders});
@@ -15,6 +16,7 @@ export async function PUT(request:Request){
     if(raw.length>2000000)return Response.json({error:"Content is too large."},{status:413,headers:privateHeaders});
     const body=JSON.parse(raw),parsed=cmsDocumentSchema.safeParse(body.document);
     if(!parsed.success||!Number.isSafeInteger(body.revision)||body.revision<0||typeof body.publish!=="boolean")return Response.json({error:parsed.success?"Invalid revision.":parsed.error.issues[0].message},{status:400,headers:privateHeaders});
+    if(body.publish&&!publicProjects(parsed.data).some(p=>p.code===parsed.data.settings.featuredProjectCode))return Response.json({error:"Choose an approved, published project with a valid cover for the homepage hero."},{status:400,headers:privateHeaders});
     const old=await readCMS();
     for(const project of old.published.projects.filter(p=>p.visibility!=="draft")){
       const edited=parsed.data.projects.find(p=>p.code===project.code);
@@ -22,7 +24,10 @@ export async function PUT(request:Request){
       if(!edited)return Response.json({error:"Archive projects instead of deleting them."},{status:400,headers:privateHeaders});
     }
     const state=await writeCMS(parsed.data,body.revision,body.publish);
-    if(body.publish)revalidatePath("/","layout");
+    if(body.publish){
+      revalidateTag(publishedContentTag,{expire:0});
+      revalidatePath("/","layout");
+    }
     return Response.json(state,{headers:privateHeaders});
   }catch(error){return Response.json({error:error instanceof SyntaxError?"Invalid JSON request.":error instanceof ConflictError?error.message:"Your changes could not be saved. They remain in the editor."},{status:error instanceof SyntaxError?400:error instanceof ConflictError?409:503,headers:privateHeaders})}
 }

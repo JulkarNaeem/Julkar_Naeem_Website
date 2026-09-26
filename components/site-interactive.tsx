@@ -2,7 +2,7 @@
 import {useState,useEffect,useRef,useCallback} from 'react';
 import {usePathname} from 'next/navigation';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {projects,cloud,services,deliverables,formats,config,type PortfolioProject} from '@/lib/content';
+import {projects,cloud,cloudVideoPoster,isCloudinaryImage,services,deliverables,formats,config,type PortfolioProject} from '@/lib/content';
 import {isVideoUrl} from '@/lib/cms-model';
 import {ArrowUpRight,Menu,X,ArrowLeft,ArrowRight,Expand,Copy,Check,ChevronDown,Mail,Play,Pause,ArrowUp} from 'lucide-react';
 import {FaInstagram,FaLinkedin,FaUpwork,FaWhatsapp} from 'react-icons/fa6';
@@ -83,7 +83,8 @@ export function ProjectImage({
   sizes="(max-width: 760px) 92vw, (max-width: 1100px) 48vw, 560px",
   width=1350,
   height=1080,
-  className
+  className,
+  videoControls=false
 }:{
   url:string;
   alt:string;
@@ -93,15 +94,18 @@ export function ProjectImage({
   width?:number;
   height?:number;
   className?:string;
+  videoControls?:boolean;
 }){
   if (isVideoUrl(url)) {
     return (
       <video
         src={url}
+        poster={cloudVideoPoster(url)}
         muted
         playsInline
         loop
-        autoPlay
+        preload="none"
+        controls={videoControls}
         width={width}
         height={height}
         className={className}
@@ -112,7 +116,7 @@ export function ProjectImage({
   return (
     <img 
       src={cloud(url)} 
-      srcSet={url && url.includes('f_auto,q_auto') ? [480,800,1080,1400].map(w=>`${cloud(url,w)} ${w}w`).join(', ') : undefined} 
+      srcSet={isCloudinaryImage(url) ? [480,800,1080,1400].map(w=>`${cloud(url,w)} ${w}w`).join(', ') : undefined}
       sizes={sizes} 
       alt={alt} 
       loading={eager?'eager':'lazy'} 
@@ -224,7 +228,7 @@ export function Gallery({project:p}:{project:PortfolioProject}){
             <div className="gallery-media-box">
               {isVideoUrl(m.url) ? (
                 <>
-                  <video src={m.url} muted playsInline preload="metadata" />
+                  <video src={m.url} poster={cloudVideoPoster(m.url)} muted playsInline preload="none" />
                   <div className="gallery-play-icon" aria-hidden="true">
                     <Play size={20} fill="currentColor" />
                   </div>
