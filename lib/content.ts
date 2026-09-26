@@ -187,9 +187,37 @@ const seeds=[
   takeaway:'Tracing the access route through the model helps reveal geometry and coordination questions at ladders, turns and handrail interfaces.',
   facts:[['Location','Chattogram, Bangladesh'],['Area','35 m²'],['Steel quantity','4.4 t'],['Software','Tekla Structures 2020']],
   hero:'3D-SCREENSHOT-01'
+},
+{
+  code:'006',
+  slug:'hong-kong-flyover-steel-support',
+  title:'Hong Kong Flyover Steel Support Structure',
+  type:'Infrastructure',
+  category:'Braced support structures',
+  summary:'A flyover support structure in Hong Kong, China, with a braced main frame, platform and supporting steelwork. The recorded project covers 110 m² and approximately 70 t of structural steel.',
+  overview:'This international steel-detailing project used Tekla Structures 2020 for a flyover support structure. The recorded scope includes the main braced frame, platform and supporting steelwork. All connections were specified as site-welded, requiring close coordination with the structural engineers.',
+  glance:[
+    ['Facility type','Infrastructure'],
+    ['Location','Hong Kong, China'],
+    ['Area','110 m²'],
+    ['Steel quantity','Approximately 70 t'],
+    ['Year','2023'],
+    ['Software','Tekla Structures 2020'],
+    ['Structural system','Braced frame'],
+    ['Scope','Main structure, platform and support structure'],
+    ['Connection requirement','Site-welded connections'],
+    ['Standard recorded','AISC']
+  ],
+  challenge:'The site-welded connection requirement made coordination between the supporting frame and the structural engineers central to the detailing work.',
+  approach:'The main braced frame, platform and supporting steelwork were detailed in Tekla Structures 2020. Connection requirements were resolved through technical collaboration with the structural engineers.',
+  checks:'The recorded coordination focused on the site-welded connections and how the platform and supporting steelwork meet the main braced frame.',
+  deliverables:[],
+  takeaway:'For a site-welded support structure, connection requirements and frame geometry need to be coordinated together before the detailing is issued.',
+  facts:[['Location','Hong Kong, China'],['Area','110 m²'],['Steel quantity','Approximately 70 t'],['Year','2023'],['Software','Tekla Structures 2020']],
+  hero:'3D-SCREENSHOT-01'
 }
 ];
 export const projects=seeds.map(p=>({...p,images:media.filter(m=>m.name.startsWith('JN-PRJ-'+p.code)).sort((a,b)=>a.name.localeCompare(b.name)),cover:media.find(m=>m.name==='JN-PRJ-'+p.code+'-'+p.hero)!.url}));
 export type PortfolioProject=(typeof projects)[number]&{scopeVerified?:boolean;deliverablesVerified?:boolean};
 export {cloud,cloudVideoPoster,isCloudinaryImage} from './cloudinary';
-export const pageInfo:Record<string,{title:string,description:string}>={services:{title:'Structural Steel Detailing Services',description:'Tekla steel detailing, steel shop drawings, erection drawings, connection detailing and material reporting for fabrication teams.'},portfolio:{title:'Steel Detailing Project Experience',description:'Explore five structural-steel modelling case studies: PEB framing, multi-storey structures, industrial steel and maintenance walkways.'},process:{title:'The Steel Detailing Process',description:'From project review and RFIs to Tekla model coordination, fabrication checks, drawing issue and revision management.'},about:{title:'About Julkar Naeem',description:'Senior Structural Steel Detailer based in Dhaka, with experience across steel, construction, production, QA and operations.'},credentials:{title:'Training & Credentials',description:'AISC Detailer Training Series and Tekla Structures Steel Fundamentals, supporting practical structural-steel detailing.'},contact:{title:'Request a Project Review',description:'Discuss Tekla modelling, fabrication drawings and structural-steel detailing support. Send your scope, deliverables and schedule.'},privacy:{title:'Privacy',description:'How project enquiries and contact information are handled on the Julkar Naeem structural-steel detailing website.'}};
+export const pageInfo:Record<string,{title:string,description:string}>={services:{title:'Structural Steel Detailing Services',description:'Tekla steel detailing, steel shop drawings, erection drawings, connection detailing and material reporting for fabrication teams.'},portfolio:{title:'Steel Detailing Project Experience',description:'Explore six structural-steel modelling case studies: PEB framing, multi-storey structures, infrastructure, industrial steel and maintenance walkways.'},process:{title:'The Steel Detailing Process',description:'From project review and RFIs to Tekla model coordination, fabrication checks, drawing issue and revision management.'},about:{title:'About Julkar Naeem',description:'Senior Structural Steel Detailer based in Dhaka, with experience across steel, construction, production, QA and operations.'},credentials:{title:'Training & Credentials',description:'AISC Detailer Training Series and Tekla Structures Steel Fundamentals, supporting practical structural-steel detailing.'},contact:{title:'Request a Project Review',description:'Discuss Tekla modelling, fabrication drawings and structural-steel detailing support. Send your scope, deliverables and schedule.'},privacy:{title:'Privacy',description:'How project enquiries and contact information are handled on the Julkar Naeem structural-steel detailing website.'}};

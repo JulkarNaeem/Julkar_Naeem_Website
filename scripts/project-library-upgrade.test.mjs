@@ -22,7 +22,9 @@ function oldDocument() {
   document.projects = document.projects.map(project => ({
     ...project,
     ...structuredClone(previous.find(old => old.code === project.code))
-  }));
+  })).filter(project => project.code !== '006');
+  document.settings.featuredProjectCode = '002';
+  document.settings.pageInfo.portfolio.description = 'Explore five structural-steel modelling case studies: PEB framing, multi-storey structures, industrial steel and maintenance walkways.';
   return document;
 }
 
@@ -58,4 +60,15 @@ test('updates the previous hero headline while preserving custom CMS copy', () =
   document.settings.heroLead = 'My custom headline';
   assert.equal(upgradeProjectLibrary(document).settings.heroLead, 'My custom headline');
   assert.equal(upgradeProjectLibrary(document).settings.heroAccent, 'clear, coordinated deliverables.');
+});
+
+test('adds approved project 006 and keeps a custom featured project choice', () => {
+  const document = oldDocument();
+  document.settings.featuredProjectCode = '003';
+  document.settings.pageInfo.portfolio.description = 'Custom portfolio description';
+  const updated = upgradeProjectLibrary(document);
+  assert.equal(updated.projects.length, 6);
+  assert.equal(updated.projects.find(project => project.code === '006').title, 'Hong Kong Flyover Steel Support Structure');
+  assert.equal(updated.settings.featuredProjectCode, '003');
+  assert.equal(updated.settings.pageInfo.portfolio.description, 'Custom portfolio description');
 });

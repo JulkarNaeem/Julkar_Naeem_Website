@@ -31,10 +31,22 @@ export function upgradeProjectLibrary(document: CMSDocument): CMSDocument {
     if (JSON.stringify(next) !== JSON.stringify(project)) changed = true;
     return next;
   });
+  const missingNewProject = !projects.some(project => project.code === "006");
+  if (missingNewProject) {
+    const newProject = updatedByCode.get("006");
+    if (newProject) projects.push(structuredClone(newProject));
+  }
   const previousHero = document.settings.heroLead === "Fabrication-ready steel detailing for teams that need"
     && document.settings.heroAccent === "clear, coordinated deliverables.";
-  const settings = previousHero
-    ? { ...document.settings, heroLead: initialDocument.settings.heroLead, heroAccent: initialDocument.settings.heroAccent }
-    : document.settings;
-  return changed || previousHero ? { ...document, projects, settings } : document;
+  const previousPortfolioDescription = "Explore five structural-steel modelling case studies: PEB framing, multi-storey structures, industrial steel and maintenance walkways.";
+  const settings = {
+    ...document.settings,
+    ...(previousHero ? {heroLead:initialDocument.settings.heroLead,heroAccent:initialDocument.settings.heroAccent} : {}),
+    ...(missingNewProject && document.settings.featuredProjectCode === "002" ? {featuredProjectCode:"006"} : {}),
+    ...(document.settings.pageInfo.portfolio.description === previousPortfolioDescription ? {
+      pageInfo:{...document.settings.pageInfo,portfolio:initialDocument.settings.pageInfo.portfolio}
+    } : {})
+  };
+  return changed || missingNewProject || JSON.stringify(settings) !== JSON.stringify(document.settings)
+    ? { ...document, projects, settings } : document;
 }
