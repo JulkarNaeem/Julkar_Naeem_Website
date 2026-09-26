@@ -54,8 +54,8 @@ export type CMSDocument=z.infer<typeof cmsDocumentSchema>;
 export const initialDocument:CMSDocument={
   projects:projects.map(p=>({...p,glance:p.glance.map(([a,b]):[string,string]=>[a,b]),facts:p.facts.map(([a,b]):[string,string]=>[a,b]),approved:true,visibility:"published",scopeVerified:true,deliverablesVerified:p.code==="001"})),
   settings:{
-    heroLead:"Fabrication-ready steel detailing for teams that need",
-    heroAccent:"clear, coordinated deliverables.",
+    heroLead:"Clear steel detailing, from model",
+    heroAccent:"to fabrication.",
     heroIntro:"I support steel fabricators, engineering teams and contractors with coordinated Tekla models, shop drawings, erection drawings, connection detailing and material reports.",
     featuredProjectCode:"002",
     aboutIntro:"Based in Dhaka, Bangladesh, I bring around nine years across steel, construction, production, QA and operations, including more than four years focused on structural-steel detailing.",

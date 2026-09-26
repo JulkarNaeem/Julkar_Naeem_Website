@@ -235,11 +235,13 @@ em{font-style:normal;color:#e6b84b}
 @keyframes lightbox-out-previous{from{transform:translateX(0)}to{transform:translateX(100%)}}
 @media(prefers-reduced-motion:reduce){.lightbox-track .entering{animation:none!important}.lightbox-track .leaving{display:none}}
 .lightbox-controls{position:absolute;inset:0;z-index:2;pointer-events:none}
-.lightbox-controls button{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border:1px solid rgba(255,255,255,.65);background:rgba(20,34,46,.88);color:#fff;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer}
+.lightbox-controls button{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border:1px solid rgba(255,255,255,.5);background:rgba(20,34,46,.55);color:#fff;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;transition:opacity .2s ease,background-color .2s ease}
 .lightbox-controls button:first-child{left:12px}
 .lightbox-controls button:last-child{right:12px}
-.lightbox-controls button:hover{background:#14222e}
+.lightbox-controls button:hover{background:rgba(20,34,46,.82)}
 .lightbox-controls button:focus-visible{outline:3px solid #e6b84b;outline-offset:3px}
+@media(hover:hover) and (pointer:fine){.lightbox-controls button{opacity:0;pointer-events:none}.lightbox-media:hover .lightbox-controls button,.lightbox-controls button:focus-visible{opacity:1;pointer-events:auto}}
+@media(prefers-reduced-motion:reduce){.lightbox-controls button{transition:none}}
 .lightbox-controls span{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(20,34,46,.88);color:#fff;padding:5px 10px;font:12px monospace;white-space:nowrap}
 @media(max-width:650px){.lightbox-controls button{width:44px;height:44px}.lightbox-controls button:first-child{left:6px}.lightbox-controls button:last-child{right:6px}}
 .related{padding-top:48px;padding-bottom:48px}

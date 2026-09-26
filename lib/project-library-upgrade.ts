@@ -31,5 +31,10 @@ export function upgradeProjectLibrary(document: CMSDocument): CMSDocument {
     if (JSON.stringify(next) !== JSON.stringify(project)) changed = true;
     return next;
   });
-  return changed ? { ...document, projects } : document;
+  const previousHero = document.settings.heroLead === "Fabrication-ready steel detailing for teams that need"
+    && document.settings.heroAccent === "clear, coordinated deliverables.";
+  const settings = previousHero
+    ? { ...document.settings, heroLead: initialDocument.settings.heroLead, heroAccent: initialDocument.settings.heroAccent }
+    : document.settings;
+  return changed || previousHero ? { ...document, projects, settings } : document;
 }

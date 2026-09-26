@@ -47,3 +47,15 @@ test('preserves owner edits while replacing only prior approved-media URLs', () 
   assert.deepEqual(updated.images.slice(0, -1), approved.images);
   assert.equal(updated.cover, approved.cover);
 });
+
+test('updates the previous hero headline while preserving custom CMS copy', () => {
+  const document = oldDocument();
+  document.settings.heroLead = 'Fabrication-ready steel detailing for teams that need';
+  document.settings.heroAccent = 'clear, coordinated deliverables.';
+  assert.equal(upgradeProjectLibrary(document).settings.heroLead, 'Clear steel detailing, from model');
+  assert.equal(upgradeProjectLibrary(document).settings.heroAccent, 'to fabrication.');
+
+  document.settings.heroLead = 'My custom headline';
+  assert.equal(upgradeProjectLibrary(document).settings.heroLead, 'My custom headline');
+  assert.equal(upgradeProjectLibrary(document).settings.heroAccent, 'clear, coordinated deliverables.');
+});
