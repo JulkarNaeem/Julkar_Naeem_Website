@@ -49,6 +49,7 @@ export function Header(){
           <a href="/services">Services</a>
           <a href="/portfolio">Portfolio</a>
           <a href="/process">Process</a>
+          <a href="/ifc-viewer">IFC Viewer</a>
           <a href="/about">About</a>
           <a className="nav-cta" href="/contact">
             Request a Project Review <ArrowUpRight size={15} aria-hidden="true"/>
@@ -66,8 +67,8 @@ export function Header(){
         </button>
         {open&&(
           <nav id="mobile-nav" className="mobile-nav" aria-label="Mobile navigation">
-            {['Services','Portfolio','Process','About','Credentials','Contact'].map(x=>(
-              <a key={x} href={'/'+x.toLowerCase()} onClick={()=>setOpen(false)}>
+            {['Services','Portfolio','Process','IFC Viewer','About','Credentials','Contact'].map(x=>(
+              <a key={x} href={'/'+x.toLowerCase().replace(' ','-')} onClick={()=>setOpen(false)}>
                 {x}<ArrowUpRight size={18} aria-hidden="true"/>
               </a>
             ))}

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IFC Viewer | Julkar Naeem</title>
+<meta name="description" content="Free in-browser 3D IFC viewer for steel detailing models. Your file stays on your device.">
+<link rel="icon" href="/ifc-viewer/favicon.svg" type="image/svg+xml">
+<style>
+  :root { --bg:rgba(24,26,29,.82); --line:rgba(255,255,255,.10); --text:#e8eaed; --muted:#9aa0a6; --accent:#f0a23b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#2a2c2f; font-family:Inter,"Segoe UI",system-ui,Arial,sans-serif; color:var(--text); overflow:hidden; }
+  canvas { display:block; }
+  .panel { position:absolute; z-index:1; background:var(--bg); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,.35); font-size:13px; }
+  button, select, input[type=number] { font:inherit; color:var(--text); background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:8px; padding:6px 11px; cursor:pointer; transition:background .15s, border-color .15s; }
+  button:hover, select:hover { background:rgba(255,255,255,.14); }
+  button:active { background:var(--accent); color:#111; border-color:var(--accent); }
+  select option { color:#111; }
+  input[type=number] { cursor:text; width:56px; }
+  input[type=checkbox] { accent-color:var(--accent); }
+  input[type=file] { color:var(--muted); font-size:12px; max-width:210px; }
+  input[type=file]::file-selector-button { font:inherit; color:#111; background:var(--accent); border:0; border-radius:8px; padding:6px 12px; margin-right:8px; cursor:pointer; font-weight:600; }
+  #top { top:14px; left:14px; right:14px; display:flex; align-items:center; gap:14px; padding:8px 14px; flex-wrap:wrap; }
+  #brand { display:flex; align-items:center; gap:9px; font-weight:700; font-size:16px; letter-spacing:.3px; padding-right:14px; border-right:1px solid var(--line); }
+  #brand img { height:40px; width:auto; display:block; border-radius:8px; }
+  #brand span b { color:var(--accent); }
+  .grp { display:flex; align-items:center; gap:6px; }
+  .grp label { display:flex; align-items:center; gap:6px; color:var(--muted); }
+  #back { color:var(--muted); text-decoration:none; font-size:12px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; }
+  #back:hover { color:var(--accent); border-color:var(--accent); }
+  #msg { margin-left:auto; color:var(--muted); font-size:12px; }
+  #parts { top:78px; left:14px; width:240px; padding:12px 14px; max-height:calc(100vh - 210px); overflow:auto; display:none; font-size:12px; line-height:1.7; }
+  #parts b { display:block; margin-bottom:6px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; font-size:11px; }
+  #parts label { color:var(--text); cursor:pointer; }
+  #rec { bottom:14px; left:14px; right:14px; padding:12px 18px; display:flex; align-items:stretch; gap:0; flex-wrap:wrap; }
+  #rec .fsec { display:flex; flex-direction:column; gap:8px; padding:0 20px; border-right:1px solid var(--line); justify-content:center; }
+  #rec .fsec:first-child { padding-left:0; }
+  #rec .fsec.out { border-right:0; margin-left:auto; padding-right:0; align-items:flex-end; }
+  #rec .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  #rec .title { color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; font-size:11px; }
+  #rec .dim { color:var(--muted); }
+  #rec .out .row button { padding:8px 14px; }
+  #kCount, #connInfo { color:var(--muted); font-size:12px; }
+  .primary { background:var(--accent) !important; color:#111 !important; border-color:var(--accent) !important; font-weight:600; }
+  ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); border-radius:8px; }
+  #props { top:78px; right:14px; width:320px; max-height:calc(100vh - 210px); overflow:auto; display:none; padding:0; }
+  #props .ph { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:rgba(24,26,29,.95); border-radius:12px 12px 0 0; }
+  #props .ph .t { font-size:15px; font-weight:700; line-height:1.3; word-break:break-word; }
+  #props .ph .s { color:var(--accent); font-size:12px; margin-top:2px; }
+  #props .ph button { margin-left:auto; padding:2px 9px; font-size:16px; line-height:1.2; }
+  #props .sec { padding:10px 16px 12px; border-bottom:1px solid var(--line); }
+  #props .sec:last-child { border-bottom:0; }
+  #props .sec h4 { margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); font-weight:600; }
+  #props .r { display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:12.5px; }
+  #props .r span:first-child { color:var(--muted); flex:0 0 auto; }
+  #props .r span:last-child { text-align:right; word-break:break-word; }
+  #props .big { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); }
+  #props .big div { background:rgba(255,255,255,.06); border-radius:10px; padding:8px 10px; }
+  #props .big small { display:block; color:var(--muted); font-size:11px; }
+  #props .big b { font-size:15px; }
+  #props .hint { padding:14px 16px; color:var(--muted); font-size:12px; }
+  #parts { overflow:visible !important; padding:0 !important; transition:transform .35s cubic-bezier(.2,.8,.2,1); }
+  #parts.closed { transform:translateX(-100%); }
+  #parts .ph2 { display:flex; align-items:center; gap:8px; padding:10px 12px 6px; }
+  #parts .ph2 b { margin:0; flex:1; }
+  #parts .ph2 button { padding:3px 8px; font-size:12px; }
+  #parts .ph2 button.on { background:var(--accent); color:#111; border-color:var(--accent); }
+  #parts .fl { display:block; width:calc(100% - 24px); margin:0 12px 8px; padding:6px 10px; font:inherit; font-size:12px; color:var(--text); background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:8px; outline:none; }
+  #parts .fl:focus { border-color:var(--accent); }
+  #parts .plist { max-height:calc(100vh - 340px); overflow:auto; padding:0 12px 12px; }
+  #parts .tab { position:absolute; left:100%; top:10px; width:34px; padding:10px 0; border-radius:0 10px 10px 0; background:var(--bg); border:1px solid var(--line); border-left:0; color:var(--text); cursor:pointer; writing-mode:vertical-rl; text-align:center; font-size:12px; letter-spacing:.5px; backdrop-filter:blur(12px); }
+  #parts .tab:hover { color:var(--accent); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+  "web-ifc": "https://esm.sh/web-ifc@0.0.57"
+} }
+</script>
+</head>
+<body>
+<div id="top" class="panel">
+  <div id="brand">
+    <img src="/ifc-viewer/logo-full.svg" alt="CivSteel">
+  </div>
+  <div class="grp"><input type="file" id="file" accept=".ifc"></div>
+  <div class="grp">
+    <button data-v="iso">3D</button><button data-v="top">Top</button><button data-v="front">Front</button><button data-v="side">Side</button>
+  </div>
+  <div class="grp">
+    <label><input type="checkbox" id="edges" checked> Outlines</label>
+    <select id="pal"><option value="premium" selected>Premium blue</option><option value="gold">Silver &amp; gold</option><option value="vivid">Vivid</option><option value="orig">Original colors</option></select>
+    <select id="bg"><option value="light">Light gray</option><option value="warm">Warm gray</option><option value="dark" selected>Dark charcoal</option><option value="blue">Blue-gray</option></select>
+  </div>
+  <a id="back" href="/" title="Back to julkarnaeem.com">&larr; Website</a>
+  <span id="msg">Choose an IFC file</span>
+</div>
+<div id="parts" class="panel"></div>
+<div id="props" class="panel"></div>
+<div id="rec" class="panel">
+  <div class="fsec">
+    <span class="title">Walkthrough</span>
+    <div class="row">
+      <button id="kAdd">+ Add point</button><button id="kClear">Clear</button><span id="kCount">0 points</span>
+      <span class="dim">Duration</span><input id="dur" type="number" value="20" min="3" max="300"><span class="dim">s</span>
+      <button id="playPath">Play path</button><button id="playOrbit">Play orbit</button>
+      <button id="recPath">Record path</button><button id="recOrbit">Record orbit</button><button id="stop">Stop</button>
+    </div>
+  </div>
+  <div class="fsec out">
+    <span class="title">Outputs</span>
+    <div class="row">
+      <button id="autoPlay">&#9654; Preview auto video</button>
+      <button id="autoRec" class="primary">&#9679; Record video</button>
+      <button id="shots">&#128247; LinkedIn photos 1350&times;1080</button>
+      <button id="report">&#128202; Report (.xlsx)</button>
+    </div>
+    <span id="connInfo">load an IFC first</span>
+  </div>
+</div><script type="module">
+import * as THREE from "three";
+import * as WebIFC from "web-ifc";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
+import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
+
+const msg = document.getElementById("msg");
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100000);
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:"high-performance" });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio * 1.5, 2.5));   // supersampling for sharp edges
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.1; }
+scene.add(new THREE.HemisphereLight(0xffffff, 0xffffff, 1.9));
+const sun = new THREE.DirectionalLight(0xffffff, 2.8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(8192, 8192); sun.shadow.normalBias = 0.02;
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+const fill = new THREE.DirectionalLight(0xffffff, 0.8);
+fill.position.set(-50, 30, -50);
+scene.add(fill);
+addEventListener("resize", () => {
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+renderer.setSize(innerWidth, innerHeight);
+
+// ---- Own simple camera controls (Tekla style) ----
+// wheel = zoom, Ctrl + middle button = rotate, middle button (or Shift + middle) = pan
+// left button drag = rotate too (for trackpads); touch: 1 finger rotate, 2 fingers pan/zoom
+const target = new THREE.Vector3();
+let theta = -Math.PI/4, phi = Math.PI/3, radius = 50;   // phi: 0 = looking straight down
+let g = { theta:null, phi:null, radius:null, tx:0, ty:0, tz:0 };
+function applyCamera() {
+  phi = Math.min(Math.max(phi, 0.001), Math.PI - 0.001);
+  radius = Math.max(radius, modelSize*0.002);
+  camera.position.set(
+    target.x + radius*Math.sin(phi)*Math.sin(theta),
+    target.y + radius*Math.cos(phi),
+    target.z + radius*Math.sin(phi)*Math.cos(theta));
+  camera.lookAt(target);
+}
+function updateCamera() { goal.theta = theta; goal.phi = phi; goal.radius = radius; goal.t.copy(target); }
+function rotate(dx, dy) { goal.theta -= dx*0.006; goal.phi -= dy*0.006; goal.phi = Math.min(Math.max(goal.phi, 0.001), Math.PI-0.001); }
+function pan(dx, dy) {
+  const k = goal.radius * 2*Math.tan(camera.fov*Math.PI/360) / innerHeight;
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+  const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+  goal.t.addScaledVector(right, -dx*k).addScaledVector(up, dy*k);
+}
+function zoom(f) {
+  // zoom toward the point under the cursor; move the target so zooming never gets stuck at a minimum distance
+  const nr = goal.radius * f;
+  if (f < 1 && nr < modelSize*0.002) { return; }
+  const ndc = new THREE.Vector2((lastX/innerWidth)*2-1, -(lastY/innerHeight)*2+1);
+  const dir = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera).sub(camera.position).normalize();
+  const delta = goal.radius - nr;
+  goal.t.addScaledVector(dir, delta*0.6 * (f < 1 ? 1 : 1));
+  goal.radius = nr;
+}
+const modelCenter = new THREE.Vector3(); let lastX = innerWidth/2, lastY = innerHeight/2, modelSize = 50;
+addEventListener("pointermove", e => { lastX = e.clientX; lastY = e.clientY; });
+
+const el = renderer.domElement;
+el.addEventListener("contextmenu", e => e.preventDefault());
+el.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
+el.addEventListener("wheel", e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.12 : 1/1.12); }, { passive:false });
+const pts = new Map(); let last = null;
+el.addEventListener("pointerdown", e => {
+  el.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, e); last = e;
+});
+el.addEventListener("pointermove", e => {
+  if (!pts.has(e.pointerId)) return;
+  const prev = pts.get(e.pointerId);
+  const dx = e.clientX - prev.clientX, dy = e.clientY - prev.clientY;
+  if (pts.size === 1) {
+    if (e.pointerType === "mouse") {
+      if (e.buttons & 4) { (e.ctrlKey ? rotate : pan)(dx, dy); }   // middle button
+      else if (e.buttons & 1) rotate(dx, dy);                       // left button
+      else if (e.buttons & 2) pan(dx, dy);                          // right button
+    } else rotate(dx, dy);
+  } else if (pts.size === 2) {
+    const other = [...pts.values()].find(p => p.pointerId !== e.pointerId);
+    const d0 = Math.hypot(prev.clientX-other.clientX, prev.clientY-other.clientY);
+    const d1 = Math.hypot(e.clientX-other.clientX, e.clientY-other.clientY);
+    if (d1 > 0) zoom(d0/d1);
+    pan(dx/2, dy/2);
+  }
+  pts.set(e.pointerId, e);
+});
+const end = e => pts.delete(e.pointerId);
+el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+
+document.querySelectorAll("button[data-v]").forEach(b => b.onclick = () => {
+  const v = b.dataset.v;
+  if (v === "iso")   { theta = -Math.PI/4; phi = Math.PI/3; }
+  if (v === "top")   { theta = 0; phi = 0.001; }
+  if (v === "front") { theta = -Math.PI/2; phi = Math.PI/2; }
+  if (v === "side")  { theta = 0; phi = Math.PI/2; }
+  updateCamera();
+});
+
+const goal = { theta, phi, radius, t: target.clone() };
+(function loop(){
+  requestAnimationFrame(loop);
+  const a = 0.35;   // smoothing (higher = less floaty)
+  let dTheta = goal.theta - theta;
+  theta += dTheta*a; phi += (goal.phi-phi)*a; radius += (goal.radius-radius)*a; target.lerp(goal.t, a);
+  if (Math.abs(goal.theta-theta)<1e-4 && Math.abs(goal.phi-phi)<1e-4 && Math.abs(goal.radius-radius)<1e-3*radius) { theta=goal.theta; phi=goal.phi; radius=goal.radius; target.copy(goal.t); }
+  applyCamera();
+  renderer.render(scene, camera);
+  if (window.__comp) window.__comp();
+})();
+updateCamera();
+
+// ---- IFC loading ----
+const ifc = new WebIFC.IfcAPI();
+ifc.SetWasmPath("https://unpkg.com/web-ifc@0.0.57/");
+await ifc.Init();
+
+let model = null;
+// remember last file in the browser (IndexedDB) so refresh keeps it
+const DB = () => new Promise((res, rej) => { const r = indexedDB.open("ifcviewer", 1); r.onupgradeneeded = () => r.result.createObjectStore("f"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function saveFile(name, buf) { const db = await DB(); db.transaction("f","readwrite").objectStore("f").put({ name, buf }, "last"); }
+async function loadSaved() { const db = await DB(); return new Promise(res => { const q = db.transaction("f").objectStore("f").get("last"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); }
+document.getElementById("file").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  try { await saveFile(f.name, buf); } catch (err) {}
+  showModel(f.name, buf);
+});
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+loadSaved().then(s => { if (s) showModel(s.name, s.buf); });
+async function showModel(name, buf) {
+  msg.textContent = "Loading..."; clearSel(); closeProps(); await new Promise(r => setTimeout(r, 40));
+  if (model) scene.remove(model);
+  elems = []; byName.clear(); edgeGroup.clear(); edgeToken++; const geoCache = new Map();
+  model = new THREE.Group();
+  lastBuf = buf; const id = ifc.OpenModel(new Uint8Array(buf));
+  ifc.StreamAllMeshes(id, mesh => {
+    const list = mesh.geometries;
+    const et = ifc.GetLineType(id, mesh.expressID); let nm = "?"; let desc = ""; try { const ln = ifc.GetLine(id, mesh.expressID); nm = ln.Name.value || "?"; desc = (ln.Description && ln.Description.value) || ""; } catch (e) {} let vol = 0; const eb = new THREE.Box3();
+    for (let i = 0; i < list.size(); i++) {
+      const pg = list.get(i);
+      const gid = pg.geometryExpressID;
+      let cg = geoCache.get(gid);
+      if (!cg) {
+        const g = ifc.GetGeometry(id, gid);
+        const v = ifc.GetVertexArray(g.GetVertexData(), g.GetVertexDataSize());
+        const idx = ifc.GetIndexArray(g.GetIndexData(), g.GetIndexDataSize());
+        const lv = meshVolLocal(v, idx);
+        let bg0 = new THREE.BufferGeometry();
+        const buf0 = new THREE.InterleavedBuffer(v, 6);
+        bg0.setAttribute("position", new THREE.InterleavedBufferAttribute(buf0, 3, 0));
+        bg0.setIndex(new THREE.BufferAttribute(idx, 1));
+        // weld shared vertices and smooth normals only across gentle angles (pipes round, plates sharp)
+        bg0 = BufferGeometryUtils.mergeVertices(bg0, 1e-4);
+        bg0.deleteAttribute("normal");
+        bg0 = toCreasedNormals(bg0, Math.PI/6);
+        bg0.computeBoundingBox();
+        g.delete();
+        cg = { bg: bg0, lv }; geoCache.set(gid, cg);
+      }
+      const bg = cg.bg;
+      vol += Math.abs(cg.lv) * Math.abs(new THREE.Matrix4().fromArray(pg.flatTransformation).determinant());
+      const c = pg.color;
+      const mat = new THREE.MeshStandardMaterial({ roughness:0.6, metalness:0.0, envMapIntensity:0.25,
+        color: new THREE.Color(c.x, c.y, c.z), side: THREE.DoubleSide,
+        transparent: c.w < 1, opacity: c.w });
+      const m = new THREE.Mesh(bg, mat); m.userData.eid = mesh.expressID; m.userData.orig = new THREE.Color(c.x, c.y, c.z);
+      m.castShadow = true; m.receiveShadow = true;
+      if (false) {
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(bg, 30), new THREE.LineBasicMaterial({ color:0x222222, transparent:true, opacity:0.10 }));
+        m.add(edges);
+      }
+      m.applyMatrix4(new THREE.Matrix4().fromArray(pg.flatTransformation));
+      model.add(m);
+      (byName.get(nm) || byName.set(nm, []).get(nm)).push(m);
+      m.geometry.computeBoundingBox(); eb.union(m.geometry.boundingBox.clone().applyMatrix4(m.matrix));
+    }
+    if (!eb.isEmpty()) elems.push({ type: et, box: eb, id: mesh.expressID, name: nm, desc, vol });
+  });
+  ifc.CloseModel(id);
+  // no rotation: this model is already Y-up when loaded
+  scene.add(model);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3()).length();
+  box.getCenter(target);
+  modelSize = size; modelCenter.copy(target); radius = size*1.0; theta = -Math.PI/4; phi = Math.PI/3;
+  sun.position.copy(target).add(new THREE.Vector3(size*0.6, size*1.0, size*0.5)); sun.target.position.copy(target);
+  if (window.ground) scene.remove(window.ground);
+  window.ground = new THREE.Mesh(new THREE.PlaneGeometry(size*6, size*6), new THREE.MeshStandardMaterial({ color:0xaeaa9f, roughness:1.0, metalness:0 }));
+  window.ground.rotation.x = -Math.PI/2; window.ground.position.set(target.x, box.min.y - 0.01, target.z); window.ground.receiveShadow = true; scene.add(window.ground);
+  scene.fog = new THREE.Fog(0xaeaa9f, size*1.8, size*4.5);
+  const sc = sun.shadow.camera; sc.left = sc.bottom = -size*1.2; sc.right = sc.top = size*1.2; sc.near = 0; sc.far = size*3; sc.updateProjectionMatrix();
+  camera.near = size/1000; camera.far = size*50; camera.updateProjectionMatrix();
+  renderer.shadowMap.needsUpdate = true;
+  updateCamera();
+  msg.textContent = name + " | wheel = zoom, Ctrl + middle button = rotate, middle button = pan";
+  buildParts(); decorateParts(); applySurfaces(); applySteelLook(); applyPalette(); setBg($("bg").value); hideWelds();
+  setTimeout(() => { analyze(); $("connInfo").textContent += window.surfTxt || ""; }, 60);
+  if ($("edges").checked) setTimeout(addEdges, 120);
+}
+
+// ---- Walkthrough: keyframes, orbit, recording ----
+const keys = [];
+let anim = null, recorder = null, chunks = [];
+const $ = id => document.getElementById(id);
+const ease = x => x*x*(3-2*x);
+$("kAdd").onclick = () => { keys.push({ theta:goal.theta, phi:goal.phi, radius:goal.radius, t:goal.t.clone() }); $("kCount").textContent = keys.length + " points"; };
+$("kClear").onclick = () => { keys.length = 0; $("kCount").textContent = "0 points"; };
+function catmull(a, b, c, d, u) { return 0.5*((2*b) + (-a+c)*u + (2*a-5*b+4*c-d)*u*u + (-a+3*b-3*c+d)*u*u*u); }
+function pathState(s) {   // s in 0..1
+  const n = keys.length, f = s*(n-1), i = Math.min(Math.floor(f), n-2), u = f - i;
+  const k = j => keys[Math.max(0, Math.min(n-1, j))];
+  const c = (p) => catmull(k(i-1)[p], k(i)[p], k(i+1)[p], k(i+2)[p], u);
+  return { theta:c("theta"), phi:c("phi"), radius:c("radius"),
+    t:new THREE.Vector3(c2("x"), c2("y"), c2("z")) };
+  function c2(ax) { return catmull(k(i-1).t[ax], k(i).t[ax], k(i+1).t[ax], k(i+2).t[ax], u); }
+}
+function play(mode, record) {
+  if (mode === "path" && keys.length < 2) { alert("Add at least 2 points first (move the camera, click Add point)."); return; }
+  stopAnim();
+  const dur = Math.max(3, +$("dur").value) * 1000;
+  const start = { theta:theta, phi:phi, radius:radius, t:target.clone() };
+  const orbitPhi = Math.PI/3.2, orbitR = modelSize*0.9, center = target.clone();
+  if (record) {
+    const stream = renderer.domElement.captureStream(60);
+    const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
+    const mime = types.find(t => MediaRecorder.isTypeSupported(t));
+    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 40e6 });
+    chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: mime });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "walkthrough." + (mime.includes("mp4") ? "mp4" : "webm");
+      a.click();
+    };
+    recorder.start();
+  }
+  const t0 = performance.now();
+  anim = { running:true };
+  (function step() {
+    if (!anim || !anim.running) return;
+    const s = Math.min((performance.now() - t0) / dur, 1);
+    const e = mode === "orbit" ? s : ease(s);
+    let st;
+    if (mode === "orbit") st = { theta: start.theta - e*Math.PI*2, phi: orbitPhi, radius: orbitR, t: center };
+    else st = pathState(e);
+    // drive the camera directly (no smoothing) for a clean video
+    goal.theta = theta = st.theta; goal.phi = phi = st.phi; goal.radius = radius = st.radius;
+    goal.t.copy(st.t); target.copy(st.t);
+    if (s >= 1) stopAnim(); else requestAnimationFrame(step);
+  })();
+}
+function stopAnim() {
+  if (typeof stopComp === "function" && !(recorder && recorder.state !== "inactive")) { try { stopComp(); } catch(e) {} }
+  if (anim) anim.running = false; anim = null;
+  if (recorder && recorder.state !== "inactive") recorder.stop();
+  recorder = null;
+}
+$("playPath").onclick = () => play("path", false);
+$("playOrbit").onclick = () => play("orbit", false);
+$("recPath").onclick = () => play("path", true);
+$("recOrbit").onclick = () => play("orbit", true);
+$("stop").onclick = stopAnim;
+// any manual input cancels playback
+el.addEventListener("pointerdown", () => { if (anim && !recorder) stopAnim(); });
+// ---- Connection detection + automatic video ----
+const byName = new Map();
+let elems = [];
+let shots = [];
+const T = WebIFC;
+const isStruct = ty => ty===T.IFCCOLUMN || ty===T.IFCBEAM || ty===T.IFCMEMBER || ty===T.IFCPLATE;
+const hl = new THREE.Box3Helper(new THREE.Box3(), 0xff7a00); hl.visible = false; scene.add(hl);
+function analyze() {
+  shots = [];
+  const bolts = elems.filter(e => e.type === T.IFCMECHANICALFASTENER);
+  const structure = elems.filter(e => isStruct(e.type));
+  if (!bolts.length) { $("connInfo").textContent = "no bolts found in this IFC"; return; }
+  const d = modelSize*0.012;
+  const n = bolts.length, par = [...Array(n).keys()];
+  const find = x => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+  const cen = bolts.map(b => b.box.getCenter(new THREE.Vector3()));
+  const grid = new Map(), key = (x,y,z) => x+","+y+","+z;
+  cen.forEach((c,i) => { const k = key(Math.floor(c.x/d),Math.floor(c.y/d),Math.floor(c.z/d)); (grid.get(k) || grid.set(k,[]).get(k)).push(i); });
+  cen.forEach((c,i) => {
+    const gx=Math.floor(c.x/d), gy=Math.floor(c.y/d), gz=Math.floor(c.z/d);
+    for (let x=gx-1;x<=gx+1;x++) for (let y=gy-1;y<=gy+1;y++) for (let z=gz-1;z<=gz+1;z++)
+      for (const j of (grid.get(key(x,y,z)) || [])) if (j>i && cen[j].distanceTo(c) < d) par[find(j)] = find(i);
+  });
+  const groups = new Map();
+  for (let i=0;i<n;i++) { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(i); }
+  const cols = structure.filter(e => e.type===T.IFCCOLUMN);
+  const baseY = cols.length ? Math.min(...cols.map(c => c.box.min.y)) : 0;
+  const topY = cols.length ? Math.max(...cols.map(c => c.box.max.y)) : 0;
+  const clusters = [];
+  for (const idxs of groups.values()) {
+    const box = new THREE.Box3(); idxs.forEach(i => box.union(bolts[i].box));
+    const ex = box.clone().expandByScalar(d*0.5);
+    const near = structure.filter(e => e.box.intersectsBox(ex));
+    const cnt = ty => near.filter(e => e.type===ty).length;
+    const c = cnt(T.IFCCOLUMN), b = cnt(T.IFCBEAM), m = cnt(T.IFCMEMBER), pl = cnt(T.IFCPLATE);
+    let label, w;
+    if (c && box.min.y < baseY + 0.06*(topY-baseY)) { label = "Column base plate"; w = 3; }
+    else if (c && b) { label = "Beam to column connection"; w = 3; }
+    else if (b >= 2) { label = "Beam splice / beam to beam"; w = 2; }
+    else if (m) { label = "Brace / secondary member connection"; w = 2; }
+    else { label = "Plate connection"; w = 1; }
+    clusters.push({ box, center: box.getCenter(new THREE.Vector3()), size: box.getSize(new THREE.Vector3()).length(),
+      sig: label + "|" + idxs.length + "|" + c + b + m + pl, bolts: idxs.length, label, score: idxs.length*w + (pl?2:0), ex });
+  }
+  clusters.sort((a,b) => b.score - a.score);
+  const chosen = [];
+  const far = c => chosen.every(o => o.center.distanceTo(c.center) > d*10);
+  for (const lab of ["Column base plate","Beam to column connection","Beam splice / beam to beam","Brace / secondary member connection","Plate connection"]) {
+    const c = clusters.find(x => x.label===lab && far(x) && !chosen.some(o => o.sig===x.sig)); if (c) chosen.push(c);
+  }
+  // one example per typical connection (same type, bolt count and parts): drop repeats
+  const seen = new Set(chosen.map(c => c.sig));
+  for (const c of clusters) { if (chosen.length >= 6) break; if (!seen.has(c.sig) && !chosen.includes(c) && far(c)) { chosen.push(c); seen.add(c.sig); } }
+  shots = chosen;
+  $("connInfo").textContent = clusters.length + " connections found, " + shots.length + " picked";
+  console.log("Connections", clusters.length, shots.map(s => s.label + " (" + s.bolts + " bolts)"));
+}
+
+// canvas that carries the 3D image plus text labels so recordings include them
+let compCanvas = null, compCtx = null, curLabel = "";
+function startComp() {
+  compCanvas = document.createElement("canvas");
+  compCanvas.width = renderer.domElement.width; compCanvas.height = renderer.domElement.height;
+  compCtx = compCanvas.getContext("2d");
+  window.__comp = () => {
+    const w = compCanvas.width, h = compCanvas.height;
+    compCtx.drawImage(renderer.domElement, 0, 0, w, h);
+    const s = h/1000;
+    compCtx.fillStyle = "rgba(20,20,20,0.55)"; compCtx.fillRect(0, 0, 420*s, 60*s);
+    compCtx.fillStyle = "#fff"; compCtx.font = "bold "+(26*s)+"px Arial"; compCtx.fillText("CivSteel  |  3D Walkthrough", 20*s, 40*s);
+    if (curLabel) {
+      compCtx.font = "bold "+(40*s)+"px Arial";
+      const tw = compCtx.measureText(curLabel).width;
+      compCtx.fillStyle = "rgba(20,20,20,0.6)"; compCtx.fillRect((w-tw)/2-30*s, h-130*s, tw+60*s, 80*s);
+      compCtx.fillStyle = "#ffb04a"; compCtx.fillText(curLabel, (w-tw)/2, h-75*s);
+    }
+  };
+}
+function stopComp() { window.__comp = null; compCanvas = null; curLabel = ""; hl.visible = false; }
+
+function autoVideo(record) {
+  if (!shots.length) { alert("Load an IFC with bolts first."); return; }
+  stopAnim();
+  // timeline of segments
+  const segs = [];
+  let cur = { theta: -Math.PI/4, phi: Math.PI/3, radius: modelSize*1.0, t: modelCenter.clone() };
+  const push = (to, dur, label, box) => { segs.push({ from: cur, to, dur: dur*1000, label, box }); cur = to; };
+  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: modelSize*0.9, t: modelCenter.clone() }, 9, "Overview", null);
+  for (const s of shots) {
+    const r = Math.max(s.size*2.6, modelSize*0.035);
+    const a0 = cur.theta - 0.0 + 0.6;
+    const start = { theta: a0, phi: Math.PI/3, radius: r, t: s.center.clone() };
+    const label = s.label + "  -  " + s.bolts + " bolts";
+    push(start, 3, label, s.ex);
+    push({ theta: a0 + Math.PI*0.9, phi: Math.PI/3.3, radius: r*0.85, t: s.center.clone() }, 4.5, label, s.ex);
+  }
+  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: modelSize*1.0, t: modelCenter.clone() }, 9, "Overview", null);
+
+  let rec = null;
+  if (record) {
+    startComp();
+    const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
+    const mime = types.find(x => MediaRecorder.isTypeSupported(x));
+    recorder = new MediaRecorder(compCanvas.captureStream(60), { mimeType: mime, videoBitsPerSecond: 40e6 });
+    chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(chunks, { type: mime }));
+      a.download = "auto-walkthrough." + (mime.includes("mp4") ? "mp4" : "webm"); a.click();
+      stopComp();
+    };
+    recorder.start();
+  } else startComp();
+  const t0 = performance.now();
+  anim = { running: true, auto: true };
+  const lerp = (a,b,u) => a + (b-a)*u;
+  (function step() {
+    if (!anim || !anim.running) return;
+    let el_ = performance.now() - t0, i = 0;
+    while (i < segs.length-1 && el_ > segs[i].dur) { el_ -= segs[i].dur; i++; }
+    const sg = segs[i], u = Math.min(el_ / sg.dur, 1), e = ease(u);
+    // fly-in segments ease; orbit segments are linear in angle for steady motion
+    const isOrbit = sg.label === (segs[i-1] && segs[i-1].label) || sg.label === "Overview";
+    const k = isOrbit ? u : e;
+    theta = goal.theta = lerp(sg.from.theta, sg.to.theta, k);
+    phi = goal.phi = lerp(sg.from.phi, sg.to.phi, k);
+    radius = goal.radius = lerp(sg.from.radius, sg.to.radius, e);
+    target.lerpVectors(sg.from.t, sg.to.t, e); goal.t.copy(target);
+    curLabel = sg.label === "Overview" ? "" : sg.label;
+    hl.visible = false;
+    if (i === segs.length-1 && u >= 1) { stopAnim(); if (!record) stopComp(); return; }
+    requestAnimationFrame(step);
+  })();
+}
+$("autoPlay").onclick = () => autoVideo(false);
+$("autoRec").onclick = () => autoVideo(true);
+// ---- Show / hide parts by name (e.g. untick things you do not want in the view) ----
+function buildParts() {
+  const box = $("parts"); box.style.display = "block";
+  box.innerHTML = "<b>Parts (untick to hide)</b><br>";
+  [...byName.entries()].sort((a,b) => b[1].length - a[1].length).forEach(([name, list]) => {
+    const l = document.createElement("label"); l.style.display = "block";
+    const c = document.createElement("input"); c.type = "checkbox"; c.checked = true;
+    c.onchange = () => { list.forEach(m => m.visible = c.checked); edgeGroup.children.forEach(e => { if (e.userData.list === list) e.visible = c.checked; }); renderer.shadowMap.needsUpdate = true; };
+    l.append(c, " " + name + " (" + list.length + ")"); box.append(l);
+  });
+}
+// ---- Automatic photos at 1350x1080 (no UI, no labels: raw renders) ----
+async function savePhotos() {
+  if (!elems.length) { alert("Load an IFC first."); return; }
+  stopAnim();
+  const W = 1350, H = 1080;
+  const oldRatio = renderer.getPixelRatio(), oldAspect = camera.aspect;
+  const oldW = renderer.domElement.clientWidth, oldH = renderer.domElement.clientHeight;
+  document.getElementById("top").style.visibility = "hidden";
+  document.getElementById("rec").style.visibility = "hidden";
+  document.getElementById("parts").style.visibility = "hidden"; document.getElementById("props").style.visibility = "hidden"; clearSel();
+  renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+  camera.aspect = W/H; camera.updateProjectionMatrix();
+  el.style.width = "100%"; el.style.height = "100%";
+  const saved = { theta, phi, radius, t: target.clone() };
+  const views = [
+    ["01-isometric", -Math.PI/4, Math.PI/3, modelSize*0.95, modelCenter],
+    ["02-iso-opposite", Math.PI*3/4, Math.PI/3, modelSize*0.95, modelCenter],
+    ["03-front", -Math.PI/2, Math.PI/2.1, modelSize*0.95, modelCenter],
+    ["04-side", 0, Math.PI/2.1, modelSize*0.95, modelCenter],
+    ["05-plan", 0, 0.001, modelSize*0.95, modelCenter],
+    ["06-low-angle", -Math.PI/3, Math.PI/2.4, modelSize*0.7, modelCenter],
+  ];
+  shots.forEach((s, i) => views.push([ "conn" + String(i+1).padStart(2,"0") + "-" + s.label.replace(/[^a-z0-9]+/gi,"-").toLowerCase(),
+    -Math.PI/4 + i*0.5, Math.PI/3, Math.max(s.size*2.6, modelSize*0.035), s.center ]));
+  for (const [name, th, ph, r, c] of views) {
+    theta = goal.theta = th; phi = goal.phi = ph; radius = goal.radius = r; target.copy(c); goal.t.copy(c);
+    applyCamera(); hl.visible = false;
+    renderer.render(scene, camera);
+    await new Promise(res => renderer.domElement.toBlob(b => {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name + ".png"; a.click(); res();
+    }, "image/png"));
+    await new Promise(r2 => setTimeout(r2, 400));   // let the browser accept each download
+  }
+  document.getElementById("top").style.visibility = "";
+  document.getElementById("rec").style.visibility = "";
+  document.getElementById("parts").style.visibility = ""; document.getElementById("props").style.visibility = "";
+  renderer.setPixelRatio(oldRatio); renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  theta = goal.theta = saved.theta; phi = goal.phi = saved.phi; radius = goal.radius = saved.radius; target.copy(saved.t); goal.t.copy(saved.t);
+}
+$("shots").onclick = savePhotos;
+// ---- Concrete and brick surfaces, chosen by part name ----
+const CONCRETE_WORDS = /concrete|footing|foundation|pedestal|slab|pier|grout|plinth|pad|beam ground|column base concrete/i;
+const BRICK_WORDS = /brick|masonry|wall|block/i;
+function makeTex(draw, size) {
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const g = c.getContext("2d"); draw(g, size);
+  const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+  tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8; return tx;
+}
+const concreteTex = makeTex((g, s) => {
+  g.fillStyle = "#b9b7b0"; g.fillRect(0,0,s,s);
+  for (let i = 0; i < 9000; i++) { const v = 150 + Math.random()*70|0; g.fillStyle = "rgba("+v+","+v+","+(v-4)+",0.35)"; g.fillRect(Math.random()*s, Math.random()*s, 1+Math.random()*3, 1+Math.random()*3); }
+  for (let i = 0; i < 120; i++) { g.fillStyle = "rgba(90,90,85,0.25)"; g.beginPath(); g.arc(Math.random()*s, Math.random()*s, Math.random()*2.2, 0, 7); g.fill(); }
+}, 512);
+const brickTex = makeTex((g, s) => {
+  g.fillStyle = "#c9c4b8"; g.fillRect(0,0,s,s);              // mortar
+  const rows = 8, cols = 4, bh = s/rows, bw = s/cols;
+  for (let r = 0; r < rows; r++) for (let c = -1; c < cols; c++) {
+    const x = c*bw + (r%2 ? bw/2 : 0) + 3, y = r*bh + 3;
+    const sh = 150 + Math.random()*40|0;
+    g.fillStyle = "rgb("+(sh+40)+","+(sh-35)+","+(sh-55)+")"; g.fillRect(x, y, bw-6, bh-6);
+    for (let i = 0; i < 60; i++) { g.fillStyle = "rgba(60,25,15,0.12)"; g.fillRect(x+Math.random()*(bw-6), y+Math.random()*(bh-6), 2, 2); }
+  }
+}, 512);
+function boxUV(geo, tile) {   // world-axis projection from the dominant normal
+  const pos = geo.attributes.position, nor = geo.attributes.normal, uv = new Float32Array(pos.count*2);
+  for (let i = 0; i < pos.count; i++) {
+    const nx = Math.abs(nor.getX(i)), ny = Math.abs(nor.getY(i)), nz = Math.abs(nor.getZ(i));
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    let u, v;
+    if (ny >= nx && ny >= nz) { u = x; v = z; } else if (nx >= nz) { u = z; v = y; } else { u = x; v = y; }
+    uv[i*2] = u/tile; uv[i*2+1] = v/tile;
+  }
+  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+}
+function applySurfaces() {
+  let nc = 0, nb = 0;
+  for (const [name, list] of byName) {
+    const kind = BRICK_WORDS.test(name) ? "brick" : CONCRETE_WORDS.test(name) ? "concrete" : null;
+    if (!kind) continue;
+    for (const m of list) {
+      m.geometry = m.geometry.clone();
+      boxUV(m.geometry, kind === "brick" ? modelSize*0.012 : modelSize*0.05);
+      m.material = new THREE.MeshStandardMaterial({ map: kind === "brick" ? brickTex : concreteTex, roughness: 0.95, metalness: 0 });
+      m.castShadow = true; m.receiveShadow = true;
+      kind === "brick" ? nb++ : nc++;
+    }
+  }
+  console.log("surfaces: concrete", nc, "brick", nb);
+  window.surfTxt = "  |  concrete parts: " + nc + ", brick parts: " + nb;
+}
+// ---- Background switch ----
+const BGS = {
+  warm:  { css:"linear-gradient(#b0aca1, #aca79d)", col:0xaeaa9f, ground:0xaeaa9f },
+  light: { css:"linear-gradient(#ffffff, #e9ecef)", col:0xeceff1, ground:0xe4e7ea },
+  dark:  { css:"linear-gradient(#34373b, #232528)", col:0x2a2c2f, ground:0x2a2c2f },
+  blue:  { css:"linear-gradient(#8fa3b8, #5f7790)", col:0x738aa2, ground:0x6f869e },
+};
+function gradTex(css) {
+  const m = css.match(/#[0-9a-f]{6}/gi), c = document.createElement("canvas"); c.width = 4; c.height = 512;
+  const g = c.getContext("2d"), gr = g.createLinearGradient(0,0,0,512); gr.addColorStop(0, m[0]); gr.addColorStop(1, m[1]);
+  g.fillStyle = gr; g.fillRect(0,0,4,512);
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
+}
+function setBg(k) {
+  const b = BGS[k]; document.body.style.background = b.css; scene.background = gradTex(b.css);   // real background so photos/videos are never transparent
+  if (scene.fog) scene.fog.color.setHex(b.col);
+  if (window.ground) window.ground.material.color.setHex(b.ground);
+  bgGround = b.ground; bgCol = b.col;
+}
+let bgGround = 0xaeaa9f, bgCol = 0xaeaa9f;
+$("bg").onchange = e => setBg(e.target.value);
+$("bg").value = "dark"; setBg("dark");
+// ---- Realistic painted-steel look: fine grain bump + roughness variation ----
+const steelBump = (() => {
+  const s = 512, c = document.createElement("canvas"); c.width = c.height = s;
+  const g = c.getContext("2d"); g.fillStyle = "#808080"; g.fillRect(0,0,s,s);
+  for (let i = 0; i < 40000; i++) { const v = 100 + Math.random()*60|0; g.fillStyle = "rgb("+v+","+v+","+v+")"; g.fillRect(Math.random()*s, Math.random()*s, 1, 1+Math.random()*2); }
+  for (let i = 0; i < 80; i++) { g.strokeStyle = "rgba(255,255,255,0.05)"; g.beginPath(); const y = Math.random()*s; g.moveTo(0,y); g.lineTo(s,y+Math.random()*6-3); g.stroke(); }
+  const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 8; return tx;
+})();
+function applySteelLook() {
+  for (const [name, list] of byName) {
+    if (CONCRETE_WORDS.test(name) || BRICK_WORDS.test(name)) continue;
+    const isBolt = /bolt|nut|washer|anchor/i.test(name);
+    for (const m of list) {
+      if (!m.material || m.material.map) continue;
+      const mat = m.material;
+      if (isBolt) mat.color.set(0xd9962a);
+      mat.roughness = isBolt ? 0.6 : 0.8; mat.metalness = isBolt ? 0.2 : 0.05;
+      mat.envMapIntensity = isBolt ? 0.9 : 0.45;
+    }
+  }
+}// ---- Tekla-style thin dark outlines (edge lines) for every part ----
+const edgeGroup = new THREE.Group(); scene.add(edgeGroup);
+let edgeToken = 0;
+const edgeCache = new WeakMap();
+async function addEdges() {
+  const tok = ++edgeToken; edgeGroup.clear();
+  const lm = new THREE.LineBasicMaterial({ color: 0x4a4540, transparent: true, opacity: 0.35 });
+  let t0 = performance.now();
+  const v3 = new THREE.Vector3();
+  for (const [name, list] of byName) {
+    const chunks = []; let total = 0;
+    for (const m of list) {
+      let arr = edgeCache.get(m.geometry);
+      if (!arr) { arr = new THREE.EdgesGeometry(m.geometry, 30).attributes.position.array; edgeCache.set(m.geometry, arr); }
+      const out = new Float32Array(arr.length);
+      m.updateMatrix();
+      for (let i = 0; i < arr.length; i += 3) { v3.set(arr[i], arr[i+1], arr[i+2]).applyMatrix4(m.matrix); out[i] = v3.x; out[i+1] = v3.y; out[i+2] = v3.z; }
+      chunks.push(out); total += out.length;
+      if (performance.now() - t0 > 14) { await new Promise(r => setTimeout(r, 0)); t0 = performance.now(); if (tok !== edgeToken) return; }
+    }
+    if (tok !== edgeToken || !chunks.length) continue;
+    const all = new Float32Array(total); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(all, 3));
+    const ls = new THREE.LineSegments(g, lm); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
+    edgeGroup.add(ls);
+  }
+}$("edges") && ($("edges").onchange = ev => { if (ev.target.checked) addEdges(); else { edgeToken++; edgeGroup.clear(); } });
+function hideWelds() { [...$("parts").querySelectorAll("label")].forEach(l => { if (/weld/i.test(l.textContent)) { const c = l.querySelector("input"); c.checked = false; c.onchange(); } }); }
+// ---- Excel report: part name, profile, length, weight ----
+let lastBuf = null;
+function meshVolLocal(v, idx) {
+  let s = 0;
+  for (let i = 0; i < idx.length; i += 3) {
+    const a = idx[i]*6, b = idx[i+1]*6, c = idx[i+2]*6;
+    const ax=v[a], ay=v[a+1], az=v[a+2], bx=v[b], by=v[b+1], bz=v[b+2], cx=v[c], cy=v[c+1], cz=v[c+2];
+    s += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6;
+  }
+  return s;
+}
+function meshVolume(v, idx, ft) {
+  let s = 0;
+  for (let i = 0; i < idx.length; i += 3) {
+    const a = idx[i]*6, b = idx[i+1]*6, c = idx[i+2]*6;
+    const ax=v[a], ay=v[a+1], az=v[a+2], bx=v[b], by=v[b+1], bz=v[b+2], cx=v[c], cy=v[c+1], cz=v[c+2];
+    s += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6;
+  }
+  const m = new THREE.Matrix4().fromArray(ft);
+  return Math.abs(s) * Math.abs(m.determinant());
+}
+$("report").onclick = async () => {
+  if (!elems.length || !lastBuf) { alert("Load an IFC first."); return; }
+  msg.textContent = "Building report...";
+  const XLSX = await import("https://esm.sh/xlsx@0.18.5");
+  const id = ifc.OpenModel(new Uint8Array(lastBuf));
+  const rows = [];
+  for (const e of elems) {
+    if (e.type === T.IFCMECHANICALFASTENER) continue;           // bolt assemblies listed separately below
+    let len = null, wt = null, wsrc = "";
+    try {
+      const sets = await ifc.properties.getPropertySets(id, e.id, true);
+      for (const s of sets || []) for (const p of (s.HasProperties || [])) {
+        const n = p.Name && p.Name.value, val = p.NominalValue && p.NominalValue.value;
+        if (n === "Length" && len == null && typeof val === "number") len = val;
+        if (n === "Weight" && wt == null && typeof val === "number") { wt = val; wsrc = "IFC"; }
+      }
+    } catch (err) {}
+    const sz = e.box.getSize(new THREE.Vector3());
+    if (len == null || len === 0) len = Math.max(sz.x, sz.y, sz.z);
+    if (wt == null || wt === 0) { wt = e.vol * 1e-9 * 7850; wsrc = "Calculated"; }
+    rows.push({ "Part name": e.name, "Profile": e.desc, "Length (mm)": +len.toFixed(1), "Weight (kg)": +wt.toFixed(2), "Weight source": wsrc });
+  }
+  const bolts = elems.filter(e => e.type === T.IFCMECHANICALFASTENER).length;
+  ifc.CloseModel(id);
+  const groups = new Map();
+  rows.forEach(r => { const k = r["Part name"] + "|" + r["Profile"]; const g = groups.get(k) || { "Part name": r["Part name"], "Profile": r["Profile"], "Qty": 0, "Total length (mm)": 0, "Total weight (kg)": 0 };
+    g["Qty"]++; g["Total length (mm)"] += r["Length (mm)"]; g["Total weight (kg)"] += r["Weight (kg)"]; groups.set(k, g); });
+  const summary = [...groups.values()].map(g => ({ ...g, "Total length (mm)": +g["Total length (mm)"].toFixed(1), "Total weight (kg)": +g["Total weight (kg)"].toFixed(2) }))
+    .sort((a,b) => b["Total weight (kg)"] - a["Total weight (kg)"]);
+  summary.push({ "Part name": "TOTAL (excluding " + bolts + " bolt assemblies)", "Qty": rows.length, "Total weight (kg)": +rows.reduce((s,r) => s + r["Weight (kg)"], 0).toFixed(2) });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Summary");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "All parts");
+  XLSX.writeFile(wb, "steel-report.xlsx");
+  msg.textContent = "Report saved: " + rows.length + " parts";
+};
+// ---- Click a part: highlight it and show its properties in the side panel ----
+let propId = null, selEid = null, selMeshes = [];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;" }[c]));
+const fmt = (n, d = 1) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
+function clearSel() {
+  selMeshes.forEach(m => { if (m.material && m.material.emissive) { m.material.emissive.setHex(0x000000); m.material.emissiveIntensity = 1; } });
+  selMeshes = []; selEid = null;
+}
+function closeProps() {
+  if (propId != null) { try { ifc.CloseModel(propId); } catch (e) {} propId = null; }
+  $("props").style.display = "none";
+}
+function pickAt(cx, cy) {
+  if (!model) return null;
+  const r = el.getBoundingClientRect();
+  const ndc = new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  const rc = new THREE.Raycaster(); rc.setFromCamera(ndc, camera);
+  const hits = rc.intersectObjects(model.children.filter(m => m.visible), false);
+  return hits.length ? hits[0].object : null;
+}
+async function selectPart(m) {
+  clearSel();
+  const eid = m.userData.eid; selEid = eid;
+  model.children.forEach(o => { if (o.userData.eid === eid) selMeshes.push(o); });
+  selMeshes.forEach(o => { o.material.emissive.setHex(0xf0a23b); o.material.emissiveIntensity = 0.55; });
+  const e = elems.find(x => x.id === eid); if (!e) return;
+  const panel = $("props"); panel.style.display = "block";
+  panel.innerHTML = '<div class="hint">Loading properties...</div>';
+  if (propId == null && lastBuf) propId = ifc.OpenModel(new Uint8Array(lastBuf));
+  let line = {}, typeName = "", psets = [];
+  try { line = ifc.GetLine(propId, eid) || {}; } catch (er) {}
+  try { typeName = ifc.GetNameFromTypeCode(e.type) || ""; } catch (er) {}
+  try { psets = await ifc.properties.getPropertySets(propId, eid, true) || []; } catch (er) {}
+  if (selEid !== eid) return;
+  let len = null, wt = null, wsrc = "";
+  const groups = [];
+  for (const s of psets) {
+    const rows = [];
+    for (const p of (s.HasProperties || [])) {
+      const n = p.Name && p.Name.value; const v = p.NominalValue ? p.NominalValue.value : null;
+      if (n == null || v == null) continue;
+      if (n === "Length" && len == null && typeof v === "number") len = v;
+      if (n === "Weight" && wt == null && typeof v === "number") { wt = v; wsrc = "IFC"; }
+      rows.push([n, typeof v === "number" ? fmt(v, 3) : v]);
+    }
+    if (rows.length) groups.push([(s.Name && s.Name.value) || "Properties", rows]);
+  }
+  const sz = e.box.getSize(new THREE.Vector3());
+  if (!len) len = Math.max(sz.x, sz.y, sz.z);
+  if (!wt) { wt = e.vol * 1e-9 * 7850; wsrc = "calculated"; }
+  const same = elems.filter(x => x.name === e.name && x.desc === e.desc).length;
+  const val = k => line[k] && line[k].value != null ? line[k].value : "";
+  const row = (a, b) => b === "" || b == null ? "" : `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+  let h = `<div class="ph"><div><div class="t">${esc(e.name)}</div><div class="s">${esc(e.desc || typeName)}</div></div><button id="propsClose" title="Close">&times;</button></div>`;
+  h += `<div class="big"><div><small>Length</small><b>${fmt(len)} mm</b></div><div><small>Weight${wsrc === "calculated" ? " (calc.)" : ""}</small><b>${fmt(wt, 2)} kg</b></div></div>`;
+  h += `<div class="sec"><h4>General</h4>${row("Name", e.name)}${row("Profile", e.desc)}${row("IFC type", typeName)}${row("Mark / tag", val("Tag"))}${row("Object type", val("ObjectType"))}${row("GUID", val("GlobalId"))}${row("Express ID", "#" + eid)}${row("Same part in model", same + " pcs")}</div>`;
+  h += `<div class="sec"><h4>Dimensions</h4>${row("Bounding box", fmt(sz.x,0) + " × " + fmt(sz.y,0) + " × " + fmt(sz.z,0) + " mm")}${row("Volume", fmt(e.vol / 1e6, 1) + " cm³")}${row("Weight source", wsrc)}</div>`;
+  groups.forEach(([n, rows]) => { h += `<div class="sec"><h4>${esc(n)}</h4>${rows.map(r => row(r[0], r[1])).join("")}</div>`; });
+  panel.innerHTML = h;
+  $("propsClose").onclick = () => { clearSel(); panel.style.display = "none"; };
+}
+let downAt = null;
+el.addEventListener("pointerdown", e => { downAt = e.button === 0 ? { x: e.clientX, y: e.clientY } : null; });
+el.addEventListener("pointerup", e => {
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) { downAt = null; return; }
+  downAt = null;
+  const m = pickAt(e.clientX, e.clientY);
+  if (m) selectPart(m); else { clearSel(); $("props").style.display = "none"; }
+});
+window.addEventListener("keydown", e => { if (e.key === "Escape") { clearSel(); $("props").style.display = "none"; } });
+// ---- Color palettes for social media (by part role) ----
+const PALETTES = {
+  premium: { purlin:0xf1f5f9, girt:0x5eead4, brace:0xf0605a, main:0x4a90e2, plate:0xf7c948, stiff:0x9cc8f5, other:0xcbd5e1, bolt:0xf59e42 },
+  gold:    { purlin:0x8da2b8, girt:0x4fb6c4, brace:0xe5645b, main:0xe2e8f0, plate:0xe8c15a, stiff:0x9fb3c8, other:0xb6c2d0, bolt:0xf08a4b },
+  vivid:   { purlin:0xffffff, girt:0x22d3ee, brace:0xef4444, main:0x3b82f6, plate:0xfacc15, stiff:0xa78bfa, other:0x94a3b8, bolt:0xfb923c },
+}; 
+function partRole(n) {
+  if (/purlin/i.test(n)) return "purlin";
+  if (/girt/i.test(n)) return "girt";
+  if (/brac|wall\s*(brac|rod|cable|x)|cable|tie\s*rod|flange\s*brace|f\.?\s*brace|fb\b|sag\s*rod|rod\s*brace|x-?brace/i.test(n)) return "brace";
+  if (/bolt|nut|washer|anchor|screw/i.test(n)) return "bolt";
+  if (/stiff/i.test(n)) return "stiff";
+  if (/plate|cleat|gusset|angle|bracket|doubler|shim|lug|pl\b/i.test(n)) return "plate";
+  if (/flange|web|beam|column|rafter|purlin|girt|brace|chord|truss|tube|pipe|hss|channel|^i$|^h$/i.test(n)) return "main";
+  return "other";
+}
+function applyPalette() {
+  const sel = $("pal").value, pal = PALETTES[sel];
+  for (const [name, list] of byName) {
+    const role = partRole(name);
+    for (const m of list) {
+      if (!m.material || m.material.map) continue;
+      if (!pal) m.material.color.copy(m.userData.orig);
+      else m.material.color.setHex(pal[role]);
+      m.material.needsUpdate = true;
+    }
+  }
+}
+$("pal").onchange = applyPalette;
+// ---- Parts panel: slide open/closed, lock, and filter ----
+let partsLocked = true, partsTimer = null;
+function decorateParts() {
+  const box = $("parts");
+  const labels = [...box.querySelectorAll("label")];
+  box.innerHTML = "";
+  const head = document.createElement("div"); head.className = "ph2";
+  head.innerHTML = '<b>Parts</b><button id="pAll" title="Show all">All</button><button id="pNone" title="Hide all">None</button><button id="pLock" class="on" title="Locked: panel stays open. Unlock: it slides away when you move off it.">&#128274;</button><button id="pHide" title="Hide panel">&#10094;</button>';
+  const fl = document.createElement("input"); fl.className = "fl"; fl.placeholder = "Filter parts...";
+  const list = document.createElement("div"); list.className = "plist"; labels.forEach(l => list.append(l));
+  const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "Parts"; tab.onclick = () => box.classList.remove("closed");
+  box.append(head, fl, list, tab);
+  fl.oninput = () => { const q = fl.value.toLowerCase(); labels.forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? "block" : "none"); };
+  const setAll = on => labels.forEach(l => { if (l.style.display === "none") return; const c = l.querySelector("input"); if (c.checked !== on) { c.checked = on; c.onchange(); } });
+  $("pAll").onclick = () => setAll(true); $("pNone").onclick = () => setAll(false);
+  $("pHide").onclick = () => box.classList.add("closed");
+  $("pLock").onclick = e => { partsLocked = !partsLocked; e.currentTarget.classList.toggle("on", partsLocked); e.currentTarget.innerHTML = partsLocked ? "&#128274;" : "&#128275;"; };
+  box.onmouseleave = () => { if (!partsLocked) partsTimer = setTimeout(() => box.classList.add("closed"), 1200); };
+  box.onmouseenter = () => clearTimeout(partsTimer);
+  box.classList.add("closed");
+}</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
