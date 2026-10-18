@@ -179,6 +179,7 @@ function zoom(f) {
   // zoom toward the point under the cursor; move the target so zooming never gets stuck at a minimum distance
   const nr = goal.radius * f;
   if (f < 1 && nr < modelSize*0.002) { return; }
+  if (f > 1 && nr > modelSize*4) { return; }   // keep the model from drifting out of sight
   const ndc = new THREE.Vector2((lastX/innerWidth)*2-1, -(lastY/innerHeight)*2+1);
   const dir = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera).sub(camera.position).normalize();
   const delta = goal.radius - nr;
@@ -320,7 +321,7 @@ async function showModel(name, buf) {
   if (window.ground) scene.remove(window.ground);
   window.ground = new THREE.Mesh(new THREE.PlaneGeometry(size*6, size*6), new THREE.MeshStandardMaterial({ color:0xaeaa9f, roughness:1.0, metalness:0 }));
   window.ground.rotation.x = -Math.PI/2; window.ground.position.set(target.x, box.min.y - 0.01, target.z); window.ground.receiveShadow = true; scene.add(window.ground);
-  scene.fog = new THREE.Fog(0xaeaa9f, size*1.8, size*4.5);
+  scene.fog = null;   // no depth fade: the model must stay fully visible when zoomed out
   const sc = sun.shadow.camera; sc.left = sc.bottom = -size*1.2; sc.right = sc.top = size*1.2; sc.near = 0; sc.far = size*3; sc.updateProjectionMatrix();
   camera.near = size/1000; camera.far = size*50; camera.updateProjectionMatrix();
   renderer.shadowMap.needsUpdate = true;
@@ -335,7 +336,7 @@ async function showModel(name, buf) {
 const keys = [];
 let anim = null, recorder = null, chunks = [];
 const $ = id => document.getElementById(id);
-const ease = x => x*x*(3-2*x);
+const ease = x => x*x*x*(x*(x*6-15)+10);   // smootherstep: gentle ease in/out
 $("kAdd").onclick = () => { keys.push({ theta:goal.theta, phi:goal.phi, radius:goal.radius, t:goal.t.clone() }); $("kCount").textContent = keys.length + " points"; };
 $("kClear").onclick = () => { keys.length = 0; $("kCount").textContent = "0 points"; };
 function catmull(a, b, c, d, u) { return 0.5*((2*b) + (-a+c)*u + (2*a-5*b+4*c-d)*u*u + (-a+3*b-3*c+d)*u*u*u); }
@@ -357,7 +358,7 @@ function play(mode, record) {
     const stream = renderer.domElement.captureStream(60);
     const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
     const mime = types.find(t => MediaRecorder.isTypeSupported(t));
-    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 40e6 });
+    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 24e6 });
     chunks = [];
     recorder.ondataavailable = e => chunks.push(e.data);
     recorder.onstop = () => {
@@ -455,27 +456,32 @@ function analyze() {
   console.log("Connections", clusters.length, shots.map(s => s.label + " (" + s.bolts + " bolts)"));
 }
 
-// canvas that carries the 3D image plus text labels so recordings include them
-let compCanvas = null, compCtx = null, curLabel = "";
+// recording canvas: clean 1920x1080 frames (3D render supersampled at pixelRatio 2, downscaled), no text/overlays
+let compCanvas = null, compCtx = null, recSaved = null;
+const REC_W = 1920, REC_H = 1080;
 function startComp() {
+  recSaved = { ratio: renderer.getPixelRatio(), aspect: camera.aspect, cw: el.style.width, ch: el.style.height };
+  ["top","rec","parts","props"].forEach(id => { const n = document.getElementById(id); if (n) n.style.visibility = "hidden"; });
+  clearSel();
+  renderer.setPixelRatio(2); renderer.setSize(REC_W, REC_H, false);
+  el.style.width = "100%"; el.style.height = "100%";
+  camera.aspect = REC_W/REC_H; camera.updateProjectionMatrix();
   compCanvas = document.createElement("canvas");
-  compCanvas.width = renderer.domElement.width; compCanvas.height = renderer.domElement.height;
+  compCanvas.width = REC_W; compCanvas.height = REC_H;
   compCtx = compCanvas.getContext("2d");
-  window.__comp = () => {
-    const w = compCanvas.width, h = compCanvas.height;
-    compCtx.drawImage(renderer.domElement, 0, 0, w, h);
-    const s = h/1000;
-    compCtx.fillStyle = "rgba(20,20,20,0.55)"; compCtx.fillRect(0, 0, 420*s, 60*s);
-    compCtx.fillStyle = "#fff"; compCtx.font = "bold "+(26*s)+"px Arial"; compCtx.fillText("CivSteel  |  3D Walkthrough", 20*s, 40*s);
-    if (curLabel) {
-      compCtx.font = "bold "+(40*s)+"px Arial";
-      const tw = compCtx.measureText(curLabel).width;
-      compCtx.fillStyle = "rgba(20,20,20,0.6)"; compCtx.fillRect((w-tw)/2-30*s, h-130*s, tw+60*s, 80*s);
-      compCtx.fillStyle = "#ffb04a"; compCtx.fillText(curLabel, (w-tw)/2, h-75*s);
-    }
-  };
+  compCtx.imageSmoothingEnabled = true; compCtx.imageSmoothingQuality = "high";
+  window.__comp = () => { compCtx.drawImage(renderer.domElement, 0, 0, REC_W, REC_H); };
 }
-function stopComp() { window.__comp = null; compCanvas = null; curLabel = ""; hl.visible = false; }
+function stopComp() {
+  window.__comp = null; compCanvas = null; hl.visible = false;
+  if (recSaved) {
+    ["top","rec","parts","props"].forEach(id => { const n = document.getElementById(id); if (n) n.style.visibility = ""; });
+    renderer.setPixelRatio(recSaved.ratio); renderer.setSize(innerWidth, innerHeight);
+    el.style.width = recSaved.cw; el.style.height = recSaved.ch;
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    recSaved = null;
+  }
+}
 
 function autoVideo(record) {
   if (!shots.length) { alert("Load an IFC with bolts first."); return; }
@@ -489,7 +495,7 @@ function autoVideo(record) {
     const r = Math.max(s.size*2.6, modelSize*0.035);
     const a0 = cur.theta - 0.0 + 0.6;
     const start = { theta: a0, phi: Math.PI/3, radius: r, t: s.center.clone() };
-    const label = s.label + "  -  " + s.bolts + " bolts";
+    const label = s.label;   // internal id only, never drawn
     push(start, 3, label, s.ex);
     push({ theta: a0 + Math.PI*0.9, phi: Math.PI/3.3, radius: r*0.85, t: s.center.clone() }, 4.5, label, s.ex);
   }
@@ -500,7 +506,7 @@ function autoVideo(record) {
     startComp();
     const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
     const mime = types.find(x => MediaRecorder.isTypeSupported(x));
-    recorder = new MediaRecorder(compCanvas.captureStream(60), { mimeType: mime, videoBitsPerSecond: 40e6 });
+    recorder = new MediaRecorder(compCanvas.captureStream(60), { mimeType: mime, videoBitsPerSecond: 24e6 });
     chunks = [];
     recorder.ondataavailable = e => chunks.push(e.data);
     recorder.onstop = () => {
@@ -510,7 +516,7 @@ function autoVideo(record) {
       stopComp();
     };
     recorder.start();
-  } else startComp();
+  }
   const t0 = performance.now();
   anim = { running: true, auto: true };
   const lerp = (a,b,u) => a + (b-a)*u;
@@ -526,9 +532,8 @@ function autoVideo(record) {
     phi = goal.phi = lerp(sg.from.phi, sg.to.phi, k);
     radius = goal.radius = lerp(sg.from.radius, sg.to.radius, e);
     target.lerpVectors(sg.from.t, sg.to.t, e); goal.t.copy(target);
-    curLabel = sg.label === "Overview" ? "" : sg.label;
-    hl.visible = false;
-    if (i === segs.length-1 && u >= 1) { stopAnim(); if (!record) stopComp(); return; }
+        hl.visible = false;
+    if (i === segs.length-1 && u >= 1) { stopAnim(); return; }
     requestAnimationFrame(step);
   })();
 }
@@ -682,6 +687,19 @@ function applySteelLook() {
 }// ---- Tekla-style thin dark outlines (edge lines) for every part ----
 const edgeGroup = new THREE.Group(); scene.add(edgeGroup);
 let edgeToken = 0;
+function keepLongEdges(geo, arr, longOnly) {
+  // flange outline = only the true silhouette edges of the plate (its bounding-box edges); lines inside a face are cut lines and are dropped
+  geo.computeBoundingBox(); const bb = geo.boundingBox, s = bb.getSize(new THREE.Vector3());
+  const eps = Math.max(1e-6, Math.min(s.x, s.y, s.z) * 0.05);
+  const lo = [bb.min.x, bb.min.y, bb.min.z], hi = [bb.max.x, bb.max.y, bb.max.z];
+  const onB = (x, y, z) => { const c = [x, y, z]; let n = 0; for (let k = 0; k < 3; k++) if (Math.abs(c[k]-lo[k]) < eps || Math.abs(c[k]-hi[k]) < eps) n++; return n >= 2; };
+  const keep = [];
+  for (let i = 0; i < arr.length; i += 6) {
+    if (longOnly) { const d = [arr[i+3]-arr[i], arr[i+4]-arr[i+1], arr[i+5]-arr[i+2]], L = Math.hypot(d[0], d[1], d[2]), ax = s.x >= s.y && s.x >= s.z ? 0 : (s.y >= s.z ? 1 : 2); if (!(L > 0 && Math.abs(d[ax]) / L > 0.95)) continue; }
+    if (onB(arr[i], arr[i+1], arr[i+2]) && onB(arr[i+3], arr[i+4], arr[i+5])) keep.push(arr[i], arr[i+1], arr[i+2], arr[i+3], arr[i+4], arr[i+5]);
+  }
+  return new Float32Array(keep);
+}
 const edgeCache = new WeakMap();
 async function addEdges() {
   const tok = ++edgeToken; edgeGroup.clear();
@@ -692,7 +710,15 @@ async function addEdges() {
     const chunks = []; let total = 0;
     for (const m of list) {
       let arr = edgeCache.get(m.geometry);
-      if (!arr) { arr = new THREE.EdgesGeometry(m.geometry, 30).attributes.position.array; edgeCache.set(m.geometry, arr); }
+      if (!arr) {
+        arr = new THREE.EdgesGeometry(m.geometry, 30).attributes.position.array;
+        { const NAMED = /sheet|cladd|panel|deck|liner|gutter|wall|roof|purlin|girt|flashing|trim/i.test(name);
+          m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new THREE.Vector3());
+          const plate = Math.min(sz.x, sz.y, sz.z) < 0.05 * Math.max(sz.x, sz.y, sz.z);
+          if (/^(flange|web)$/i.test(name) || NAMED || plate) arr = keepLongEdges(m.geometry, arr, /^web$/i.test(name) || NAMED);   // plates/panels: silhouette edges only, no seams/cut lines
+        }
+        edgeCache.set(m.geometry, arr);
+      }
       const out = new Float32Array(arr.length);
       m.updateMatrix();
       for (let i = 0; i < arr.length; i += 3) { v3.set(arr[i], arr[i+1], arr[i+2]).applyMatrix4(m.matrix); out[i] = v3.x; out[i+1] = v3.y; out[i+2] = v3.z; }
