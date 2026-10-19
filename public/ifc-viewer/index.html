@@ -710,6 +710,8 @@ function loadModel(buf) {
     let name = "?", desc = "";
     try { const ln = ifc.GetLine(id, eid); name = (ln.Name && ln.Name.value) || "?"; desc = (ln.Description && ln.Description.value) || ""; } catch (e) {}
     const kind = surfaceKind(type, name);
+    // bolt assemblies, plus nuts, washers and anchor bolts that Tekla exports as beams/columns/members
+    const bolt = type === T.IFCMECHANICALFASTENER || type === T.IFCFASTENER || partRole(name) === "bolt";
     const list = mesh.geometries, eb = new THREE.Box3();
     let vol = 0;
     for (let i = 0; i < list.size(); i++) {
@@ -724,7 +726,7 @@ function loadModel(buf) {
       if (Math.abs(Math.abs(det) - 1) > 1e-3) { geo = cg.bg.clone().applyMatrix4(mtx); geo.computeBoundingBox(); mtx.identity(); }
       const c = pg.color;
       const m = new THREE.Mesh(geo, PLACEHOLDER);
-      m.userData = { eid, kind, orig: new THREE.Color(c.x, c.y, c.z).getHex(), opacity: c.w };
+      m.userData = { eid, kind, bolt, orig: new THREE.Color(c.x, c.y, c.z).getHex(), opacity: c.w };
       m.castShadow = m.receiveShadow = true;
       m.applyMatrix4(mtx);
       model.add(m);
@@ -1086,15 +1088,14 @@ $("shots").onclick = savePhotos;
 
 // ---- Concrete and brick surfaces, chosen by IFC type and part name ----
 const STRONG_CONCRETE = /\b(concrete|footing|foundation|pedestal|grout|plinth|pier)\b/i;
-const BRICK_WORDS = /\b(brick|masonry|blockwork)\b/i;
+const BRICK_WORDS = /\b(brick|masonry|blockwork|block\s*wall)\b/i;
 const CONCRETE_TYPES = new Set([T.IFCFOOTING, T.IFCSLAB, T.IFCPILE]);
-const WALL_TYPES = new Set([T.IFCWALL, T.IFCWALLSTANDARDCASE]);
 function surfaceKind(type, name) {
   if (type === T.IFCMECHANICALFASTENER) return null;
   if (BRICK_WORDS.test(name)) return "brick";
   if (STRONG_CONCRETE.test(name)) return "concrete";
   if (partRole(name) !== "other") return null;   // "WALL BRACE", "WALL GIRT" etc. are steel, not masonry
-  if (WALL_TYPES.has(type)) return "brick";
+  // brick only when the name says so: IFC walls are also used for wall sheeting and cladding, which stay plain
   if (CONCRETE_TYPES.has(type) || /\b(slab|pad)\b/i.test(name)) return "concrete";
   return null;
 }
@@ -1370,13 +1371,16 @@ function partRole(n) {
   if (/flange|web|beam|column|rafter|chord|truss|tube|pipe|hss|channel|^i$|^h$/i.test(n)) return "main";
   return "other";
 }
+// every bolt, nut and washer is one solid matte red in all colour schemes (no sheen, no metal look)
+const boltMat = new THREE.MeshStandardMaterial({ color: 0xc8202a, roughness: 1, metalness: 0, envMapIntensity: 0.1,
+  side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
 function applyPalette() {
   const pal = PALETTES[$("pal").value];
   for (const [name, list] of byName) {
     const role = partRole(name);
     for (const m of list) {
       const u = m.userData;
-      setMat(m, u.kind ? masonryMat[u.kind] : getMat(pal ? pal[role] : u.orig, u.opacity, role === "bolt"));
+      setMat(m, u.bolt ? boltMat : u.kind ? masonryMat[u.kind] : getMat(pal ? pal[role] : u.orig, u.opacity, false));
     }
   }
   invalidate();
