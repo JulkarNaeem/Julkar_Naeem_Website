@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -7,69 +7,137 @@
 <meta name="description" content="Free in-browser 3D IFC viewer for steel detailing models. Your file stays on your device.">
 <link rel="icon" href="/ifc-viewer/favicon.svg" type="image/svg+xml">
 <style>
-  :root { --bg:rgba(24,26,29,.82); --line:rgba(255,255,255,.10); --text:#e8eaed; --muted:#9aa0a6; --accent:#f0a23b; }
+  :root {
+    --panel:rgba(22,24,27,.86); --panel-solid:#17191c; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+    --text:#e8eaed; --muted:#9aa0a6; --faint:#6f757c; --accent:#f0a23b; --accent-hi:#f6b55c; --accent-ink:#1d1306; --danger:#ef4444;
+    --r:12px; --h:34px;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:#2a2c2f; font-family:Inter,"Segoe UI",system-ui,Arial,sans-serif; color:var(--text); overflow:hidden; }
+  body { margin:0; background:#2a2c2f; font:13px/1.4 Inter,"Segoe UI",system-ui,Arial,sans-serif; color:var(--text); overflow:hidden; -webkit-font-smoothing:antialiased; }
   canvas { display:block; }
-  .panel { position:absolute; z-index:1; background:var(--bg); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,.35); font-size:13px; }
-  button, select, input[type=number] { font:inherit; color:var(--text); background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:8px; padding:6px 11px; cursor:pointer; transition:background .15s, border-color .15s; }
-  button:hover, select:hover { background:rgba(255,255,255,.14); }
-  button:active { background:var(--accent); color:#111; border-color:var(--accent); }
+  [hidden] { display:none !important; }
+  svg.i { width:16px; height:16px; flex:none; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .panel { position:absolute; z-index:2; background:var(--panel); backdrop-filter:blur(14px) saturate(1.2); -webkit-backdrop-filter:blur(14px) saturate(1.2); border:1px solid var(--line); border-radius:var(--r); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+
+  /* ---- controls ---- */
+  button, .btn, select, input[type=number] { text-decoration:none; font:inherit; color:var(--text); background-color:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; height:var(--h); padding:0 12px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; white-space:nowrap; transition:background-color .15s, border-color .15s, color .15s; }
+  button:hover, .btn:hover, select:hover { background-color:rgba(255,255,255,.12); border-color:var(--line2); }
+  button:active, .btn:active { transform:translateY(1px); }
+  button:focus-visible, .btn:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .primary { background-color:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
+  .primary:hover { background-color:var(--accent-hi); border-color:var(--accent-hi); }
+  .ghost { background-color:transparent; border-color:transparent; color:var(--muted); padding:0 9px; }
+  .ghost:hover { color:var(--text); }
+  .rec-ico { color:var(--danger); }
+  select { appearance:none; -webkit-appearance:none; padding-right:28px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239aa0a6' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
   select option { color:#111; }
-  input[type=number] { cursor:text; width:56px; }
-  input[type=checkbox] { accent-color:var(--accent); }
-  input[type=file] { color:var(--muted); font-size:12px; max-width:210px; }
-  input[type=file]::file-selector-button { font:inherit; color:#111; background:var(--accent); border:0; border-radius:8px; padding:6px 12px; margin-right:8px; cursor:pointer; font-weight:600; }
-  #top { top:14px; left:14px; right:14px; display:flex; align-items:center; gap:14px; padding:8px 14px; flex-wrap:wrap; }
-  #brand { display:flex; align-items:center; gap:9px; font-weight:700; font-size:16px; letter-spacing:.3px; padding-right:14px; border-right:1px solid var(--line); }
-  #brand img { height:40px; width:auto; display:block; border-radius:8px; }
-  #brand span b { color:var(--accent); }
-  .grp { display:flex; align-items:center; gap:6px; }
-  .grp label { display:flex; align-items:center; gap:6px; color:var(--muted); }
-  #back { color:var(--muted); text-decoration:none; font-size:12px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; }
-  #back:hover { color:var(--accent); border-color:var(--accent); }
-  #msg { margin-left:auto; color:var(--muted); font-size:12px; }
-  #parts { top:78px; left:14px; width:240px; padding:12px 14px; max-height:calc(100vh - 210px); overflow:auto; display:none; font-size:12px; line-height:1.7; }
-  #parts b { display:block; margin-bottom:6px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; font-size:11px; }
-  #parts label { color:var(--text); cursor:pointer; }
-  #rec { bottom:14px; left:14px; right:14px; padding:12px 18px; display:flex; align-items:stretch; gap:0; flex-wrap:wrap; }
-  #rec .fsec { display:flex; flex-direction:column; gap:8px; padding:0 20px; border-right:1px solid var(--line); justify-content:center; }
-  #rec .fsec:first-child { padding-left:0; }
-  #rec .fsec.out { border-right:0; margin-left:auto; padding-right:0; align-items:flex-end; }
-  #rec .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  #rec .title { color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.8px; font-size:11px; }
-  #rec .dim { color:var(--muted); }
-  #rec .out .row button { padding:8px 14px; }
-  #kCount, #connInfo { color:var(--muted); font-size:12px; }
-  .primary { background:var(--accent) !important; color:#111 !important; border-color:var(--accent) !important; font-weight:600; }
+  input[type=number] { width:56px; padding:0 8px; cursor:text; }
+  #file { display:none; }
+  #file:disabled + .btn, body.busy #empty .btn { opacity:.5; pointer-events:none; }
+  .switch { display:inline-flex; align-items:center; gap:8px; color:var(--muted); cursor:pointer; user-select:none; }
+  .switch:hover { color:var(--text); }
+  .switch input { appearance:none; -webkit-appearance:none; width:30px; height:18px; margin:0; border-radius:9px; background:rgba(255,255,255,.18); position:relative; cursor:pointer; transition:background .15s; }
+  .switch input::after { content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; transition:transform .15s; }
+  .switch input:checked { background:var(--accent); }
+  .switch input:checked::after { transform:translateX(12px); }
+  .rec-sw input:checked { background:var(--danger); }
+  .rec-sw:has(input:checked) { color:var(--text); }
+  kbd { font:inherit; font-size:10.5px; padding:0 5px; border:1px solid var(--line2); border-bottom-width:2px; border-radius:4px; color:var(--muted); }
+
+  /* ---- top bar ---- */
+  #top { top:12px; left:12px; right:12px; height:56px; display:flex; align-items:center; gap:12px; padding:0 12px 0 14px; }
+  #brand img { height:30px; width:auto; display:block; }
+  .sep { width:1px; height:26px; background:var(--line); flex:none; }
+  #msg { color:var(--muted); font-size:12.5px; min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .seg { display:inline-flex; padding:3px; gap:2px; background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:10px; }
+  .seg button { height:28px; border:0; background-color:transparent; color:var(--muted); padding:0 12px; border-radius:7px; }
+  .seg button:hover { color:var(--text); background-color:rgba(255,255,255,.1); }
+  #views { margin-left:auto; }
+  .disp { display:flex; align-items:center; gap:8px; margin-left:auto; }
+
+  /* ---- bottom dock ---- */
+  #rec { left:50%; bottom:12px; transform:translateX(-50%); width:max-content; max-width:calc(100% - 24px); padding:10px 12px 8px; display:flex; flex-direction:column; gap:8px; }
+  #rec .groups { display:flex; gap:10px; align-items:stretch; flex-wrap:wrap; justify-content:center; }
+  .grp2 { display:flex; flex-direction:column; gap:6px; }
+  .grp2 .ttl { font-size:10.5px; font-weight:600; letter-spacing:.9px; text-transform:uppercase; color:var(--faint); padding-left:2px; }
+  .grp2 .row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .vsep { width:1px; background:var(--line); margin:0 2px; }
+  .chip { color:var(--muted); font-size:12px; padding:0 4px; font-variant-numeric:tabular-nums; }
+  .dur { display:inline-flex; align-items:center; gap:5px; color:var(--muted); }
+  #rec .foot { display:flex; justify-content:space-between; gap:24px; font-size:11.5px; color:var(--faint); border-top:1px solid var(--line); padding:7px 2px 0; }
+  #connInfo { color:var(--muted); }
+  .hints { display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* ---- start screen, loading, notices ---- */
+  #empty { position:absolute; inset:0; display:grid; place-items:center; z-index:1; pointer-events:none; }
+  #empty .card { pointer-events:auto; width:min(440px, calc(100% - 32px)); padding:34px 30px 28px; text-align:center; border:1.5px dashed rgba(255,255,255,.2); border-radius:18px; background:rgba(22,24,27,.6); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); transition:border-color .15s, background .15s; }
+  #empty .ico { width:54px; height:54px; margin:0 auto 14px; border-radius:15px; display:grid; place-items:center; background:rgba(240,162,59,.13); color:var(--accent); }
+  #empty .ico svg.i { width:26px; height:26px; }
+  #empty h2 { margin:0 0 6px; font-size:19px; font-weight:650; }
+  #empty p { margin:0 0 20px; color:var(--muted); }
+  #empty .btn { height:38px; padding:0 18px; }
+  #empty small { display:block; margin-top:16px; color:var(--faint); }
+  body.dragging #empty .card { border-color:var(--accent); background:rgba(240,162,59,.10); }
+  #loading { left:50%; top:50%; transform:translate(-50%,-50%); z-index:5; display:flex; align-items:center; gap:12px; padding:14px 20px; font-weight:500; }
+  .spin { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,.2); border-top-color:var(--accent); animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #toast { left:50%; bottom:140px; transform:translateX(-50%); z-index:6; padding:9px 16px; max-width:calc(100% - 32px); }
+  #recPill { top:12px; left:50%; transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:10px; padding:5px 5px 5px 14px; font-weight:600; font-variant-numeric:tabular-nums; }
+  #recPill .dot { width:9px; height:9px; border-radius:50%; background:var(--danger); animation:pulse 1.2s ease-in-out infinite; }
+  #recPill button { height:28px; }
+  @keyframes pulse { 50% { opacity:.3; } }
+
+  /* ---- properties panel ---- */
   ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); border-radius:8px; }
-  #props { top:78px; right:14px; width:320px; max-height:calc(100vh - 210px); overflow:auto; display:none; padding:0; }
-  #props .ph { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:rgba(24,26,29,.95); border-radius:12px 12px 0 0; }
+  #props { top:80px; right:12px; width:320px; max-height:calc(100vh - 240px); overflow:auto; display:none; padding:0; }
+  #props .ph { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel-solid); border-radius:var(--r) var(--r) 0 0; }
   #props .ph .t { font-size:15px; font-weight:700; line-height:1.3; word-break:break-word; }
   #props .ph .s { color:var(--accent); font-size:12px; margin-top:2px; }
-  #props .ph button { margin-left:auto; padding:2px 9px; font-size:16px; line-height:1.2; }
+  #props .ph button { margin-left:auto; height:28px; padding:0 9px; font-size:16px; }
   #props .sec { padding:10px 16px 12px; border-bottom:1px solid var(--line); }
   #props .sec:last-child { border-bottom:0; }
-  #props .sec h4 { margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); font-weight:600; }
+  #props .sec h4 { margin:0 0 6px; font-size:10.5px; text-transform:uppercase; letter-spacing:.9px; color:var(--faint); font-weight:600; }
   #props .r { display:flex; justify-content:space-between; gap:12px; padding:3px 0; font-size:12.5px; }
   #props .r span:first-child { color:var(--muted); flex:0 0 auto; }
   #props .r span:last-child { text-align:right; word-break:break-word; }
   #props .big { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line); }
-  #props .big div { background:rgba(255,255,255,.06); border-radius:10px; padding:8px 10px; }
+  #props .big div { background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:10px; padding:8px 10px; }
   #props .big small { display:block; color:var(--muted); font-size:11px; }
-  #props .big b { font-size:15px; }
-  #props .hint { padding:14px 16px; color:var(--muted); font-size:12px; }
-  #parts { overflow:visible !important; padding:0 !important; transition:transform .35s cubic-bezier(.2,.8,.2,1); }
-  #parts.closed { transform:translateX(-100%); }
-  #parts .ph2 { display:flex; align-items:center; gap:8px; padding:10px 12px 6px; }
-  #parts .ph2 b { margin:0; flex:1; }
-  #parts .ph2 button { padding:3px 8px; font-size:12px; }
-  #parts .ph2 button.on { background:var(--accent); color:#111; border-color:var(--accent); }
-  #parts .fl { display:block; width:calc(100% - 24px); margin:0 12px 8px; padding:6px 10px; font:inherit; font-size:12px; color:var(--text); background:rgba(255,255,255,.07); border:1px solid var(--line); border-radius:8px; outline:none; }
+  #props .big b { font-size:16px; font-variant-numeric:tabular-nums; }
+
+  /* ---- parts panel ---- */
+  #parts { top:80px; left:12px; width:250px; padding:0; display:none; font-size:12px; line-height:1.7; transition:transform .35s cubic-bezier(.2,.8,.2,1); }
+  #parts.closed { transform:translateX(calc(-100% - 12px)); }
+  #parts label { color:var(--text); cursor:pointer; border-radius:6px; padding:1px 4px; }
+  #parts label:hover { background:rgba(255,255,255,.06); }
+  #parts .ph2 { display:flex; align-items:center; gap:6px; padding:10px 12px 8px; }
+  #parts .ph2 b { flex:1; color:var(--faint); font-weight:600; text-transform:uppercase; letter-spacing:.9px; font-size:10.5px; }
+  #parts .ph2 button { height:26px; padding:0 8px; font-size:12px; }
+  #parts .ph2 button.on { background-color:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  #parts .fl { display:block; width:calc(100% - 24px); margin:0 12px 8px; height:32px; padding:0 10px; font:inherit; font-size:12px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; outline:none; }
   #parts .fl:focus { border-color:var(--accent); }
-  #parts .plist { max-height:calc(100vh - 340px); overflow:auto; padding:0 12px 12px; }
-  #parts .tab { position:absolute; left:100%; top:10px; width:34px; padding:10px 0; border-radius:0 10px 10px 0; background:var(--bg); border:1px solid var(--line); border-left:0; color:var(--text); cursor:pointer; writing-mode:vertical-rl; text-align:center; font-size:12px; letter-spacing:.5px; backdrop-filter:blur(12px); }
+  #parts .plist { max-height:calc(100vh - 360px); overflow:auto; padding:0 8px 12px; }
+  #parts .tab { position:absolute; left:calc(100% + 12px); top:10px; width:30px; padding:12px 0; border-radius:0 10px 10px 0; background:var(--panel); border:1px solid var(--line); border-left:0; color:var(--muted); cursor:pointer; writing-mode:vertical-rl; text-align:center; font-size:11px; font-weight:600; letter-spacing:.9px; text-transform:uppercase; backdrop-filter:blur(12px); }
+  #parts:not(.closed) .tab { display:none; }
   #parts .tab:hover { color:var(--accent); }
+
+  /* ---- narrow screens ---- */
+  @media (max-width:1240px) { .hints { display:none; } }
+  @media (max-width:1100px) { #rec .lbl.opt { display:none; } }
+  @media (max-width:980px) { #msg, #top .sep { display:none; } }
+  @media (max-width:760px) { #rec .lbl { display:none; } .disp .switch { font-size:0; gap:0; } }
+  @media (max-width:720px) {
+    #top { height:auto; flex-wrap:wrap; padding:8px 10px; row-gap:8px; }
+    #views { margin-left:0; } .disp { margin-left:0; }
+    #rec { left:12px; right:12px; transform:none; width:auto; padding:10px 12px 8px; }
+    #rec .groups { flex-direction:column; align-items:stretch; gap:8px; }
+    .vsep { display:none; }
+    .grp2 { flex-direction:row; align-items:center; gap:10px; }
+    .grp2 .ttl { width:74px; flex:none; }
+    #parts, #props, #toast { top:160px; bottom:auto; }
+    #props { width:calc(100% - 24px); max-height:calc(100vh - 420px); }
+    #parts .plist { max-height:calc(100vh - 500px); }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -79,85 +147,191 @@
 } }
 </script>
 </head>
-<body>
+<body class="busy">
 <div id="top" class="panel">
-  <div id="brand">
-    <img src="/ifc-viewer/logo-full.svg" alt="CivSteel">
+  <div id="brand"><img src="/ifc-viewer/logo-full.svg" alt="CivSteel"></div>
+  <span class="sep"></span>
+  <input type="file" id="file" accept=".ifc" disabled>
+  <label class="btn primary" for="file" title="Open an IFC file (or drag one onto the window)">
+    <svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Open IFC
+  </label>
+  <span id="msg">No model loaded</span>
+  <div id="views" class="seg" role="group" aria-label="Camera view">
+    <button data-v="iso" title="Isometric view">3D</button><button data-v="top" title="Plan view">Top</button><button data-v="front" title="Front elevation">Front</button><button data-v="side" title="Side elevation">Side</button><button data-v="fit" title="Fit the whole model in the current view (F)"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
-  <div class="grp"><input type="file" id="file" accept=".ifc"></div>
-  <div class="grp">
-    <button data-v="iso">3D</button><button data-v="top">Top</button><button data-v="front">Front</button><button data-v="side">Side</button>
+  <div class="disp">
+    <label class="switch" title="Show part outlines"><input type="checkbox" id="edges" checked> Outlines</label>
+    <select id="pal" title="Colour scheme"><option value="premium" selected>Premium blue</option><option value="gold">Silver &amp; gold</option><option value="vivid">Vivid</option><option value="orig">Original colors</option></select>
+    <label class="switch" title="Ambient occlusion: soft contact shading in joints and under members"><input type="checkbox" id="ao" checked> AO</label>
+    <select id="bg" title="Background"><option value="dark" selected>Studio dark</option><option value="light">Studio light</option><option value="warm">Warm concrete</option><option value="blue">Steel blue</option><option value="sky">Daylight sky</option></select>
   </div>
-  <div class="grp">
-    <label><input type="checkbox" id="edges" checked> Outlines</label>
-    <select id="pal"><option value="premium" selected>Premium blue</option><option value="gold">Silver &amp; gold</option><option value="vivid">Vivid</option><option value="orig">Original colors</option></select>
-    <select id="bg"><option value="light">Light gray</option><option value="warm">Warm gray</option><option value="dark" selected>Dark charcoal</option><option value="blue">Blue-gray</option></select>
-  </div>
-  <a id="back" href="/" title="Back to julkarnaeem.com">&larr; Website</a>
-  <span id="msg">Choose an IFC file</span>
+  <a id="back" class="btn ghost" href="/" title="Back to julkarnaeem.com">&larr; Website</a>
 </div>
+
+<div id="empty">
+  <div class="card">
+    <div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></div>
+    <h2>Open an IFC model</h2>
+    <p>Drag and drop an .ifc file anywhere on this window, or choose one from your computer.</p>
+    <label class="btn primary" for="file">Choose IFC file</label>
+    <small>Files open locally in your browser and are not uploaded.</small>
+  </div>
+</div>
+
 <div id="parts" class="panel"></div>
 <div id="props" class="panel"></div>
+
 <div id="rec" class="panel">
-  <div class="fsec">
-    <span class="title">Walkthrough</span>
-    <div class="row">
-      <button id="kAdd">+ Add point</button><button id="kClear">Clear</button><span id="kCount">0 points</span>
-      <span class="dim">Duration</span><input id="dur" type="number" value="20" min="3" max="300"><span class="dim">s</span>
-      <button id="playPath">Play path</button><button id="playOrbit">Play orbit</button>
-      <button id="recPath">Record path</button><button id="recOrbit">Record orbit</button><button id="stop">Stop</button>
+  <div class="groups">
+    <div class="grp2">
+      <span class="ttl">Camera path</span>
+      <div class="row">
+        <button id="kAdd" title="Add the current view as a path point"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Add point</span></button>
+        <span id="kCount" class="chip">0 points</span>
+        <button id="kClear" class="ghost" title="Remove all path points"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
+      </div>
+    </div>
+    <span class="vsep"></span>
+    <div class="grp2">
+      <span class="ttl">Playback</span>
+      <div class="row">
+        <label class="dur" title="Length of the path / orbit playback in seconds"><input id="dur" type="number" value="20" min="3" max="300"> s</label>
+        <button id="playPath" title="Play the camera path"><svg class="i" viewBox="0 0 24 24"><path d="M4 18c4 0 4-12 8-12s4 12 8 12"/></svg><span class="lbl">Path</span></button>
+        <button id="playOrbit" title="Play a 360° orbit"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="4"/><circle cx="12" cy="12" r="1.5"/></svg><span class="lbl">Orbit</span></button>
+        <label class="switch rec-sw" title="When on, Path and Orbit are recorded as 1920×1080 video"><input type="checkbox" id="recMode"> Record</label>
+        <button id="stop" class="ghost" title="Stop (Esc)"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+      </div>
+    </div>
+    <span class="vsep"></span>
+    <div class="grp2">
+      <span class="ttl">Export</span>
+      <div class="row">
+        <button id="autoPlay" title="Preview the automatic tour of the connections"><svg class="i" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg><span class="lbl opt">Preview tour</span></button>
+        <button id="autoRec" class="primary" title="Record the automatic tour as 1920×1080 video"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg><span class="lbl">Record tour</span></button>
+        <button id="shots" title="Save LinkedIn photos, 1350×1080"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lbl opt">Photos</span></button>
+        <button id="report" title="Download the steel weight report (.xlsx)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/></svg><span class="lbl opt">Report</span></button>
+      </div>
     </div>
   </div>
-  <div class="fsec out">
-    <span class="title">Outputs</span>
-    <div class="row">
-      <button id="autoPlay">&#9654; Preview auto video</button>
-      <button id="autoRec" class="primary">&#9679; Record video</button>
-      <button id="shots">&#128247; LinkedIn photos 1350&times;1080</button>
-      <button id="report">&#128202; Report (.xlsx)</button>
-    </div>
-    <span id="connInfo">load an IFC first</span>
+  <div class="foot">
+    <span id="connInfo">Load an IFC to find connections</span>
+    <span class="hints"><span><kbd>Wheel</kbd> zoom</span><span><kbd>Left</kbd> rotate</span><span><kbd>Right</kbd> / <kbd>Middle</kbd> pan</span><span><kbd>Click</kbd> part info</span><span><kbd>F</kbd> fit</span><span><kbd>Esc</kbd> stop · clear</span></span>
   </div>
-</div><script type="module">
+</div>
+
+<div id="loading" class="panel" hidden><span class="spin"></span><span id="loadTxt">Opening…</span></div>
+<div id="toast" class="panel" role="status" hidden></div>
+<div id="recPill" class="panel" hidden><span class="dot"></span>Recording <span id="recTime">0:00</span><button id="recStop" title="Stop recording (Esc)">Stop</button></div>
+<script type="module">
 import * as THREE from "three";
 import * as WebIFC from "web-ifc";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
-import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeVertices, toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
-const msg = document.getElementById("msg");
+const $ = id => document.getElementById(id);
+const msg = $("msg");
+const T = WebIFC;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let toastTimer = null;
+function toast(text, ms = 3500) {   // short notice above the bottom dock
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+}
+
+// ---- Shared model state ----
+let model = null, modelID = null, loading = false;
+let elems = [];                  // one entry per IFC element: { type, box, id, name, desc, vol, kind }
+const byName = new Map();        // part name -> meshes
+let shots = [];                  // connections picked for the auto video / photos
+let modelSize = 50;
+let unitToMm = 1000;             // web-ifc normally returns metres; models that come through in mm are detected on load
+const modelCenter = new THREE.Vector3();
+let ground = null;
+
+// ---- Renderer, lights ----
 const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100000);
-const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:"high-performance" });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio * 1.5, 2.5));   // supersampling for sharp edges
+const FOV_3D = 40, FOV_ELEV = 12;   // perspective for 3D views; near-orthographic telephoto for plan and elevations
+const camera = new THREE.PerspectiveCamera(FOV_3D, innerWidth/innerHeight, 0.1, 100000);
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:"high-performance" });
+const VIEW_RATIO = Math.min(devicePixelRatio * 1.5, 2);   // supersampling for sharp edges, capped so 4K screens stay fast
+renderer.setPixelRatio(VIEW_RATIO);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping; renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
-{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.1; }
-scene.add(new THREE.HemisphereLight(0xffffff, 0xffffff, 1.9));
-const sun = new THREE.DirectionalLight(0xffffff, 2.8);
+const el = renderer.domElement;
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.2; pm.dispose(); }
+// lighting: cool sky / warm ground bounce, one strong key light that casts shadows, a soft fill and a rim from behind
+const hemi = new THREE.HemisphereLight(0xe9f0fa, 0x4d463d, 1.25);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff6ea, 3.0);
 sun.castShadow = true;
-sun.shadow.mapSize.set(8192, 8192); sun.shadow.normalBias = 0.02;
-sun.shadow.bias = -0.0005;
+const shadowSize = Math.min(4096, renderer.capabilities.maxTextureSize);   // 8192² used ~256 MB of GPU memory
+sun.shadow.mapSize.set(shadowSize, shadowSize);
+sun.shadow.bias = -0.0003;
 scene.add(sun, sun.target);
-const fill = new THREE.DirectionalLight(0xffffff, 0.8);
-fill.position.set(-50, 30, -50);
-scene.add(fill);
-addEventListener("resize", () => {
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+const fill = new THREE.DirectionalLight(0xdbe6f5, 0.75);
+const rim = new THREE.DirectionalLight(0xffffff, 0.55);
+scene.add(fill, fill.target, rim, rim.target);
+
+// post-processing: multisampled render target (keeps edges smooth), ambient occlusion, then colour output
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: 4 }));
+composer.addPass(new RenderPass(scene, camera));
+const aoPass = new GTAOPass(scene, camera, innerWidth, innerHeight);
+aoPass.output = GTAOPass.OUTPUT.Default;
+aoPass.blendIntensity = 0.9;
+// replacement for the pass's stock normal shader: double-sided (IFC faces wind both ways) and guarded against
+// zero-length normals, which came out as NaN and punched black holes in the occlusion
+aoPass.normalMaterial.dispose();
+aoPass.normalMaterial = new THREE.ShaderMaterial({
+  vertexShader: "varying vec3 vN; void main() { vN = normalMatrix * normal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+  fragmentShader: "varying vec3 vN; void main() { vec3 n = gl_FrontFacing ? vN : -vN; float l = length(n); n = l > 1e-6 ? n / l : vec3(0.0, 0.0, 1.0); gl_FragColor = vec4(n * 0.5 + 0.5, 1.0); }",
+  side: THREE.DoubleSide,
 });
-renderer.setSize(innerWidth, innerHeight);
+composer.addPass(aoPass);
+composer.addPass(new OutputPass());
+// the AO pass draws everything solid into its depth/normal buffer: leave out the outlines and see-through parts
+// (glazing, or parts the IFC marks nearly invisible), or they would cast dark occlusion where nothing is drawn
+{
+  const ro = aoPass.renderOverride.bind(aoPass);
+  aoPass.renderOverride = (...a) => {
+    const v = edgeGroup.visible, hidden = [];
+    edgeGroup.visible = false;
+    if (model) for (const m of model.children) if (m.visible && m.material.transparent) { m.visible = false; hidden.push(m); }
+    ro(...a);
+    edgeGroup.visible = v; hidden.forEach(m => { m.visible = true; });
+  };
+}
+let aoOn = true;
+// AO costs a second pass over every part, so it is drawn on still frames only (and on photos); moving frames skip it
+function draw(withAO = true) { if (withAO && aoOn && model) composer.render(); else renderer.render(scene, camera); }
+function setRenderSize(w, h, ratio, updateStyle = true) {   // one place that keeps renderer, composer and AO buffers in step
+  renderer.setPixelRatio(ratio); renderer.setSize(w, h, updateStyle);
+  composer.setPixelRatio(ratio); composer.setSize(w, h);
+}
+setRenderSize(innerWidth, innerHeight, VIEW_RATIO);
+
+// render only when something changed (camera moved, or invalidate() was called)
+let dirty = true, comp = null, capturing = false;
+const invalidate = () => { dirty = true; };
+addEventListener("resize", () => {
+  if (capturing) return;   // a photo/video capture owns the canvas size until it finishes
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  setRenderSize(innerWidth, innerHeight, VIEW_RATIO); invalidate();
+});
 
 // ---- Own simple camera controls (Tekla style) ----
 // wheel = zoom, Ctrl + middle button = rotate, middle button (or Shift + middle) = pan
 // left button drag = rotate too (for trackpads); touch: 1 finger rotate, 2 fingers pan/zoom
 const target = new THREE.Vector3();
 let theta = -Math.PI/4, phi = Math.PI/3, radius = 50;   // phi: 0 = looking straight down
-let g = { theta:null, phi:null, radius:null, tx:0, ty:0, tz:0 };
+const goal = { theta, phi, radius, t: target.clone(), fov: FOV_3D };
+let lastX = innerWidth/2, lastY = innerHeight/2;
 function applyCamera() {
   phi = Math.min(Math.max(phi, 0.001), Math.PI - 0.001);
   radius = Math.max(radius, modelSize*0.002);
@@ -168,8 +342,19 @@ function applyCamera() {
   camera.lookAt(target);
 }
 function updateCamera() { goal.theta = theta; goal.phi = phi; goal.radius = radius; goal.t.copy(target); }
-function rotate(dx, dy) { goal.theta -= dx*0.006; goal.phi -= dy*0.006; goal.phi = Math.min(Math.max(goal.phi, 0.001), Math.PI-0.001); }
+function setCameraNow(st) {
+  theta = goal.theta = st.theta; phi = goal.phi = st.phi; radius = goal.radius = st.radius; target.copy(st.t); goal.t.copy(st.t);
+  if (st.fov && st.fov !== camera.fov) setFovNow(st.fov);
+}
+function rotate(dx, dy) {
+  if (goal.fov !== FOV_3D) {   // leaving a plan/elevation: back to normal perspective, same apparent size
+    goal.radius *= Math.tan(goal.fov*Math.PI/360) / Math.tan(FOV_3D*Math.PI/360); goal.fov = FOV_3D;
+  }
+  goal.theta -= dx*0.006; goal.phi -= dy*0.006; goal.phi = Math.min(Math.max(goal.phi, 0.001), Math.PI-0.001);
+}
+function setFovNow(f) { goal.fov = camera.fov = f; camera.updateProjectionMatrix(); }
 function pan(dx, dy) {
+  camera.updateMatrixWorld();
   const k = goal.radius * 2*Math.tan(camera.fov*Math.PI/360) / innerHeight;
   const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
   const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
@@ -178,25 +363,23 @@ function pan(dx, dy) {
 function zoom(f) {
   // zoom toward the point under the cursor; move the target so zooming never gets stuck at a minimum distance
   const nr = goal.radius * f;
-  if (f < 1 && nr < modelSize*0.002) { return; }
-  if (f > 1 && nr > modelSize*4) { return; }   // keep the model from drifting out of sight
+  if (f < 1 && nr < modelSize*0.002) return;
+  if (f > 1 && nr > modelSize*4) return;   // keep the model from drifting out of sight
   const ndc = new THREE.Vector2((lastX/innerWidth)*2-1, -(lastY/innerHeight)*2+1);
   const dir = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera).sub(camera.position).normalize();
-  const delta = goal.radius - nr;
-  goal.t.addScaledVector(dir, delta*0.6 * (f < 1 ? 1 : 1));
+  goal.t.addScaledVector(dir, (goal.radius - nr)*0.6);
   goal.radius = nr;
 }
-const modelCenter = new THREE.Vector3(); let lastX = innerWidth/2, lastY = innerHeight/2, modelSize = 50;
 addEventListener("pointermove", e => { lastX = e.clientX; lastY = e.clientY; });
 
-const el = renderer.domElement;
 el.addEventListener("contextmenu", e => e.preventDefault());
 el.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
 el.addEventListener("wheel", e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.12 : 1/1.12); }, { passive:false });
-const pts = new Map(); let last = null;
+const pts = new Map();
 el.addEventListener("pointerdown", e => {
   el.setPointerCapture(e.pointerId);
-  pts.set(e.pointerId, e); last = e;
+  pts.set(e.pointerId, e);
+  if (anim && !recorder) stopAnim();   // any manual input cancels playback
 });
 el.addEventListener("pointermove", e => {
   if (!pts.has(e.pointerId)) return;
@@ -220,196 +403,401 @@ el.addEventListener("pointermove", e => {
 const end = e => pts.delete(e.pointerId);
 el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
 
+// ---- Fit to view: camera distance and target that show the whole model for a given direction ----
+const modelBox = new THREE.Box3();
+const fitCam = new THREE.PerspectiveCamera();
+function viewInsets() {   // screen area covered by the top bar and the dock, in px
+  const top = $("top").getBoundingClientRect(), rec = $("rec").getBoundingClientRect();
+  return { top: top.bottom + 16, bottom: innerHeight - rec.top + 16, left: 16, right: 16 };
+}
+function placeCam(cam, th, ph, r, t) {
+  cam.position.set(t.x + r*Math.sin(ph)*Math.sin(th), t.y + r*Math.cos(ph), t.z + r*Math.sin(ph)*Math.cos(th));
+  cam.lookAt(t); cam.updateMatrixWorld();
+}
+// opts.aspect: frame width/height; opts.insets: px hidden at each screen edge (on-screen views only);
+// opts.center: false keeps the target on the model centre (orbits) instead of centring the picture
+function fitView(th, ph, opts = {}) {
+  const aspect = opts.insets ? innerWidth/innerHeight : (opts.aspect || camera.aspect);
+  const ins = opts.insets, m = 0.94;   // keep a 6% margin
+  let wx0 = -1, wx1 = 1, wy0 = -1, wy1 = 1;   // usable window in normalized screen coordinates
+  if (ins) { wx0 = -1 + 2*ins.left/innerWidth; wx1 = 1 - 2*ins.right/innerWidth; wy0 = -1 + 2*ins.bottom/innerHeight; wy1 = 1 - 2*ins.top/innerHeight; }
+  const wcx = (wx0+wx1)/2, wcy = (wy0+wy1)/2, whx = (wx1-wx0)/2*m, why = (wy1-wy0)/2*m;
+  const b = modelBox, c = b.getCenter(new THREE.Vector3());
+  placeCam(fitCam, th, ph, modelSize, c);   // only the orientation is used
+  const R = new THREE.Vector3().setFromMatrixColumn(fitCam.matrixWorld, 0), U = new THREE.Vector3().setFromMatrixColumn(fitCam.matrixWorld, 1);
+  const F = new THREE.Vector3().setFromMatrixColumn(fitCam.matrixWorld, 2).negate();   // view direction
+  // corners in view axes relative to the centre: x right, y up, z depth beyond the target
+  const pts = [0,1,2,3,4,5,6,7].map(i => {
+    const p = new THREE.Vector3(i&1 ? b.max.x : b.min.x, i&2 ? b.max.y : b.min.y, i&4 ? b.max.z : b.min.z).sub(c);
+    return { x: p.dot(R), y: p.dot(U), z: p.dot(F) };
+  });
+  // a corner at depth D+z is on screen when its offset lies within (D+z)·tan·[window edges]: linear in D and the target shift,
+  // so the smallest D and the matching shift can be solved exactly per axis
+  const tanV = Math.tan((opts.fov || camera.fov)*Math.PI/360), tanH = tanV*aspect;
+  const axis = (key, tan, lo, hi) => {
+    const a0 = tan*lo, a1 = tan*hi;
+    let D = 0;
+    if (opts.center === false) {   // target fixed on the model centre (orbits)
+      for (const p of pts) D = Math.max(D, p[key]/a1 - p.z, p[key]/a0 - p.z);
+      return { D, s: () => 0 };
+    }
+    for (const p of pts) for (const q of pts) D = Math.max(D, (p[key] - q[key] - p.z*a1 + q.z*a0) / (a1 - a0));
+    return { D, s: D2 => {   // centre of the allowed shift range at distance D2
+      let lo2 = -Infinity, hi2 = Infinity;
+      for (const p of pts) { lo2 = Math.max(lo2, p[key] - (D2 + p.z)*a1); hi2 = Math.min(hi2, p[key] - (D2 + p.z)*a0); }
+      return (lo2 + hi2) / 2;
+    } };
+  };
+  const ax = axis("x", tanH, wcx - whx, wcx + whx), ay = axis("y", tanV, wcy - why, wcy + why);
+  const nearest = Math.max(...pts.map(p => -p.z));   // the camera must stay in front of the whole model
+  const D = Math.max(ax.D, ay.D, nearest + modelSize*0.05, modelSize*0.02);
+  const t = c.clone().addScaledVector(R, ax.s(D)).addScaledVector(U, ay.s(D));
+  return { radius: D, t };
+}
+function orbitFit(ph, opts = {}) {   // one radius that keeps the model in frame all the way round an orbit
+  let r = 0;
+  for (let i = 0; i < 16; i++) r = Math.max(r, fitView(i/16*Math.PI*2, ph, { ...opts, center: false }).radius);
+  return r;
+}
+// each button cycles round the model when clicked again: 4 iso corners, front/back, both sides, plan turned 90°
+const P = Math.PI;
+const VIEWS = {
+  iso:   { fov: FOV_3D,   list: [["Isometric", -P/4, P/3], ["Isometric", P/4, P/3], ["Isometric", 3*P/4, P/3], ["Isometric", -3*P/4, P/3]] },
+  top:   { fov: FOV_ELEV, list: [["Plan", 0, 0.001], ["Plan (turned)", P/2, 0.001]] },
+  front: { fov: FOV_ELEV, list: [["Front elevation", -P/2, P/2], ["Back elevation", P/2, P/2]] },
+  side:  { fov: FOV_ELEV, list: [["Right elevation", 0, P/2], ["Left elevation", P, P/2]] },
+};
+let lastView = null, viewStep = 0;
+function flyTo(th, ph, fov = goal.fov) {   // smooth move to a view that fits the model on screen
+  if (!model) return;
+  const f = fitView(th, ph, { insets: viewInsets(), fov });
+  goal.theta = th + P*2*Math.round((goal.theta - th)/(P*2));   // nearest equivalent angle: no extra spins
+  goal.phi = ph; goal.radius = f.radius; goal.t.copy(f.t); goal.fov = fov;
+}
 document.querySelectorAll("button[data-v]").forEach(b => b.onclick = () => {
   const v = b.dataset.v;
-  if (v === "iso")   { theta = -Math.PI/4; phi = Math.PI/3; }
-  if (v === "top")   { theta = 0; phi = 0.001; }
-  if (v === "front") { theta = -Math.PI/2; phi = Math.PI/2; }
-  if (v === "side")  { theta = 0; phi = Math.PI/2; }
-  updateCamera();
+  if (v === "fit") { flyTo(goal.theta, goal.phi); return; }
+  viewStep = v === lastView ? viewStep + 1 : 0; lastView = v;
+  const view = VIEWS[v], [name, th, ph] = view.list[viewStep % view.list.length];
+  flyTo(th, ph, view.fov);
+  if (model) toast(name, 1200);
 });
+addEventListener("keydown", e => { if ((e.key === "f" || e.key === "F") && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) flyTo(goal.theta, goal.phi); });
 
-const goal = { theta, phi, radius, t: target.clone() };
+const lastPos = new THREE.Vector3(NaN, NaN, NaN), lastTgt = lastPos.clone();
+let aoPending = false;
+let anim = null, recorder = null;   // walkthrough playback / video recording state (see Walkthrough)
 (function loop(){
   requestAnimationFrame(loop);
   const a = 0.35;   // smoothing (higher = less floaty)
-  let dTheta = goal.theta - theta;
-  theta += dTheta*a; phi += (goal.phi-phi)*a; radius += (goal.radius-radius)*a; target.lerp(goal.t, a);
+  theta += (goal.theta-theta)*a; phi += (goal.phi-phi)*a; radius += (goal.radius-radius)*a; target.lerp(goal.t, a);
   if (Math.abs(goal.theta-theta)<1e-4 && Math.abs(goal.phi-phi)<1e-4 && Math.abs(goal.radius-radius)<1e-3*radius) { theta=goal.theta; phi=goal.phi; radius=goal.radius; target.copy(goal.t); }
+  let moved = false;
+  if (camera.fov !== goal.fov) {
+    camera.fov = Math.abs(goal.fov - camera.fov) < 0.05 ? goal.fov : camera.fov + (goal.fov - camera.fov)*a;
+    camera.updateProjectionMatrix(); moved = true;
+  }
   applyCamera();
-  renderer.render(scene, camera);
-  if (window.__comp) window.__comp();
+  moved = moved || !camera.position.equals(lastPos) || !target.equals(lastTgt);
+  if (dirty || comp || moved || aoPending) {
+    const fast = moved || !!comp || !!anim;   // recordings stay fast so the video keeps its frame rate
+    draw(!fast);
+    aoPending = fast;   // once it settles, draw one more frame with ambient occlusion
+    lastPos.copy(camera.position); lastTgt.copy(target); dirty = false;
+    if (comp) comp();
+  }
 })();
-updateCamera();
+
+// ---- Materials: shared per color, so thousands of parts do not each get their own ----
+const PLACEHOLDER = new THREE.MeshBasicMaterial();
+const matCache = new Map(), hiCache = new Map();
+function getMat(hex, opacity, isBolt) {
+  const key = hex + "|" + opacity + "|" + isBolt;
+  let m = matCache.get(key);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color: hex, side: THREE.DoubleSide, transparent: opacity < 1, opacity,
+      roughness: isBolt ? 0.45 : 0.62, metalness: isBolt ? 0.35 : 0.12, envMapIntensity: isBolt ? 1.0 : 0.6,
+      polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });   // faces sit a hair behind their outlines, so lines draw crisp
+    matCache.set(key, m);
+  }
+  return m;
+}
+function hiMat(base) {   // highlighted copy of a material, for the selected part
+  let h = hiCache.get(base);
+  if (!h) { h = base.clone(); h.emissive.setHex(0xf0a23b); h.emissiveIntensity = 0.55; hiCache.set(base, h); }
+  return h;
+}
+function setMat(m, mat) { m.userData.mat = mat; m.material = selMeshes.has(m) ? hiMat(mat) : mat; }
 
 // ---- IFC loading ----
 const ifc = new WebIFC.IfcAPI();
 ifc.SetWasmPath("https://unpkg.com/web-ifc@0.0.57/");
-await ifc.Init();
 
-let model = null;
 // remember last file in the browser (IndexedDB) so refresh keeps it
 const DB = () => new Promise((res, rej) => { const r = indexedDB.open("ifcviewer", 1); r.onupgradeneeded = () => r.result.createObjectStore("f"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 async function saveFile(name, buf) { const db = await DB(); db.transaction("f","readwrite").objectStore("f").put({ name, buf }, "last"); }
 async function loadSaved() { const db = await DB(); return new Promise(res => { const q = db.transaction("f").objectStore("f").get("last"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); }
-document.getElementById("file").addEventListener("change", async e => {
-  const f = e.target.files[0]; if (!f) return;
+async function clearSaved() { try { const db = await DB(); db.transaction("f","readwrite").objectStore("f").delete("last"); } catch (e) {} }
+// set while a model loads; if the tab crashes mid-load the flag survives and the file is not reopened on refresh
+const loadFlag = {
+  get() { try { return localStorage.getItem("ifcviewer-loading"); } catch (e) { return null; } },
+  set(on) { try { on ? localStorage.setItem("ifcviewer-loading", "1") : localStorage.removeItem("ifcviewer-loading"); } catch (e) {} },
+};
+async function openFile(f) {
+  if (!f || loading || $("file").disabled) return;
+  if (!/\.ifc$/i.test(f.name)) { toast(f.name + " is not an .ifc file"); return; }
   const buf = await f.arrayBuffer();
-  try { await saveFile(f.name, buf); } catch (err) {}
-  showModel(f.name, buf);
-});
-if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
-loadSaved().then(s => { if (s) showModel(s.name, s.buf); });
-async function showModel(name, buf) {
-  msg.textContent = "Loading..."; clearSel(); closeProps(); await new Promise(r => setTimeout(r, 40));
-  if (model) scene.remove(model);
-  elems = []; byName.clear(); edgeGroup.clear(); edgeToken++; const geoCache = new Map();
+  if (await showModel(f.name, buf)) saveFile(f.name, buf).catch(() => {});   // only keep files that opened cleanly
+}
+$("file").addEventListener("change", e => { openFile(e.target.files[0]); e.target.value = ""; });   // reset so the same file can be reopened
+// drag and drop an .ifc anywhere on the window
+addEventListener("dragover", e => { e.preventDefault(); document.body.classList.add("dragging"); });
+addEventListener("dragleave", e => { if (!e.relatedTarget) document.body.classList.remove("dragging"); });
+addEventListener("drop", e => { e.preventDefault(); document.body.classList.remove("dragging"); openFile(e.dataTransfer.files[0]); });
+
+function meshVolLocal(v, idx) {   // signed volume of a closed mesh (web-ifc vertex layout: x y z nx ny nz)
+  let s = 0;
+  for (let i = 0; i < idx.length; i += 3) {
+    const a = idx[i]*6, b = idx[i+1]*6, c = idx[i+2]*6;
+    const ax=v[a], ay=v[a+1], az=v[a+2], bx=v[b], by=v[b+1], bz=v[b+2], cx=v[c], cy=v[c+1], cz=v[c+2];
+    s += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6;
+  }
+  return s;
+}
+function buildGeometry(id, gid) {
+  const g = ifc.GetGeometry(id, gid);
+  const v = ifc.GetVertexArray(g.GetVertexData(), g.GetVertexDataSize());
+  const idx = ifc.GetIndexArray(g.GetIndexData(), g.GetIndexDataSize());
+  const lv = meshVolLocal(v, idx);
+  let bg = new THREE.BufferGeometry();
+  bg.setAttribute("position", new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(v, 6), 3, 0));
+  bg.setIndex(new THREE.BufferAttribute(idx, 1));
+  // weld shared vertices and smooth normals only across gentle angles (pipes round, plates sharp);
+  // toCreasedNormals un-indexes the mesh (3x the vertices), so weld again afterwards
+  bg = mergeVertices(bg, 1e-4);
+  bg = mergeVertices(toCreasedNormals(bg, Math.PI/6), 1e-4);
+  bg.computeBoundingBox();
+  g.delete();
+  return { bg, lv };
+}
+function loadModel(buf) {
+  const id = modelID = ifc.OpenModel(new Uint8Array(buf));   // stays open for properties and the report
   model = new THREE.Group();
-  lastBuf = buf; const id = ifc.OpenModel(new Uint8Array(buf));
+  const geoCache = new Map();
   ifc.StreamAllMeshes(id, mesh => {
-    const list = mesh.geometries;
-    const et = ifc.GetLineType(id, mesh.expressID); let nm = "?"; let desc = ""; try { const ln = ifc.GetLine(id, mesh.expressID); nm = ln.Name.value || "?"; desc = (ln.Description && ln.Description.value) || ""; } catch (e) {} let vol = 0; const eb = new THREE.Box3();
+    const eid = mesh.expressID, type = ifc.GetLineType(id, eid);
+    let name = "?", desc = "";
+    try { const ln = ifc.GetLine(id, eid); name = (ln.Name && ln.Name.value) || "?"; desc = (ln.Description && ln.Description.value) || ""; } catch (e) {}
+    const kind = surfaceKind(type, name);
+    const list = mesh.geometries, eb = new THREE.Box3();
+    let vol = 0;
     for (let i = 0; i < list.size(); i++) {
       const pg = list.get(i);
-      const gid = pg.geometryExpressID;
-      let cg = geoCache.get(gid);
-      if (!cg) {
-        const g = ifc.GetGeometry(id, gid);
-        const v = ifc.GetVertexArray(g.GetVertexData(), g.GetVertexDataSize());
-        const idx = ifc.GetIndexArray(g.GetIndexData(), g.GetIndexDataSize());
-        const lv = meshVolLocal(v, idx);
-        let bg0 = new THREE.BufferGeometry();
-        const buf0 = new THREE.InterleavedBuffer(v, 6);
-        bg0.setAttribute("position", new THREE.InterleavedBufferAttribute(buf0, 3, 0));
-        bg0.setIndex(new THREE.BufferAttribute(idx, 1));
-        // weld shared vertices and smooth normals only across gentle angles (pipes round, plates sharp)
-        bg0 = BufferGeometryUtils.mergeVertices(bg0, 1e-4);
-        bg0.deleteAttribute("normal");
-        bg0 = toCreasedNormals(bg0, Math.PI/6);
-        bg0.computeBoundingBox();
-        g.delete();
-        cg = { bg: bg0, lv }; geoCache.set(gid, cg);
-      }
-      const bg = cg.bg;
-      vol += Math.abs(cg.lv) * Math.abs(new THREE.Matrix4().fromArray(pg.flatTransformation).determinant());
+      let cg = geoCache.get(pg.geometryExpressID);
+      if (!cg) { cg = buildGeometry(id, pg.geometryExpressID); geoCache.set(pg.geometryExpressID, cg); }
+      const mtx = new THREE.Matrix4().fromArray(pg.flatTransformation);
+      const det = mtx.determinant();
+      vol += Math.abs(cg.lv * det);
+      let geo = cg.bg;
+      // scaled placements (e.g. mm-based items in a metre model) break normals in the AO pass: bake the transform in
+      if (Math.abs(Math.abs(det) - 1) > 1e-3) { geo = cg.bg.clone().applyMatrix4(mtx); geo.computeBoundingBox(); mtx.identity(); }
       const c = pg.color;
-      const mat = new THREE.MeshStandardMaterial({ roughness:0.6, metalness:0.0, envMapIntensity:0.25,
-        color: new THREE.Color(c.x, c.y, c.z), side: THREE.DoubleSide,
-        transparent: c.w < 1, opacity: c.w });
-      const m = new THREE.Mesh(bg, mat); m.userData.eid = mesh.expressID; m.userData.orig = new THREE.Color(c.x, c.y, c.z);
-      m.castShadow = true; m.receiveShadow = true;
-      if (false) {
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(bg, 30), new THREE.LineBasicMaterial({ color:0x222222, transparent:true, opacity:0.10 }));
-        m.add(edges);
-      }
-      m.applyMatrix4(new THREE.Matrix4().fromArray(pg.flatTransformation));
+      const m = new THREE.Mesh(geo, PLACEHOLDER);
+      m.userData = { eid, kind, orig: new THREE.Color(c.x, c.y, c.z).getHex(), opacity: c.w };
+      m.castShadow = m.receiveShadow = true;
+      m.applyMatrix4(mtx);
       model.add(m);
-      (byName.get(nm) || byName.set(nm, []).get(nm)).push(m);
-      m.geometry.computeBoundingBox(); eb.union(m.geometry.boundingBox.clone().applyMatrix4(m.matrix));
+      (byName.get(name) || byName.set(name, []).get(name)).push(m);
+      eb.union(geo.boundingBox.clone().applyMatrix4(m.matrix));
     }
-    if (!eb.isEmpty()) elems.push({ type: et, box: eb, id: mesh.expressID, name: nm, desc, vol });
+    if (!eb.isEmpty()) elems.push({ type, box: eb, id: eid, name, desc, vol, kind });
   });
-  ifc.CloseModel(id);
-  // no rotation: this model is already Y-up when loaded
+  if (!elems.length) throw new Error("no 3D geometry found");
+  // no rotation: web-ifc already returns the model Y-up
   scene.add(model);
   model.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3()).length();
-  box.getCenter(target);
-  modelSize = size; modelCenter.copy(target); radius = size*1.0; theta = -Math.PI/4; phi = Math.PI/3;
-  sun.position.copy(target).add(new THREE.Vector3(size*0.6, size*1.0, size*0.5)); sun.target.position.copy(target);
-  if (window.ground) scene.remove(window.ground);
-  window.ground = new THREE.Mesh(new THREE.PlaneGeometry(size*6, size*6), new THREE.MeshStandardMaterial({ color:0xaeaa9f, roughness:1.0, metalness:0 }));
-  window.ground.rotation.x = -Math.PI/2; window.ground.position.set(target.x, box.min.y - 0.01, target.z); window.ground.receiveShadow = true; scene.add(window.ground);
-  scene.fog = null;   // no depth fade: the model must stay fully visible when zoomed out
-  const sc = sun.shadow.camera; sc.left = sc.bottom = -size*1.2; sc.right = sc.top = size*1.2; sc.near = 0; sc.far = size*3; sc.updateProjectionMatrix();
+}
+// key light high at the front-right, fill from the opposite side, rim from behind; the shadow camera wraps the model
+// tightly in the light's own view, so the same shadow map gives much sharper shadows
+function placeLights(box) {
+  const c = modelCenter, s = modelSize;
+  sun.position.copy(c).addScaledVector(new THREE.Vector3(0.55, 1.0, 0.4).normalize(), s*1.5); sun.target.position.copy(c);
+  fill.position.copy(c).add(new THREE.Vector3(-0.7, 0.45, -0.3).multiplyScalar(s)); fill.target.position.copy(c);
+  rim.position.copy(c).add(new THREE.Vector3(-0.2, 0.6, -1).multiplyScalar(s)); rim.target.position.copy(c);
+  const sc = sun.shadow.camera;
+  sc.position.copy(sun.position); sc.lookAt(c); sc.updateMatrixWorld();
+  const inv = sc.matrixWorld.clone().invert(), lb = new THREE.Box3(), p = new THREE.Vector3();
+  for (let i = 0; i < 8; i++) lb.expandByPoint(p.set(i&1 ? box.max.x : box.min.x, i&2 ? box.max.y : box.min.y, i&4 ? box.max.z : box.min.z).applyMatrix4(inv));
+  const pad = s*0.02;
+  sc.left = lb.min.x - pad; sc.right = lb.max.x + pad; sc.bottom = lb.min.y - pad; sc.top = lb.max.y + pad;
+  sc.near = Math.max(s*0.001, -lb.max.z - pad); sc.far = -lb.min.z + s;   // far reaches the ground the shadows land on
+  sc.updateProjectionMatrix();
+  sun.shadow.normalBias = s*0.0003;
+}
+function frameModel() {
+  const box = modelBox.setFromObject(model);
+  const size = box.getSize(new THREE.Vector3()).length() || 1;
+  box.getCenter(target); modelCenter.copy(target);
+  modelSize = size;
+  unitToMm = size > 500 ? 1 : 1000;   // a structure is not 500 m across, so a bigger number means the geometry is already in mm
   camera.near = size/1000; camera.far = size*50; camera.updateProjectionMatrix();
+  setFovNow(FOV_3D); lastView = null;
+  theta = -P/4; phi = P/3;
+  const f = fitView(theta, phi, { insets: viewInsets() }); radius = f.radius; target.copy(f.t);
+  placeLights(box);
+  // ground: a shadow catcher - only the shadows are drawn, straight over the background, so there is no horizon line
+  // and the shadows read on every background (a lit ground plane clipped to white on the light ones)
+  ground = new THREE.Mesh(new THREE.PlaneGeometry(size*6, size*6), new THREE.ShadowMaterial({ color: 0x000000, opacity: (BGS[$("bg").value] || BGS.dark).shadow }));
+  ground.rotation.x = -P/2; ground.position.set(modelCenter.x, box.min.y - size*0.0002, modelCenter.z); ground.receiveShadow = true; scene.add(ground);
+  // contact shading scaled to the model: about 1% of its size reaches into joints and under members
+  aoPass.updateGtaoMaterial({ radius: size*0.012, distanceExponent: 1, thickness: size*0.012, scale: 1.1, samples: 16, distanceFallOff: 1, screenSpaceRadius: false });
+  aoPass.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, radiusExponent: 1, rings: 2, samples: 16 });
   renderer.shadowMap.needsUpdate = true;
   updateCamera();
-  msg.textContent = name + " | wheel = zoom, Ctrl + middle button = rotate, middle button = pan";
-  buildParts(); decorateParts(); applySurfaces(); applySteelLook(); applyPalette(); setBg($("bg").value); hideWelds();
-  setTimeout(() => { analyze(); $("connInfo").textContent += window.surfTxt || ""; }, 60);
+}
+function unloadModel() {
+  edgeToken++; disposeEdges();
+  if (model) {
+    scene.remove(model);
+    new Set(model.children.map(m => m.geometry)).forEach(g => g.dispose());
+  }
+  matCache.forEach(m => m.dispose()); matCache.clear();
+  hiCache.forEach(m => m.dispose()); hiCache.clear();
+  if (ground) { scene.remove(ground); ground.geometry.dispose(); ground.material.dispose(); ground = null; }
+  if (modelID != null) { try { ifc.CloseModel(modelID); } catch (e) {} modelID = null; }
+  psetIndex = null; model = null; elems = []; byName.clear(); shots = [];
+}
+async function showModel(name, buf) {
+  if (loading) return false;
+  loading = true; $("file").disabled = true; document.body.classList.add("busy"); loadFlag.set(true);
+  stopAnim(); clearSel(); $("props").style.display = "none";
+  $("loadTxt").textContent = "Opening " + name + "…"; $("loading").hidden = false;
+  await sleep(40);   // let the message paint before the heavy work
+  unloadModel();
+  let ok = true;
+  try { loadModel(buf); frameModel(); }
+  catch (err) {
+    console.error(err); ok = false; unloadModel(); clearSaved();
+    toast("Could not open " + name + ": " + (err.message || err), 7000);
+    msg.textContent = "No model loaded"; msg.title = "";
+    $("parts").style.display = "none"; $("connInfo").textContent = "Load an IFC to find connections";
+  }
+  loading = false; $("file").disabled = false; document.body.classList.remove("busy"); loadFlag.set(false);
+  $("loading").hidden = true; $("empty").hidden = ok;
+  if (!ok) return false;
+  msg.textContent = msg.title = name;
+  const surfTxt = applySurfaces();
+  buildParts(); applyPalette(); setBg($("bg").value); hideWelds();
+  setTimeout(() => { analyze(); $("connInfo").textContent += surfTxt; }, 60);
   if ($("edges").checked) setTimeout(addEdges, 120);
+  invalidate();
+  return true;
 }
 
 // ---- Walkthrough: keyframes, orbit, recording ----
 const keys = [];
-let anim = null, recorder = null, chunks = [];
-const $ = id => document.getElementById(id);
 const ease = x => x*x*x*(x*(x*6-15)+10);   // smootherstep: gentle ease in/out
-$("kAdd").onclick = () => { keys.push({ theta:goal.theta, phi:goal.phi, radius:goal.radius, t:goal.t.clone() }); $("kCount").textContent = keys.length + " points"; };
+$("kAdd").onclick = () => { keys.push({ theta:goal.theta, phi:goal.phi, radius:goal.radius, fov:goal.fov, t:goal.t.clone() }); $("kCount").textContent = keys.length + " points"; };
 $("kClear").onclick = () => { keys.length = 0; $("kCount").textContent = "0 points"; };
 function catmull(a, b, c, d, u) { return 0.5*((2*b) + (-a+c)*u + (2*a-5*b+4*c-d)*u*u + (-a+3*b-3*c+d)*u*u*u); }
 function pathState(s) {   // s in 0..1
   const n = keys.length, f = s*(n-1), i = Math.min(Math.floor(f), n-2), u = f - i;
   const k = j => keys[Math.max(0, Math.min(n-1, j))];
-  const c = (p) => catmull(k(i-1)[p], k(i)[p], k(i+1)[p], k(i+2)[p], u);
-  return { theta:c("theta"), phi:c("phi"), radius:c("radius"),
-    t:new THREE.Vector3(c2("x"), c2("y"), c2("z")) };
-  function c2(ax) { return catmull(k(i-1).t[ax], k(i).t[ax], k(i+1).t[ax], k(i+2).t[ax], u); }
+  const c = p => catmull(k(i-1)[p], k(i)[p], k(i+1)[p], k(i+2)[p], u);
+  const c2 = ax => catmull(k(i-1).t[ax], k(i).t[ax], k(i+1).t[ax], k(i+2).t[ax], u);
+  return { theta:c("theta"), phi:c("phi"), radius:c("radius"), fov:c("fov"), t:new THREE.Vector3(c2("x"), c2("y"), c2("z")) };
+}
+function download(blob, name) {
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function setUiHidden(hidden) { ["top","rec","parts","props"].forEach(id => { $(id).style.visibility = hidden ? "hidden" : ""; }); }
+function restoreViewport() {
+  setRenderSize(innerWidth, innerHeight, VIEW_RATIO);
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); invalidate();
+}
+
+// recording canvas: clean 1920x1080 frames (rendered at 1.5x with 4x MSAA and downscaled), no text/overlays;
+// 1.5x rather than 2x keeps the ambient occlusion fast enough for real-time capture
+const REC_W = 1920, REC_H = 1080;
+let compCanvas = null;
+function startComp() {
+  capturing = true; setUiHidden(true); clearSel();
+  setRenderSize(REC_W, REC_H, 1.5, false); setFovNow(FOV_3D);
+  camera.aspect = REC_W/REC_H; camera.updateProjectionMatrix();
+  compCanvas = document.createElement("canvas");
+  compCanvas.width = REC_W; compCanvas.height = REC_H;
+  const ctx = compCanvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  comp = () => ctx.drawImage(el, 0, 0, REC_W, REC_H);
+}
+function stopComp() {
+  if (!capturing || !comp) return;
+  comp = null; compCanvas = null; capturing = false;
+  setUiHidden(false); restoreViewport(); showRecPill(false);
+}
+// "Recording 0:12 [Stop]" indicator: sits over the page only, the video is taken from the 3D canvas
+let recTimer = null;
+function showRecPill(on) {
+  $("recPill").hidden = !on; clearInterval(recTimer);
+  if (!on) return;
+  const t0 = performance.now();
+  const tick = () => { const s = (performance.now() - t0) / 1000 | 0; $("recTime").textContent = (s / 60 | 0) + ":" + String(s % 60).padStart(2, "0"); };
+  tick(); recTimer = setInterval(tick, 500);
+}
+$("recStop").onclick = () => stopAnim();
+function startRecording(fileBase) {
+  startComp();
+  const mime = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t));
+  if (!mime) { stopComp(); alert("This browser cannot record video."); return false; }
+  const rec = recorder = new MediaRecorder(compCanvas.captureStream(60), { mimeType: mime, videoBitsPerSecond: 24e6 });
+  const chunks = [];
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.onstop = () => {
+    download(new Blob(chunks, { type: mime }), fileBase + "." + (mime.includes("mp4") ? "mp4" : "webm"));
+    if (!recorder) stopComp();   // unless a new recording already took over the canvas
+  };
+  rec.start(); showRecPill(true);
+  return true;
+}
+function stopAnim() {
+  if (anim) anim.running = false;
+  anim = null;
+  if (recorder && recorder.state !== "inactive") recorder.stop();   // onstop saves the file and restores the view
+  else stopComp();
+  recorder = null;
 }
 function play(mode, record) {
   if (mode === "path" && keys.length < 2) { alert("Add at least 2 points first (move the camera, click Add point)."); return; }
   stopAnim();
-  const dur = Math.max(3, +$("dur").value) * 1000;
-  const start = { theta:theta, phi:phi, radius:radius, t:target.clone() };
-  const orbitPhi = Math.PI/3.2, orbitR = modelSize*0.9, center = target.clone();
-  if (record) {
-    const stream = renderer.domElement.captureStream(60);
-    const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
-    const mime = types.find(t => MediaRecorder.isTypeSupported(t));
-    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 24e6 });
-    chunks = [];
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mime });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "walkthrough." + (mime.includes("mp4") ? "mp4" : "webm");
-      a.click();
-    };
-    recorder.start();
-  }
+  const dur = Math.max(3, +$("dur").value || 20) * 1000;
+  if (record && !startRecording("walkthrough")) return;
+  setFovNow(FOV_3D);
+  // the orbit circles the model centre at a radius that keeps every side in frame (video frame when recording, else the screen)
+  const startTheta = theta, orbitPhi = Math.PI/3.2, center = modelCenter.clone();
+  const orbitR = mode === "orbit" ? orbitFit(orbitPhi, record ? { aspect: REC_W/REC_H } : { insets: viewInsets() }) : 0;
   const t0 = performance.now();
-  anim = { running:true };
+  const a = anim = { running:true };
   (function step() {
-    if (!anim || !anim.running) return;
+    if (!a.running) return;
     const s = Math.min((performance.now() - t0) / dur, 1);
-    const e = mode === "orbit" ? s : ease(s);
-    let st;
-    if (mode === "orbit") st = { theta: start.theta - e*Math.PI*2, phi: orbitPhi, radius: orbitR, t: center };
-    else st = pathState(e);
     // drive the camera directly (no smoothing) for a clean video
-    goal.theta = theta = st.theta; goal.phi = phi = st.phi; goal.radius = radius = st.radius;
-    goal.t.copy(st.t); target.copy(st.t);
+    setCameraNow(mode === "orbit" ? { theta: startTheta - s*Math.PI*2, phi: orbitPhi, radius: orbitR, t: center } : pathState(ease(s)));
     if (s >= 1) stopAnim(); else requestAnimationFrame(step);
   })();
 }
-function stopAnim() {
-  if (typeof stopComp === "function" && !(recorder && recorder.state !== "inactive")) { try { stopComp(); } catch(e) {} }
-  if (anim) anim.running = false; anim = null;
-  if (recorder && recorder.state !== "inactive") recorder.stop();
-  recorder = null;
-}
-$("playPath").onclick = () => play("path", false);
-$("playOrbit").onclick = () => play("orbit", false);
-$("recPath").onclick = () => play("path", true);
-$("recOrbit").onclick = () => play("orbit", true);
+$("playPath").onclick = () => play("path", $("recMode").checked);
+$("playOrbit").onclick = () => play("orbit", $("recMode").checked);
 $("stop").onclick = stopAnim;
-// any manual input cancels playback
-el.addEventListener("pointerdown", () => { if (anim && !recorder) stopAnim(); });
+
 // ---- Connection detection + automatic video ----
-const byName = new Map();
-let elems = [];
-let shots = [];
-const T = WebIFC;
 const isStruct = ty => ty===T.IFCCOLUMN || ty===T.IFCBEAM || ty===T.IFCMEMBER || ty===T.IFCPLATE;
-const hl = new THREE.Box3Helper(new THREE.Box3(), 0xff7a00); hl.visible = false; scene.add(hl);
 function analyze() {
   shots = [];
   const bolts = elems.filter(e => e.type === T.IFCMECHANICALFASTENER);
   const structure = elems.filter(e => isStruct(e.type));
-  if (!bolts.length) { $("connInfo").textContent = "no bolts found in this IFC"; return; }
+  if (!bolts.length) { $("connInfo").textContent = "No bolts found, so the auto tour is unavailable"; return; }
   const d = modelSize*0.012;
   const n = bolts.length, par = [...Array(n).keys()];
   const find = x => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
@@ -439,8 +827,8 @@ function analyze() {
     else if (b >= 2) { label = "Beam splice / beam to beam"; w = 2; }
     else if (m) { label = "Brace / secondary member connection"; w = 2; }
     else { label = "Plate connection"; w = 1; }
-    clusters.push({ box, center: box.getCenter(new THREE.Vector3()), size: box.getSize(new THREE.Vector3()).length(),
-      sig: label + "|" + idxs.length + "|" + c + b + m + pl, bolts: idxs.length, label, score: idxs.length*w + (pl?2:0), ex });
+    clusters.push({ center: box.getCenter(new THREE.Vector3()), size: box.getSize(new THREE.Vector3()).length(),
+      sig: label + "|" + idxs.length + "|" + c + b + m + pl, bolts: idxs.length, label, score: idxs.length*w + (pl?2:0) });
   }
   clusters.sort((a,b) => b.score - a.score);
   const chosen = [];
@@ -452,148 +840,142 @@ function analyze() {
   const seen = new Set(chosen.map(c => c.sig));
   for (const c of clusters) { if (chosen.length >= 6) break; if (!seen.has(c.sig) && !chosen.includes(c) && far(c)) { chosen.push(c); seen.add(c.sig); } }
   shots = chosen;
-  $("connInfo").textContent = clusters.length + " connections found, " + shots.length + " picked";
+  $("connInfo").textContent = clusters.length + " bolted connection" + (clusters.length === 1 ? "" : "s") + " found · " + shots.length + " in the tour";
   console.log("Connections", clusters.length, shots.map(s => s.label + " (" + s.bolts + " bolts)"));
-}
-
-// recording canvas: clean 1920x1080 frames (3D render supersampled at pixelRatio 2, downscaled), no text/overlays
-let compCanvas = null, compCtx = null, recSaved = null;
-const REC_W = 1920, REC_H = 1080;
-function startComp() {
-  recSaved = { ratio: renderer.getPixelRatio(), aspect: camera.aspect, cw: el.style.width, ch: el.style.height };
-  ["top","rec","parts","props"].forEach(id => { const n = document.getElementById(id); if (n) n.style.visibility = "hidden"; });
-  clearSel();
-  renderer.setPixelRatio(2); renderer.setSize(REC_W, REC_H, false);
-  el.style.width = "100%"; el.style.height = "100%";
-  camera.aspect = REC_W/REC_H; camera.updateProjectionMatrix();
-  compCanvas = document.createElement("canvas");
-  compCanvas.width = REC_W; compCanvas.height = REC_H;
-  compCtx = compCanvas.getContext("2d");
-  compCtx.imageSmoothingEnabled = true; compCtx.imageSmoothingQuality = "high";
-  window.__comp = () => { compCtx.drawImage(renderer.domElement, 0, 0, REC_W, REC_H); };
-}
-function stopComp() {
-  window.__comp = null; compCanvas = null; hl.visible = false;
-  if (recSaved) {
-    ["top","rec","parts","props"].forEach(id => { const n = document.getElementById(id); if (n) n.style.visibility = ""; });
-    renderer.setPixelRatio(recSaved.ratio); renderer.setSize(innerWidth, innerHeight);
-    el.style.width = recSaved.cw; el.style.height = recSaved.ch;
-    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-    recSaved = null;
-  }
 }
 
 function autoVideo(record) {
   if (!shots.length) { alert("Load an IFC with bolts first."); return; }
-  stopAnim();
+  stopAnim(); setFovNow(FOV_3D);
   // timeline of segments
   const segs = [];
-  let cur = { theta: -Math.PI/4, phi: Math.PI/3, radius: modelSize*1.0, t: modelCenter.clone() };
-  const push = (to, dur, label, box) => { segs.push({ from: cur, to, dur: dur*1000, label, box }); cur = to; };
-  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: modelSize*0.9, t: modelCenter.clone() }, 9, "Overview", null);
+  // overview orbits are fitted to the video frame when recording, or to the free screen area when previewing
+  const frame = record ? { aspect: REC_W/REC_H } : { insets: viewInsets() };
+  const overR = orbitFit(Math.PI/3.2, frame);
+  let cur = { theta: -Math.PI/4, phi: Math.PI/3.2, radius: overR, t: modelCenter.clone() };
+  const push = (to, dur, label) => { segs.push({ from: cur, to, dur: dur*1000, label }); cur = to; };
+  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: overR, t: modelCenter.clone() }, 9, "Overview");
   for (const s of shots) {
     const r = Math.max(s.size*2.6, modelSize*0.035);
-    const a0 = cur.theta - 0.0 + 0.6;
-    const start = { theta: a0, phi: Math.PI/3, radius: r, t: s.center.clone() };
-    const label = s.label;   // internal id only, never drawn
-    push(start, 3, label, s.ex);
-    push({ theta: a0 + Math.PI*0.9, phi: Math.PI/3.3, radius: r*0.85, t: s.center.clone() }, 4.5, label, s.ex);
+    const a0 = cur.theta + 0.6;
+    push({ theta: a0, phi: Math.PI/3, radius: r, t: s.center.clone() }, 3, s.label);
+    push({ theta: a0 + Math.PI*0.9, phi: Math.PI/3.3, radius: r*0.85, t: s.center.clone() }, 4.5, s.label);
   }
-  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: modelSize*1.0, t: modelCenter.clone() }, 9, "Overview", null);
+  push({ theta: cur.theta - Math.PI*2, phi: Math.PI/3.2, radius: overR, t: modelCenter.clone() }, 9, "Overview");
 
-  let rec = null;
-  if (record) {
-    startComp();
-    const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"];
-    const mime = types.find(x => MediaRecorder.isTypeSupported(x));
-    recorder = new MediaRecorder(compCanvas.captureStream(60), { mimeType: mime, videoBitsPerSecond: 24e6 });
-    chunks = [];
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = () => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob(chunks, { type: mime }));
-      a.download = "auto-walkthrough." + (mime.includes("mp4") ? "mp4" : "webm"); a.click();
-      stopComp();
-    };
-    recorder.start();
-  }
+  if (record && !startRecording("auto-walkthrough")) return;
   const t0 = performance.now();
-  anim = { running: true, auto: true };
-  const lerp = (a,b,u) => a + (b-a)*u;
+  const a = anim = { running: true };
+  const lerp = (p, q, u) => p + (q-p)*u;
+  const t = new THREE.Vector3();
   (function step() {
-    if (!anim || !anim.running) return;
+    if (!a.running) return;
     let el_ = performance.now() - t0, i = 0;
     while (i < segs.length-1 && el_ > segs[i].dur) { el_ -= segs[i].dur; i++; }
     const sg = segs[i], u = Math.min(el_ / sg.dur, 1), e = ease(u);
     // fly-in segments ease; orbit segments are linear in angle for steady motion
     const isOrbit = sg.label === (segs[i-1] && segs[i-1].label) || sg.label === "Overview";
     const k = isOrbit ? u : e;
-    theta = goal.theta = lerp(sg.from.theta, sg.to.theta, k);
-    phi = goal.phi = lerp(sg.from.phi, sg.to.phi, k);
-    radius = goal.radius = lerp(sg.from.radius, sg.to.radius, e);
-    target.lerpVectors(sg.from.t, sg.to.t, e); goal.t.copy(target);
-        hl.visible = false;
+    setCameraNow({ theta: lerp(sg.from.theta, sg.to.theta, k), phi: lerp(sg.from.phi, sg.to.phi, k),
+      radius: lerp(sg.from.radius, sg.to.radius, e), t: t.lerpVectors(sg.from.t, sg.to.t, e) });
     if (i === segs.length-1 && u >= 1) { stopAnim(); return; }
     requestAnimationFrame(step);
   })();
 }
 $("autoPlay").onclick = () => autoVideo(false);
 $("autoRec").onclick = () => autoVideo(true);
-// ---- Show / hide parts by name (e.g. untick things you do not want in the view) ----
+
+// ---- Parts panel: show / hide parts by name, slide open/closed, lock, and filter ----
+let partsLocked = true, partsTimer = null;
+const LOCK_ICON = {
+  on:  '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  off: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>',
+};
+function setPartVisible(meshes, on) {
+  meshes.forEach(m => m.visible = on);
+  edgeGroup.children.forEach(e => { if (e.userData.list === meshes) e.visible = on; });
+  renderer.shadowMap.needsUpdate = true; invalidate();
+}
 function buildParts() {
-  const box = $("parts"); box.style.display = "block";
-  box.innerHTML = "<b>Parts (untick to hide)</b><br>";
-  [...byName.entries()].sort((a,b) => b[1].length - a[1].length).forEach(([name, list]) => {
+  const box = $("parts");
+  box.innerHTML = ""; box.style.display = "block";
+  const head = document.createElement("div"); head.className = "ph2";
+  head.innerHTML = '<b>Parts</b><button id="pAll" title="Show all">All</button><button id="pNone" title="Hide all">None</button><button id="pLock" class="on" title="Locked: panel stays open. Unlock: it slides away when you move off it.">' + LOCK_ICON.on + '</button><button id="pHide" title="Hide panel"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>';
+  const fl = document.createElement("input"); fl.className = "fl"; fl.placeholder = "Filter parts...";
+  const list = document.createElement("div"); list.className = "plist";
+  const labels = [...byName.entries()].sort((a,b) => b[1].length - a[1].length).map(([name, meshes]) => {
     const l = document.createElement("label"); l.style.display = "block";
     const c = document.createElement("input"); c.type = "checkbox"; c.checked = true;
-    c.onchange = () => { list.forEach(m => m.visible = c.checked); edgeGroup.children.forEach(e => { if (e.userData.list === list) e.visible = c.checked; }); renderer.shadowMap.needsUpdate = true; };
-    l.append(c, " " + name + " (" + list.length + ")"); box.append(l);
+    c.onchange = () => setPartVisible(meshes, c.checked);
+    l.append(c, " " + name + " (" + meshes.length + ")");
+    return l;
   });
+  list.append(...labels);
+  const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "Parts"; tab.onclick = () => box.classList.remove("closed");
+  box.append(head, fl, list, tab);
+  fl.oninput = () => { const q = fl.value.toLowerCase(); labels.forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? "block" : "none"); };
+  const setAll = on => labels.forEach(l => { if (l.style.display === "none") return; const c = l.querySelector("input"); if (c.checked !== on) { c.checked = on; c.onchange(); } });
+  $("pAll").onclick = () => setAll(true); $("pNone").onclick = () => setAll(false);
+  $("pHide").onclick = () => box.classList.add("closed");
+  $("pLock").onclick = e => { partsLocked = !partsLocked; e.currentTarget.classList.toggle("on", partsLocked); e.currentTarget.innerHTML = partsLocked ? LOCK_ICON.on : LOCK_ICON.off; };
+  box.onmouseleave = () => { if (!partsLocked) partsTimer = setTimeout(() => box.classList.add("closed"), 1200); };
+  box.onmouseenter = () => clearTimeout(partsTimer);
+  box.classList.add("closed");
 }
-// ---- Automatic photos at 1350x1080 (no UI, no labels: raw renders) ----
+function hideWelds() { $("parts").querySelectorAll("label").forEach(l => { if (/weld/i.test(l.textContent)) { const c = l.querySelector("input"); c.checked = false; c.onchange(); } }); }
+
+// ---- Automatic photos at 1350x1080 (no UI, no labels: raw renders, supersampled 2x) ----
 async function savePhotos() {
   if (!elems.length) { alert("Load an IFC first."); return; }
-  stopAnim();
+  stopAnim(); clearSel();
   const W = 1350, H = 1080;
-  const oldRatio = renderer.getPixelRatio(), oldAspect = camera.aspect;
-  const oldW = renderer.domElement.clientWidth, oldH = renderer.domElement.clientHeight;
-  document.getElementById("top").style.visibility = "hidden";
-  document.getElementById("rec").style.visibility = "hidden";
-  document.getElementById("parts").style.visibility = "hidden"; document.getElementById("props").style.visibility = "hidden"; clearSel();
-  renderer.setPixelRatio(1); renderer.setSize(W, H, false);
-  camera.aspect = W/H; camera.updateProjectionMatrix();
-  el.style.width = "100%"; el.style.height = "100%";
-  const saved = { theta, phi, radius, t: target.clone() };
+  const saved = { theta, phi, radius, t: target.clone(), fov: goal.fov };
+  // whole-model photos are fitted to the 1350x1080 frame (plan and elevations near-orthographic); close-ups keep their zoom
+  const fitted = (name, th, ph, fov) => { const f = fitView(th, ph, { aspect: W/H, fov }); return [name, th, ph, f.radius, f.t, fov]; };
   const views = [
-    ["01-isometric", -Math.PI/4, Math.PI/3, modelSize*0.95, modelCenter],
-    ["02-iso-opposite", Math.PI*3/4, Math.PI/3, modelSize*0.95, modelCenter],
-    ["03-front", -Math.PI/2, Math.PI/2.1, modelSize*0.95, modelCenter],
-    ["04-side", 0, Math.PI/2.1, modelSize*0.95, modelCenter],
-    ["05-plan", 0, 0.001, modelSize*0.95, modelCenter],
-    ["06-low-angle", -Math.PI/3, Math.PI/2.4, modelSize*0.7, modelCenter],
+    fitted("01-isometric", -P/4, P/3, FOV_3D),
+    fitted("02-iso-opposite", P*3/4, P/3, FOV_3D),
+    fitted("03-front", -P/2, P/2.1, FOV_ELEV),
+    fitted("04-side", 0, P/2.1, FOV_ELEV),
+    fitted("05-plan", 0, 0.001, FOV_ELEV),
+    fitted("06-low-angle", -P/3, P/2.4, FOV_3D),
   ];
   shots.forEach((s, i) => views.push([ "conn" + String(i+1).padStart(2,"0") + "-" + s.label.replace(/[^a-z0-9]+/gi,"-").toLowerCase(),
-    -Math.PI/4 + i*0.5, Math.PI/3, Math.max(s.size*2.6, modelSize*0.035), s.center ]));
-  for (const [name, th, ph, r, c] of views) {
-    theta = goal.theta = th; phi = goal.phi = ph; radius = goal.radius = r; target.copy(c); goal.t.copy(c);
-    applyCamera(); hl.visible = false;
-    renderer.render(scene, camera);
-    await new Promise(res => renderer.domElement.toBlob(b => {
-      const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name + ".png"; a.click(); res();
-    }, "image/png"));
-    await new Promise(r2 => setTimeout(r2, 400));   // let the browser accept each download
+    -P/4 + i*0.5, P/3, Math.max(s.size*2.6, modelSize*0.035), s.center, FOV_3D ]));
+  capturing = true; setUiHidden(true);
+  setRenderSize(W, H, 2, false);
+  camera.aspect = W/H; camera.updateProjectionMatrix();
+  const out = document.createElement("canvas"); out.width = W; out.height = H;
+  const ctx = out.getContext("2d"); ctx.imageSmoothingQuality = "high";
+  try {
+    for (const [name, th, ph, r, c, fov] of views) {
+      setCameraNow({ theta: th, phi: ph, radius: r, t: c, fov });
+      applyCamera(); draw();
+      ctx.drawImage(el, 0, 0, W, H);
+      download(await new Promise(res => out.toBlob(res, "image/png")), name + ".png");
+      await sleep(400);   // let the browser accept each download
+    }
+  } finally {
+    capturing = false; setUiHidden(false); restoreViewport();
+    setCameraNow(saved);
   }
-  document.getElementById("top").style.visibility = "";
-  document.getElementById("rec").style.visibility = "";
-  document.getElementById("parts").style.visibility = ""; document.getElementById("props").style.visibility = "";
-  renderer.setPixelRatio(oldRatio); renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
-  theta = goal.theta = saved.theta; phi = goal.phi = saved.phi; radius = goal.radius = saved.radius; target.copy(saved.t); goal.t.copy(saved.t);
 }
 $("shots").onclick = savePhotos;
-// ---- Concrete and brick surfaces, chosen by part name ----
-const CONCRETE_WORDS = /concrete|footing|foundation|pedestal|slab|pier|grout|plinth|pad|beam ground|column base concrete/i;
-const BRICK_WORDS = /brick|masonry|wall|block/i;
+
+// ---- Concrete and brick surfaces, chosen by IFC type and part name ----
+const STRONG_CONCRETE = /\b(concrete|footing|foundation|pedestal|grout|plinth|pier)\b/i;
+const BRICK_WORDS = /\b(brick|masonry|blockwork)\b/i;
+const CONCRETE_TYPES = new Set([T.IFCFOOTING, T.IFCSLAB, T.IFCPILE]);
+const WALL_TYPES = new Set([T.IFCWALL, T.IFCWALLSTANDARDCASE]);
+function surfaceKind(type, name) {
+  if (type === T.IFCMECHANICALFASTENER) return null;
+  if (BRICK_WORDS.test(name)) return "brick";
+  if (STRONG_CONCRETE.test(name)) return "concrete";
+  if (partRole(name) !== "other") return null;   // "WALL BRACE", "WALL GIRT" etc. are steel, not masonry
+  if (WALL_TYPES.has(type)) return "brick";
+  if (CONCRETE_TYPES.has(type) || /\b(slab|pad)\b/i.test(name)) return "concrete";
+  return null;
+}
 function makeTex(draw, size) {
   const c = document.createElement("canvas"); c.width = c.height = size;
   const g = c.getContext("2d"); draw(g, size);
@@ -606,15 +988,19 @@ const concreteTex = makeTex((g, s) => {
   for (let i = 0; i < 120; i++) { g.fillStyle = "rgba(90,90,85,0.25)"; g.beginPath(); g.arc(Math.random()*s, Math.random()*s, Math.random()*2.2, 0, 7); g.fill(); }
 }, 512);
 const brickTex = makeTex((g, s) => {
-  g.fillStyle = "#c9c4b8"; g.fillRect(0,0,s,s);              // mortar
+  g.fillStyle = "#b9b2a5"; g.fillRect(0,0,s,s);              // mortar
   const rows = 8, cols = 4, bh = s/rows, bw = s/cols;
   for (let r = 0; r < rows; r++) for (let c = -1; c < cols; c++) {
     const x = c*bw + (r%2 ? bw/2 : 0) + 3, y = r*bh + 3;
-    const sh = 150 + Math.random()*40|0;
-    g.fillStyle = "rgb("+(sh+40)+","+(sh-35)+","+(sh-55)+")"; g.fillRect(x, y, bw-6, bh-6);
-    for (let i = 0; i < 60; i++) { g.fillStyle = "rgba(60,25,15,0.12)"; g.fillRect(x+Math.random()*(bw-6), y+Math.random()*(bh-6), 2, 2); }
+    const k = Math.random();   // fired-clay red-brown with a little variation per brick
+    g.fillStyle = "rgb(" + (148 + k*38|0) + "," + (68 + k*22|0) + "," + (52 + k*16|0) + ")"; g.fillRect(x, y, bw-6, bh-6);
+    for (let i = 0; i < 60; i++) { g.fillStyle = "rgba(40,18,10,0.14)"; g.fillRect(x+Math.random()*(bw-6), y+Math.random()*(bh-6), 2, 2); }
   }
 }, 512);
+const masonryMat = {
+  concrete: new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.92, metalness: 0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
+  brick: new THREE.MeshStandardMaterial({ map: brickTex, roughness: 0.92, metalness: 0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
+};
 function boxUV(geo, tile) {   // world-axis projection from the dominant normal
   const pos = geo.attributes.position, nor = geo.attributes.normal, uv = new Float32Array(pos.count*2);
   for (let i = 0; i < pos.count; i++) {
@@ -626,84 +1012,72 @@ function boxUV(geo, tile) {   // world-axis projection from the dominant normal
   }
   geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 }
-function applySurfaces() {
-  let nc = 0, nb = 0;
-  for (const [name, list] of byName) {
-    const kind = BRICK_WORDS.test(name) ? "brick" : CONCRETE_WORDS.test(name) ? "concrete" : null;
-    if (!kind) continue;
-    for (const m of list) {
-      m.geometry = m.geometry.clone();
-      boxUV(m.geometry, kind === "brick" ? modelSize*0.012 : modelSize*0.05);
-      m.material = new THREE.MeshStandardMaterial({ map: kind === "brick" ? brickTex : concreteTex, roughness: 0.95, metalness: 0 });
-      m.castShadow = true; m.receiveShadow = true;
-      kind === "brick" ? nb++ : nc++;
-    }
+function applySurfaces() {   // give masonry parts texture coordinates; one copy per shared geometry, not per part
+  const clones = new Map(); let nc = 0, nb = 0;
+  for (const m of model.children) {
+    const kind = m.userData.kind; if (!kind) continue;
+    const key = m.geometry.uuid + kind;
+    let g = clones.get(key);
+    if (!g) { g = m.geometry.clone(); boxUV(g, kind === "brick" ? modelSize*0.012 : modelSize*0.05); clones.set(key, g); }
+    m.geometry = g;
+    kind === "brick" ? nb++ : nc++;
   }
   console.log("surfaces: concrete", nc, "brick", nb);
-  window.surfTxt = "  |  concrete parts: " + nc + ", brick parts: " + nb;
+  return nc || nb ? " · " + nc + " concrete, " + nb + " brick parts" : "";
 }
+
 // ---- Background switch ----
+// each background carries its own ground tone, vignette strength and outline colour, so contrast holds on all of them
 const BGS = {
-  warm:  { css:"linear-gradient(#b0aca1, #aca79d)", col:0xaeaa9f, ground:0xaeaa9f },
-  light: { css:"linear-gradient(#ffffff, #e9ecef)", col:0xeceff1, ground:0xe4e7ea },
-  dark:  { css:"linear-gradient(#34373b, #232528)", col:0x2a2c2f, ground:0x2a2c2f },
-  blue:  { css:"linear-gradient(#8fa3b8, #5f7790)", col:0x738aa2, ground:0x6f869e },
+  dark:  { top:"#3b4047", bottom:"#1b1e22", shadow:0.55, vignette:0.28, line:0x07090c, lineOpacity:0.6 },
+  light: { top:"#f7f8fa", bottom:"#dde1e6", shadow:0.22, vignette:0.07, line:0x272c33, lineOpacity:0.5 },
+  warm:  { top:"#d2ccc1", bottom:"#a59e91", shadow:0.3, vignette:0.12, line:0x2a241c, lineOpacity:0.5 },
+  blue:  { top:"#a7b9cc", bottom:"#566b80", shadow:0.35, vignette:0.16, line:0x111a24, lineOpacity:0.55 },
+  sky:   { top:"#6fa6dc", bottom:"#e4edf5", shadow:0.24, vignette:0.05, line:0x1d242c, lineOpacity:0.5 },
 };
-function gradTex(css) {
-  const m = css.match(/#[0-9a-f]{6}/gi), c = document.createElement("canvas"); c.width = 4; c.height = 512;
-  const g = c.getContext("2d"), gr = g.createLinearGradient(0,0,0,512); gr.addColorStop(0, m[0]); gr.addColorStop(1, m[1]);
-  g.fillStyle = gr; g.fillRect(0,0,4,512);
+function gradTex(b) {   // vertical gradient with a soft vignette toward the corners
+  const s = 512, c = document.createElement("canvas"); c.width = c.height = s;
+  const g = c.getContext("2d"), gr = g.createLinearGradient(0, 0, 0, s); gr.addColorStop(0, b.top); gr.addColorStop(1, b.bottom);
+  g.fillStyle = gr; g.fillRect(0, 0, s, s);
+  const v = g.createRadialGradient(s/2, s*0.45, s*0.25, s/2, s*0.45, s*0.8);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0," + b.vignette + ")");
+  g.fillStyle = v; g.fillRect(0, 0, s, s);
   const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
 }
 function setBg(k) {
-  const b = BGS[k]; document.body.style.background = b.css; scene.background = gradTex(b.css);   // real background so photos/videos are never transparent
-  if (scene.fog) scene.fog.color.setHex(b.col);
-  if (window.ground) window.ground.material.color.setHex(b.ground);
-  bgGround = b.ground; bgCol = b.col;
+  const b = BGS[k] || BGS.dark;
+  document.body.style.background = "linear-gradient(" + b.top + ", " + b.bottom + ")";
+  if (scene.background) scene.background.dispose();
+  scene.background = gradTex(b);   // real background so photos/videos are never transparent
+  if (ground) ground.material.opacity = b.shadow;
+  edgeMat.color.setHex(b.line); edgeMat.opacity = b.lineOpacity;
+  invalidate();
 }
-let bgGround = 0xaeaa9f, bgCol = 0xaeaa9f;
-$("bg").onchange = e => setBg(e.target.value);
-$("bg").value = "dark"; setBg("dark");
-// ---- Realistic painted-steel look: fine grain bump + roughness variation ----
-const steelBump = (() => {
-  const s = 512, c = document.createElement("canvas"); c.width = c.height = s;
-  const g = c.getContext("2d"); g.fillStyle = "#808080"; g.fillRect(0,0,s,s);
-  for (let i = 0; i < 40000; i++) { const v = 100 + Math.random()*60|0; g.fillStyle = "rgb("+v+","+v+","+v+")"; g.fillRect(Math.random()*s, Math.random()*s, 1, 1+Math.random()*2); }
-  for (let i = 0; i < 80; i++) { g.strokeStyle = "rgba(255,255,255,0.05)"; g.beginPath(); const y = Math.random()*s; g.moveTo(0,y); g.lineTo(s,y+Math.random()*6-3); g.stroke(); }
-  const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 8; return tx;
-})();
-function applySteelLook() {
-  for (const [name, list] of byName) {
-    if (CONCRETE_WORDS.test(name) || BRICK_WORDS.test(name)) continue;
-    const isBolt = /bolt|nut|washer|anchor/i.test(name);
-    for (const m of list) {
-      if (!m.material || m.material.map) continue;
-      const mat = m.material;
-      if (isBolt) mat.color.set(0xd9962a);
-      mat.roughness = isBolt ? 0.6 : 0.8; mat.metalness = isBolt ? 0.2 : 0.05;
-      mat.envMapIntensity = isBolt ? 0.9 : 0.45;
-    }
-  }
-}// ---- Tekla-style thin dark outlines (edge lines) for every part ----
+// ---- Tekla-style thin dark outlines (edge lines) for every part; colour follows the background ----
 const edgeGroup = new THREE.Group(); scene.add(edgeGroup);
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x07090c, transparent: true, opacity: 0.6 });
+$("bg").onchange = e => setBg(e.target.value);
+setBg($("bg").value);
+$("ao").onchange = e => { aoOn = e.target.checked; invalidate(); };
 let edgeToken = 0;
+function disposeEdges() { edgeGroup.children.forEach(c => c.geometry.dispose()); edgeGroup.clear(); invalidate(); }
 function keepLongEdges(geo, arr, longOnly) {
   // flange outline = only the true silhouette edges of the plate (its bounding-box edges); lines inside a face are cut lines and are dropped
   geo.computeBoundingBox(); const bb = geo.boundingBox, s = bb.getSize(new THREE.Vector3());
   const eps = Math.max(1e-6, Math.min(s.x, s.y, s.z) * 0.05);
   const lo = [bb.min.x, bb.min.y, bb.min.z], hi = [bb.max.x, bb.max.y, bb.max.z];
   const onB = (x, y, z) => { const c = [x, y, z]; let n = 0; for (let k = 0; k < 3; k++) if (Math.abs(c[k]-lo[k]) < eps || Math.abs(c[k]-hi[k]) < eps) n++; return n >= 2; };
+  const ax = s.x >= s.y && s.x >= s.z ? 0 : (s.y >= s.z ? 1 : 2);
   const keep = [];
   for (let i = 0; i < arr.length; i += 6) {
-    if (longOnly) { const d = [arr[i+3]-arr[i], arr[i+4]-arr[i+1], arr[i+5]-arr[i+2]], L = Math.hypot(d[0], d[1], d[2]), ax = s.x >= s.y && s.x >= s.z ? 0 : (s.y >= s.z ? 1 : 2); if (!(L > 0 && Math.abs(d[ax]) / L > 0.95)) continue; }
+    if (longOnly) { const d = [arr[i+3]-arr[i], arr[i+4]-arr[i+1], arr[i+5]-arr[i+2]], L = Math.hypot(d[0], d[1], d[2]); if (!(L > 0 && Math.abs(d[ax]) / L > 0.95)) continue; }
     if (onB(arr[i], arr[i+1], arr[i+2]) && onB(arr[i+3], arr[i+4], arr[i+5])) keep.push(arr[i], arr[i+1], arr[i+2], arr[i+3], arr[i+4], arr[i+5]);
   }
   return new Float32Array(keep);
 }
 const edgeCache = new WeakMap();
 async function addEdges() {
-  const tok = ++edgeToken; edgeGroup.clear();
-  const lm = new THREE.LineBasicMaterial({ color: 0x4a4540, transparent: true, opacity: 0.35 });
+  const tok = ++edgeToken; disposeEdges();
   let t0 = performance.now();
   const v3 = new THREE.Vector3();
   for (const [name, list] of byName) {
@@ -712,96 +1086,107 @@ async function addEdges() {
       let arr = edgeCache.get(m.geometry);
       if (!arr) {
         arr = new THREE.EdgesGeometry(m.geometry, 30).attributes.position.array;
-        { const NAMED = /sheet|cladd|panel|deck|liner|gutter|wall|roof|purlin|girt|flashing|trim/i.test(name);
-          m.geometry.computeBoundingBox(); const sz = m.geometry.boundingBox.getSize(new THREE.Vector3());
-          const plate = Math.min(sz.x, sz.y, sz.z) < 0.05 * Math.max(sz.x, sz.y, sz.z);
-          if (/^(flange|web)$/i.test(name) || NAMED || plate) arr = keepLongEdges(m.geometry, arr, /^web$/i.test(name) || NAMED);   // plates/panels: silhouette edges only, no seams/cut lines
-        }
+        const NAMED = /sheet|cladd|panel|deck|liner|gutter|wall|roof|purlin|girt|flashing|trim/i.test(name);
+        const sz = m.geometry.boundingBox.getSize(new THREE.Vector3());
+        const plate = Math.min(sz.x, sz.y, sz.z) < 0.05 * Math.max(sz.x, sz.y, sz.z);
+        if (/^(flange|web)$/i.test(name) || NAMED || plate) arr = keepLongEdges(m.geometry, arr, /^web$/i.test(name) || NAMED);   // plates/panels: silhouette edges only, no seams/cut lines
         edgeCache.set(m.geometry, arr);
       }
       const out = new Float32Array(arr.length);
-      m.updateMatrix();
       for (let i = 0; i < arr.length; i += 3) { v3.set(arr[i], arr[i+1], arr[i+2]).applyMatrix4(m.matrix); out[i] = v3.x; out[i+1] = v3.y; out[i+2] = v3.z; }
       chunks.push(out); total += out.length;
-      if (performance.now() - t0 > 14) { await new Promise(r => setTimeout(r, 0)); t0 = performance.now(); if (tok !== edgeToken) return; }
+      if (performance.now() - t0 > 14) { await sleep(0); t0 = performance.now(); if (tok !== edgeToken) return; }
     }
     if (tok !== edgeToken || !chunks.length) continue;
     const all = new Float32Array(total); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(all, 3));
-    const ls = new THREE.LineSegments(g, lm); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
-    edgeGroup.add(ls);
+    const ls = new THREE.LineSegments(g, edgeMat); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
+    edgeGroup.add(ls); invalidate();
   }
-}$("edges") && ($("edges").onchange = ev => { if (ev.target.checked) addEdges(); else { edgeToken++; edgeGroup.clear(); } });
-function hideWelds() { [...$("parts").querySelectorAll("label")].forEach(l => { if (/weld/i.test(l.textContent)) { const c = l.querySelector("input"); c.checked = false; c.onchange(); } }); }
+}
+$("edges").onchange = ev => { if (ev.target.checked) addEdges(); else { edgeToken++; disposeEdges(); } };
+
+// ---- Properties: one index of property sets per model, built on first use ----
+let psetIndex = null;
+function getPsets(eid) {
+  if (!psetIndex) {
+    psetIndex = new Map();
+    const rels = ifc.GetLineIDsWithType(modelID, T.IFCRELDEFINESBYPROPERTIES);
+    for (let i = 0; i < rels.size(); i++) {
+      const rel = ifc.GetLine(modelID, rels.get(i));
+      const def = rel.RelatingPropertyDefinition && rel.RelatingPropertyDefinition.value;
+      if (def == null) continue;
+      for (const o of rel.RelatedObjects || []) (psetIndex.get(o.value) || psetIndex.set(o.value, []).get(o.value)).push(def);
+    }
+  }
+  return (psetIndex.get(eid) || []).map(pid => { try { return ifc.GetLine(modelID, pid, true); } catch (e) { return null; } }).filter(Boolean);
+}
+function readProps(eid) {
+  let len = null, wt = null; const groups = [];
+  for (const s of getPsets(eid)) {
+    const rows = [];
+    for (const p of (s.HasProperties || [])) {
+      const n = p.Name && p.Name.value, v = p.NominalValue ? p.NominalValue.value : null;
+      if (n == null || v == null) continue;
+      if (n === "Length" && len == null && typeof v === "number") len = v;
+      if (n === "Weight" && wt == null && typeof v === "number") wt = v;
+      rows.push([n, v]);
+    }
+    if (rows.length) groups.push([(s.Name && s.Name.value) || "Properties", rows]);
+  }
+  return { groups, len, wt };
+}
+const DENSITY = { steel: 7850, concrete: 2400, brick: 1900 };   // kg/m³
+function partFigures(e, p) {   // length (mm) and weight (kg): IFC property values first, geometry as the fallback
+  const sz = e.box.getSize(new THREE.Vector3()).multiplyScalar(unitToMm);
+  const volMm3 = e.vol * unitToMm**3;
+  const len = p.len || Math.max(sz.x, sz.y, sz.z);
+  const wt = p.wt || volMm3 * 1e-9 * DENSITY[e.kind || "steel"];
+  return { sz, volMm3, len, wt, wsrc: p.wt ? "IFC" : "Calculated" };
+}
+
 // ---- Excel report: part name, profile, length, weight ----
-let lastBuf = null;
-function meshVolLocal(v, idx) {
-  let s = 0;
-  for (let i = 0; i < idx.length; i += 3) {
-    const a = idx[i]*6, b = idx[i+1]*6, c = idx[i+2]*6;
-    const ax=v[a], ay=v[a+1], az=v[a+2], bx=v[b], by=v[b+1], bz=v[b+2], cx=v[c], cy=v[c+1], cz=v[c+2];
-    s += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6;
-  }
-  return s;
-}
-function meshVolume(v, idx, ft) {
-  let s = 0;
-  for (let i = 0; i < idx.length; i += 3) {
-    const a = idx[i]*6, b = idx[i+1]*6, c = idx[i+2]*6;
-    const ax=v[a], ay=v[a+1], az=v[a+2], bx=v[b], by=v[b+1], bz=v[b+2], cx=v[c], cy=v[c+1], cz=v[c+2];
-    s += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6;
-  }
-  const m = new THREE.Matrix4().fromArray(ft);
-  return Math.abs(s) * Math.abs(m.determinant());
-}
 $("report").onclick = async () => {
-  if (!elems.length || !lastBuf) { alert("Load an IFC first."); return; }
-  msg.textContent = "Building report...";
-  const XLSX = await import("https://esm.sh/xlsx@0.18.5");
-  const id = ifc.OpenModel(new Uint8Array(lastBuf));
+  if (!elems.length || modelID == null) { alert("Load an IFC first."); return; }
+  toast("Building report…");
+  let XLSX;
+  try { XLSX = await import("https://esm.sh/xlsx@0.18.5"); }
+  catch (err) { toast("Could not load the Excel library (check internet connection)", 6000); return; }
   const rows = [];
   for (const e of elems) {
-    if (e.type === T.IFCMECHANICALFASTENER) continue;           // bolt assemblies listed separately below
-    let len = null, wt = null, wsrc = "";
-    try {
-      const sets = await ifc.properties.getPropertySets(id, e.id, true);
-      for (const s of sets || []) for (const p of (s.HasProperties || [])) {
-        const n = p.Name && p.Name.value, val = p.NominalValue && p.NominalValue.value;
-        if (n === "Length" && len == null && typeof val === "number") len = val;
-        if (n === "Weight" && wt == null && typeof val === "number") { wt = val; wsrc = "IFC"; }
-      }
-    } catch (err) {}
-    const sz = e.box.getSize(new THREE.Vector3());
-    if (len == null || len === 0) len = Math.max(sz.x, sz.y, sz.z);
-    if (wt == null || wt === 0) { wt = e.vol * 1e-9 * 7850; wsrc = "Calculated"; }
-    rows.push({ "Part name": e.name, "Profile": e.desc, "Length (mm)": +len.toFixed(1), "Weight (kg)": +wt.toFixed(2), "Weight source": wsrc });
+    if (e.type === T.IFCMECHANICALFASTENER) continue;           // bolt assemblies are counted, not weighed
+    const f = partFigures(e, readProps(e.id));
+    rows.push({ "Part name": e.name, "Profile": e.desc, "Material": e.kind || "steel", "Length (mm)": +f.len.toFixed(1), "Weight (kg)": +f.wt.toFixed(2), "Weight source": f.wsrc });
   }
-  const bolts = elems.filter(e => e.type === T.IFCMECHANICALFASTENER).length;
-  ifc.CloseModel(id);
+  const bolts = elems.length - rows.length;
   const groups = new Map();
-  rows.forEach(r => { const k = r["Part name"] + "|" + r["Profile"]; const g = groups.get(k) || { "Part name": r["Part name"], "Profile": r["Profile"], "Qty": 0, "Total length (mm)": 0, "Total weight (kg)": 0 };
+  rows.forEach(r => { const k = r["Part name"] + "|" + r["Profile"] + "|" + r["Material"];
+    const g = groups.get(k) || { "Part name": r["Part name"], "Profile": r["Profile"], "Material": r["Material"], "Qty": 0, "Total length (mm)": 0, "Total weight (kg)": 0 };
     g["Qty"]++; g["Total length (mm)"] += r["Length (mm)"]; g["Total weight (kg)"] += r["Weight (kg)"]; groups.set(k, g); });
   const summary = [...groups.values()].map(g => ({ ...g, "Total length (mm)": +g["Total length (mm)"].toFixed(1), "Total weight (kg)": +g["Total weight (kg)"].toFixed(2) }))
     .sort((a,b) => b["Total weight (kg)"] - a["Total weight (kg)"]);
-  summary.push({ "Part name": "TOTAL (excluding " + bolts + " bolt assemblies)", "Qty": rows.length, "Total weight (kg)": +rows.reduce((s,r) => s + r["Weight (kg)"], 0).toFixed(2) });
+  for (const mat of ["steel", "concrete", "brick"]) {
+    const r = rows.filter(x => x["Material"] === mat); if (!r.length) continue;
+    summary.push({ "Part name": "TOTAL " + mat + (mat === "steel" ? " (excluding " + bolts + " bolt assemblies)" : ""), "Material": mat, "Qty": r.length,
+      "Total weight (kg)": +r.reduce((s, x) => s + x["Weight (kg)"], 0).toFixed(2) });
+  }
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Summary");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "All parts");
   XLSX.writeFile(wb, "steel-report.xlsx");
-  msg.textContent = "Report saved: " + rows.length + " parts";
+  toast("Report saved: " + rows.length + " parts");
 };
+
 // ---- Click a part: highlight it and show its properties in the side panel ----
-let propId = null, selEid = null, selMeshes = [];
+const selMeshes = new Set(); let selEid = null;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;" }[c]));
 const fmt = (n, d = 1) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
 function clearSel() {
-  selMeshes.forEach(m => { if (m.material && m.material.emissive) { m.material.emissive.setHex(0x000000); m.material.emissiveIntensity = 1; } });
-  selMeshes = []; selEid = null;
+  if (!selMeshes.size) return;
+  selMeshes.forEach(m => { m.material = m.userData.mat; });
+  selMeshes.clear(); selEid = null; invalidate();
 }
-function closeProps() {
-  if (propId != null) { try { ifc.CloseModel(propId); } catch (e) {} propId = null; }
-  $("props").style.display = "none";
-}
+function closeProps() { clearSel(); $("props").style.display = "none"; }
 function pickAt(cx, cy) {
   if (!model) return null;
   const r = el.getBoundingClientRect();
@@ -810,46 +1195,27 @@ function pickAt(cx, cy) {
   const hits = rc.intersectObjects(model.children.filter(m => m.visible), false);
   return hits.length ? hits[0].object : null;
 }
-async function selectPart(m) {
+function selectPart(m) {
   clearSel();
-  const eid = m.userData.eid; selEid = eid;
-  model.children.forEach(o => { if (o.userData.eid === eid) selMeshes.push(o); });
-  selMeshes.forEach(o => { o.material.emissive.setHex(0xf0a23b); o.material.emissiveIntensity = 0.55; });
+  const eid = selEid = m.userData.eid;
+  model.children.forEach(o => { if (o.userData.eid === eid) { selMeshes.add(o); o.material = hiMat(o.userData.mat); } });
+  invalidate();
   const e = elems.find(x => x.id === eid); if (!e) return;
-  const panel = $("props"); panel.style.display = "block";
-  panel.innerHTML = '<div class="hint">Loading properties...</div>';
-  if (propId == null && lastBuf) propId = ifc.OpenModel(new Uint8Array(lastBuf));
-  let line = {}, typeName = "", psets = [];
-  try { line = ifc.GetLine(propId, eid) || {}; } catch (er) {}
+  let line = {}, typeName = "";
+  try { line = ifc.GetLine(modelID, eid) || {}; } catch (er) {}
   try { typeName = ifc.GetNameFromTypeCode(e.type) || ""; } catch (er) {}
-  try { psets = await ifc.properties.getPropertySets(propId, eid, true) || []; } catch (er) {}
-  if (selEid !== eid) return;
-  let len = null, wt = null, wsrc = "";
-  const groups = [];
-  for (const s of psets) {
-    const rows = [];
-    for (const p of (s.HasProperties || [])) {
-      const n = p.Name && p.Name.value; const v = p.NominalValue ? p.NominalValue.value : null;
-      if (n == null || v == null) continue;
-      if (n === "Length" && len == null && typeof v === "number") len = v;
-      if (n === "Weight" && wt == null && typeof v === "number") { wt = v; wsrc = "IFC"; }
-      rows.push([n, typeof v === "number" ? fmt(v, 3) : v]);
-    }
-    if (rows.length) groups.push([(s.Name && s.Name.value) || "Properties", rows]);
-  }
-  const sz = e.box.getSize(new THREE.Vector3());
-  if (!len) len = Math.max(sz.x, sz.y, sz.z);
-  if (!wt) { wt = e.vol * 1e-9 * 7850; wsrc = "calculated"; }
+  const p = readProps(eid), f = partFigures(e, p);
   const same = elems.filter(x => x.name === e.name && x.desc === e.desc).length;
   const val = k => line[k] && line[k].value != null ? line[k].value : "";
   const row = (a, b) => b === "" || b == null ? "" : `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
   let h = `<div class="ph"><div><div class="t">${esc(e.name)}</div><div class="s">${esc(e.desc || typeName)}</div></div><button id="propsClose" title="Close">&times;</button></div>`;
-  h += `<div class="big"><div><small>Length</small><b>${fmt(len)} mm</b></div><div><small>Weight${wsrc === "calculated" ? " (calc.)" : ""}</small><b>${fmt(wt, 2)} kg</b></div></div>`;
+  h += `<div class="big"><div><small>Length</small><b>${fmt(f.len)} mm</b></div><div><small>Weight${f.wsrc === "Calculated" ? " (calc.)" : ""}</small><b>${fmt(f.wt, 2)} kg</b></div></div>`;
   h += `<div class="sec"><h4>General</h4>${row("Name", e.name)}${row("Profile", e.desc)}${row("IFC type", typeName)}${row("Mark / tag", val("Tag"))}${row("Object type", val("ObjectType"))}${row("GUID", val("GlobalId"))}${row("Express ID", "#" + eid)}${row("Same part in model", same + " pcs")}</div>`;
-  h += `<div class="sec"><h4>Dimensions</h4>${row("Bounding box", fmt(sz.x,0) + " × " + fmt(sz.y,0) + " × " + fmt(sz.z,0) + " mm")}${row("Volume", fmt(e.vol / 1e6, 1) + " cm³")}${row("Weight source", wsrc)}</div>`;
-  groups.forEach(([n, rows]) => { h += `<div class="sec"><h4>${esc(n)}</h4>${rows.map(r => row(r[0], r[1])).join("")}</div>`; });
-  panel.innerHTML = h;
-  $("propsClose").onclick = () => { clearSel(); panel.style.display = "none"; };
+  h += `<div class="sec"><h4>Dimensions</h4>${row("Bounding box", fmt(f.sz.x,0) + " × " + fmt(f.sz.y,0) + " × " + fmt(f.sz.z,0) + " mm")}${row("Volume", fmt(f.volMm3 / 1000, 1) + " cm³")}${row("Material", e.kind || "steel")}${row("Weight source", f.wsrc)}</div>`;
+  p.groups.forEach(([n, rows]) => { h += `<div class="sec"><h4>${esc(n)}</h4>${rows.map(r => row(r[0], typeof r[1] === "number" ? fmt(r[1], 3) : r[1])).join("")}</div>`; });
+  const panel = $("props");
+  panel.innerHTML = h; panel.style.display = "block";
+  $("propsClose").onclick = closeProps;
 }
 let downAt = null;
 el.addEventListener("pointerdown", e => { downAt = e.button === 0 ? { x: e.clientX, y: e.clientY } : null; });
@@ -857,15 +1223,18 @@ el.addEventListener("pointerup", e => {
   if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) { downAt = null; return; }
   downAt = null;
   const m = pickAt(e.clientX, e.clientY);
-  if (m) selectPart(m); else { clearSel(); $("props").style.display = "none"; }
+  if (m) selectPart(m); else closeProps();
 });
-window.addEventListener("keydown", e => { if (e.key === "Escape") { clearSel(); $("props").style.display = "none"; } });
+// Escape stops a running video/recording (the Stop button is hidden while recording), otherwise clears the selection
+addEventListener("keydown", e => { if (e.key === "Escape") { if (anim || recorder) stopAnim(); else closeProps(); } });
+
 // ---- Color palettes for social media (by part role) ----
 const PALETTES = {
-  premium: { purlin:0xf1f5f9, girt:0x5eead4, brace:0xf0605a, main:0x4a90e2, plate:0xf7c948, stiff:0x9cc8f5, other:0xcbd5e1, bolt:0xf59e42 },
-  gold:    { purlin:0x8da2b8, girt:0x4fb6c4, brace:0xe5645b, main:0xe2e8f0, plate:0xe8c15a, stiff:0x9fb3c8, other:0xb6c2d0, bolt:0xf08a4b },
-  vivid:   { purlin:0xffffff, girt:0x22d3ee, brace:0xef4444, main:0x3b82f6, plate:0xfacc15, stiff:0xa78bfa, other:0x94a3b8, bolt:0xfb923c },
-}; 
+  // deeper main-frame tones and off-white purlins so every role still separates on both dark and light backgrounds
+  premium: { purlin:0xd4dbe3, girt:0x22a99a, brace:0xd9473f, main:0x2f6fd0, plate:0xf2b331, stiff:0x7fa9dd, other:0xa7b3c0, bolt:0xf08a24 },
+  gold:    { purlin:0x7f93a9, girt:0x3d9fae, brace:0xd5564c, main:0xc9d1db, plate:0xd9a93a, stiff:0x93a7bd, other:0xa4afbb, bolt:0xe07b33 },
+  vivid:   { purlin:0xe5e7eb, girt:0x06b6d4, brace:0xdc2626, main:0x2563eb, plate:0xfacc15, stiff:0x8b5cf6, other:0x94a3b8, bolt:0xf97316 },
+};
 function partRole(n) {
   if (/purlin/i.test(n)) return "purlin";
   if (/girt/i.test(n)) return "girt";
@@ -873,98 +1242,33 @@ function partRole(n) {
   if (/bolt|nut|washer|anchor|screw/i.test(n)) return "bolt";
   if (/stiff/i.test(n)) return "stiff";
   if (/plate|cleat|gusset|angle|bracket|doubler|shim|lug|pl\b/i.test(n)) return "plate";
-  if (/flange|web|beam|column|rafter|purlin|girt|brace|chord|truss|tube|pipe|hss|channel|^i$|^h$/i.test(n)) return "main";
+  if (/flange|web|beam|column|rafter|chord|truss|tube|pipe|hss|channel|^i$|^h$/i.test(n)) return "main";
   return "other";
 }
 function applyPalette() {
-  const sel = $("pal").value, pal = PALETTES[sel];
+  const pal = PALETTES[$("pal").value];
   for (const [name, list] of byName) {
     const role = partRole(name);
     for (const m of list) {
-      if (!m.material || m.material.map) continue;
-      if (!pal) m.material.color.copy(m.userData.orig);
-      else m.material.color.setHex(pal[role]);
-      m.material.needsUpdate = true;
+      const u = m.userData;
+      setMat(m, u.kind ? masonryMat[u.kind] : getMat(pal ? pal[role] : u.orig, u.opacity, role === "bolt"));
     }
   }
+  invalidate();
 }
 $("pal").onchange = applyPalette;
-// ---- Parts panel: slide open/closed, lock, and filter ----
-let partsLocked = true, partsTimer = null;
-function decorateParts() {
-  const box = $("parts");
-  const labels = [...box.querySelectorAll("label")];
-  box.innerHTML = "";
-  const head = document.createElement("div"); head.className = "ph2";
-  head.innerHTML = '<b>Parts</b><button id="pAll" title="Show all">All</button><button id="pNone" title="Hide all">None</button><button id="pLock" class="on" title="Locked: panel stays open. Unlock: it slides away when you move off it.">&#128274;</button><button id="pHide" title="Hide panel">&#10094;</button>';
-  const fl = document.createElement("input"); fl.className = "fl"; fl.placeholder = "Filter parts...";
-  const list = document.createElement("div"); list.className = "plist"; labels.forEach(l => list.append(l));
-  const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "Parts"; tab.onclick = () => box.classList.remove("closed");
-  box.append(head, fl, list, tab);
-  fl.oninput = () => { const q = fl.value.toLowerCase(); labels.forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? "block" : "none"); };
-  const setAll = on => labels.forEach(l => { if (l.style.display === "none") return; const c = l.querySelector("input"); if (c.checked !== on) { c.checked = on; c.onchange(); } });
-  $("pAll").onclick = () => setAll(true); $("pNone").onclick = () => setAll(false);
-  $("pHide").onclick = () => box.classList.add("closed");
-  $("pLock").onclick = e => { partsLocked = !partsLocked; e.currentTarget.classList.toggle("on", partsLocked); e.currentTarget.innerHTML = partsLocked ? "&#128274;" : "&#128275;"; };
-  box.onmouseleave = () => { if (!partsLocked) partsTimer = setTimeout(() => box.classList.add("closed"), 1200); };
-  box.onmouseenter = () => clearTimeout(partsTimer);
-  box.classList.add("closed");
-}</script>
+
+// ---- Start: load the IFC engine, then reopen the last file ----
+try { await ifc.Init(); }
+catch (err) { msg.textContent = "IFC engine unavailable"; toast("Could not load the IFC engine (check internet connection)", 1e9); throw err; }
+$("file").disabled = false; document.body.classList.remove("busy");
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+if (loadFlag.get()) {
+  loadFlag.set(false);
+  toast("The last file did not finish loading, so it was not reopened.", 8000);
+} else {
+  loadSaved().then(s => { if (s) showModel(s.name, s.buf); }).catch(() => {});
+}
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
