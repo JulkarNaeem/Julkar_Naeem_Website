@@ -267,16 +267,16 @@ document.body.appendChild(renderer.domElement);
 const el = renderer.domElement;
 { const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.2; pm.dispose(); }
 // lighting: cool sky / warm ground bounce, one strong key light that casts shadows, a soft fill and a rim from behind
-const hemi = new THREE.HemisphereLight(0xe9f0fa, 0x4d463d, 1.25);
+const hemi = new THREE.HemisphereLight(0xe9f0fa, 0x4d463d, 1.0);
 scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff6ea, 3.0);
+const sun = new THREE.DirectionalLight(0xfff6ea, 2.2);
 sun.castShadow = true;
 const shadowSize = Math.min(4096, renderer.capabilities.maxTextureSize);   // 8192² used ~256 MB of GPU memory
 sun.shadow.mapSize.set(shadowSize, shadowSize);
 sun.shadow.bias = -0.0003;
 scene.add(sun, sun.target);
-const fill = new THREE.DirectionalLight(0xdbe6f5, 0.75);
-const rim = new THREE.DirectionalLight(0xffffff, 0.55);
+const fill = new THREE.DirectionalLight(0xdbe6f5, 0.7);
+const rim = new THREE.DirectionalLight(0xffffff, 0.5);
 scene.add(fill, fill.target, rim, rim.target);
 
 // post-processing: multisampled render target (keeps edges smooth), ambient occlusion, then colour output
@@ -1154,11 +1154,11 @@ function applySurfaces() {   // give masonry parts texture coordinates; one copy
 // ---- Background switch ----
 // each background carries its own ground tone, vignette strength and outline colour, so contrast holds on all of them
 const BGS = {
-  dark:  { top:"#3b4047", bottom:"#1b1e22", shadow:0.55, vignette:0.28, line:0x07090c, lineOpacity:0.6 },
-  light: { top:"#f7f8fa", bottom:"#dde1e6", shadow:0.22, vignette:0.07, line:0x272c33, lineOpacity:0.5 },
-  warm:  { top:"#d2ccc1", bottom:"#a59e91", shadow:0.3, vignette:0.12, line:0x2a241c, lineOpacity:0.5 },
-  blue:  { top:"#a7b9cc", bottom:"#566b80", shadow:0.35, vignette:0.16, line:0x111a24, lineOpacity:0.55 },
-  sky:   { top:"#6fa6dc", bottom:"#e4edf5", shadow:0.24, vignette:0.05, line:0x1d242c, lineOpacity:0.5 },
+  dark:  { top:"#3b4047", bottom:"#1b1e22", shadow:0.55, vignette:0.28, lineOpacity:0.75 },
+  light: { top:"#f7f8fa", bottom:"#dde1e6", shadow:0.22, vignette:0.07, lineOpacity:0.7 },
+  warm:  { top:"#d2ccc1", bottom:"#a59e91", shadow:0.3, vignette:0.12, lineOpacity:0.7 },
+  blue:  { top:"#a7b9cc", bottom:"#566b80", shadow:0.35, vignette:0.16, lineOpacity:0.7 },
+  sky:   { top:"#6fa6dc", bottom:"#e4edf5", shadow:0.24, vignette:0.05, lineOpacity:0.7 },
 };
 function gradTex(b) {   // vertical gradient with a soft vignette toward the corners
   const s = 512, c = document.createElement("canvas"); c.width = c.height = s;
@@ -1175,12 +1175,27 @@ function setBg(k) {
   if (scene.background) scene.background.dispose();
   scene.background = gradTex(b);   // real background so photos/videos are never transparent
   if (ground) ground.material.opacity = b.shadow;
-  edgeMat.color.setHex(b.line); edgeMat.opacity = b.lineOpacity;
+  edgeOpacity = b.lineOpacity; edgeMats.forEach(m => { m.opacity = edgeOpacity; });
   invalidate();
 }
 // ---- Tekla-style thin dark outlines (edge lines) for every part; colour follows the background ----
 const edgeGroup = new THREE.Group(); scene.add(edgeGroup);
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x07090c, transparent: true, opacity: 0.6 });
+// outline colour = a darker shade of the part's own colour (black lines piled up and looked heavy on dense steel)
+const edgeMats = new Map();
+let edgeOpacity = 0.75;
+const MASONRY_TONE = { brick: 0xa0503a, concrete: 0xb9b7b0 };
+function edgeColor(meshes) {
+  const m = meshes[0], hsl = {};
+  const c = m.userData.kind ? new THREE.Color(MASONRY_TONE[m.userData.kind]) : (m.userData.mat || m.material).color;
+  c.getHSL(hsl);
+  return new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s*1.1), Math.max(0.06, hsl.l*0.42)).getHex();
+}
+function edgeMatFor(hex) {
+  let m = edgeMats.get(hex);
+  if (!m) { m = new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity: edgeOpacity }); edgeMats.set(hex, m); }
+  return m;
+}
+function recolorEdges() { edgeGroup.children.forEach(ls => { ls.material = edgeMatFor(edgeColor(ls.userData.list)); }); invalidate(); }
 $("bg").onchange = e => setBg(e.target.value);
 setBg($("bg").value);
 $("ao").onchange = e => { aoOn = e.target.checked; invalidate(); };
@@ -1225,7 +1240,7 @@ async function addEdges() {
     if (tok !== edgeToken || !chunks.length) continue;
     const all = new Float32Array(total); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(all, 3));
-    const ls = new THREE.LineSegments(g, edgeMat); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
+    const ls = new THREE.LineSegments(g, edgeMatFor(edgeColor(list))); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
     edgeGroup.add(ls); invalidate();
   }
 }
@@ -1383,7 +1398,7 @@ function applyPalette() {
       setMat(m, u.bolt ? boltMat : u.kind ? masonryMat[u.kind] : getMat(pal ? pal[role] : u.orig, u.opacity, false));
     }
   }
-  invalidate();
+  recolorEdges();
 }
 $("pal").onchange = applyPalette;
 
