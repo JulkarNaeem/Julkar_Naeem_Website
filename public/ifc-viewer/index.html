@@ -115,18 +115,64 @@
   #props .big small { display:block; color:var(--muted); font-size:11px; }
   #props .big b { font-size:16px; font-variant-numeric:tabular-nums; }
 
-  /* ---- parts panel ---- */
-  #parts { top:80px; left:12px; width:250px; padding:0; display:none; font-size:12px; line-height:1.7; transition:transform .35s cubic-bezier(.2,.8,.2,1); }
+  /* ---- filter panel (Name | Parts | Assemblies | Profiles) ---- */
+  #parts { top:80px; left:12px; width:310px; padding:0; display:none; font-size:12px; transition:transform .35s cubic-bezier(.2,.8,.2,1); }
   #parts.closed { transform:translateX(calc(-100% - 12px)); }
-  #parts label { color:var(--text); cursor:pointer; border-radius:6px; padding:1px 4px; }
-  #parts label:hover { background:rgba(255,255,255,.06); }
-  #parts .ph2 { display:flex; align-items:center; gap:6px; padding:10px 12px 8px; }
+  #parts .ph2 { display:flex; align-items:center; gap:4px; padding:10px 10px 8px 14px; }
   #parts .ph2 b { flex:1; color:var(--faint); font-weight:600; text-transform:uppercase; letter-spacing:.9px; font-size:10.5px; }
-  #parts .ph2 button { height:26px; padding:0 8px; font-size:12px; }
-  #parts .ph2 button.on { background-color:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
-  #parts .fl { display:block; width:calc(100% - 24px); margin:0 12px 8px; height:32px; padding:0 10px; font:inherit; font-size:12px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; outline:none; }
-  #parts .fl:focus { border-color:var(--accent); }
-  #parts .plist { max-height:calc(100vh - 360px); overflow:auto; padding:0 8px 12px; }
+  #parts .ph2 button.ic { height:26px; width:28px; padding:0; justify-content:center; background-color:transparent; border-color:transparent; color:var(--muted); }
+  #parts .ph2 button.ic:hover { color:var(--text); background-color:rgba(255,255,255,.08); }
+  #parts .ph2 button.ic.on { color:var(--accent); }
+  #parts .fseg { display:grid; grid-template-columns:repeat(4, auto); gap:2px; margin:0 10px 8px; padding:3px; background:rgba(0,0,0,.28); border:1px solid var(--line); border-radius:10px; }
+  #parts .fseg button { height:26px; padding:0 6px; border:0; border-radius:7px; background-color:transparent; color:var(--muted); font-size:11.5px; justify-content:center; }
+  #parts .fseg button:hover { color:var(--text); background-color:rgba(255,255,255,.08); }
+  #parts .fseg button.on { background-color:var(--accent); color:var(--accent-ink); font-weight:600; }
+  #parts .fsearch { position:relative; margin:0 10px 6px; }
+  #parts .fsearch svg { position:absolute; left:9px; top:8px; width:14px; height:14px; color:var(--faint); pointer-events:none; }
+  #parts .fsearch input { width:100%; height:30px; padding:0 10px 0 29px; font:inherit; font-size:12px; color:var(--text); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:8px; outline:none; }
+  #parts .fsearch input:focus { border-color:var(--accent); }
+  #parts .fsearch input::-webkit-search-cancel-button { filter:invert(.7); cursor:pointer; }
+  #parts .ftools { display:flex; align-items:center; gap:4px; margin:0 10px 6px; }
+  #parts .ftools .sp { flex:1; }
+  #parts .ftools button { height:24px; padding:0 8px; font-size:11.5px; border-radius:7px; color:var(--muted); }
+  #parts .ftools button:hover { color:var(--text); }
+  #parts .ftools .rst { gap:5px; color:var(--accent); border-color:rgba(240,162,59,.35); }
+  #parts .ftools .rst:hover { color:var(--accent-hi); border-color:var(--accent); background-color:rgba(240,162,59,.1); }
+  #parts .ftools .rst svg { width:13px; height:13px; }
+  #parts .plist { position:relative; height:calc(100vh - 440px); min-height:120px; max-height:560px; overflow-y:auto; overflow-x:hidden; margin:0 4px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); overscroll-behavior:contain; }
+  #parts .fsp { width:1px; }
+  #parts .fwin { position:absolute; inset:0 0 auto 0; }
+  #parts .fr { position:absolute; left:0; right:0; height:38px; display:flex; align-items:center; gap:7px; padding:0 6px 0 4px; border-radius:7px; cursor:pointer; user-select:none; }
+  #parts .fr:hover { background:rgba(255,255,255,.055); }
+  #parts .fr.sel { background:rgba(240,162,59,.13); box-shadow:inset 2px 0 0 var(--accent); }
+  #parts .fr.kid { height:30px; padding-left:22px; }
+  #parts .fr.off .nm, #parts .fr.off .ct { opacity:.45; }
+  #parts .tw { width:16px; height:16px; flex:none; display:grid; place-items:center; color:var(--faint); border-radius:4px; }
+  #parts .tw:not(.none):hover { color:var(--text); background:rgba(255,255,255,.1); }
+  #parts .tw svg { width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+  #parts .tw.open svg { transform:rotate(90deg); }
+  #parts .fr.kid .tw { display:none; }
+  #parts .cb { width:15px; height:15px; flex:none; border-radius:4px; border:1.5px solid var(--line2); background:rgba(255,255,255,.04); position:relative; }
+  #parts .cb:hover { border-color:var(--accent); }
+  #parts .cb.s2 { background:var(--accent); border-color:var(--accent); }
+  #parts .cb.s2::after { content:""; position:absolute; left:4px; top:1px; width:4px; height:8px; border:solid var(--accent-ink); border-width:0 2px 2px 0; transform:rotate(45deg); }
+  #parts .cb.s1 { border-color:var(--accent); }
+  #parts .cb.s1::after { content:""; position:absolute; left:2.5px; right:2.5px; top:5px; height:2px; border-radius:1px; background:var(--accent); }
+  #parts .nm { flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+  #parts .nm b { font-weight:550; font-size:12.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #parts .nm small { font-size:10.5px; color:var(--faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #parts .fr.kid .nm b { font-weight:450; font-size:12px; color:var(--muted); }
+  #parts .ct { flex:none; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; padding:1px 7px; border-radius:10px; background:rgba(255,255,255,.06); }
+  #parts .fr.kid .ct { background:none; padding:0; color:var(--faint); }
+  #parts .iso { flex:none; width:24px; height:24px; padding:0; justify-content:center; border:0; background-color:transparent; color:var(--faint); opacity:0; }
+  #parts .fr:hover .iso, #parts .fr.sel .iso { opacity:1; }
+  #parts .iso:hover { color:var(--accent); background-color:rgba(255,255,255,.08); }
+  #parts .iso svg { width:14px; height:14px; }
+  #parts .fmsg { padding:22px 14px; text-align:center; color:var(--muted); line-height:1.5; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  #parts .fmsg small { color:var(--faint); font-size:11px; }
+  #parts .fmsg b { color:var(--text); }
+  #parts .ffoot { padding:7px 14px 10px; font-size:11px; color:var(--faint); line-height:1.45; }
+  #parts .ffoot b { color:var(--text); font-weight:600; }
   #parts .tab { position:absolute; left:calc(100% + 12px); top:10px; width:30px; padding:12px 0; border-radius:0 10px 10px 0; background:var(--panel); border:1px solid var(--line); border-left:0; color:var(--muted); cursor:pointer; writing-mode:vertical-rl; text-align:center; font-size:11px; font-weight:600; letter-spacing:.9px; text-transform:uppercase; backdrop-filter:blur(12px); }
   #parts:not(.closed) .tab { display:none; }
   #parts .tab:hover { color:var(--accent); }
@@ -165,7 +211,8 @@
     #parts, #props, #toast { top:160px; bottom:auto; }
     #props { top:calc(var(--cubeb, 160px) + 10px); }
     #props { width:calc(100% - 24px); max-height:calc(100vh - 420px); }
-    #parts .plist { max-height:calc(100vh - 500px); }
+    #parts .plist { height:calc(100vh - 520px); }
+    #parts { width:min(310px, calc(100% - 66px)); }
   }
 </style>
 <script type="importmap">
@@ -1049,7 +1096,7 @@ function unloadModel() {
   hiCache.forEach(m => m.dispose()); hiCache.clear();
   if (ground) { scene.remove(ground); ground.geometry.dispose(); ground.material.dispose(); ground = null; }
   if (modelID != null) { try { ifc.CloseModel(modelID); } catch (e) {} modelID = null; }
-  psetIndex = null; model = null; elems = []; byName.clear(); shots = [];
+  psetIndex = null; fx = null; fSel = null; model = null; elems = []; byName.clear(); shots = [];
   clearViewPoint(true); dragMode = null; pts.clear(); downAt = null;
   dimsReset();
 }
@@ -1073,7 +1120,7 @@ async function showModel(name, buf) {
   if (!ok) return false;
   msg.textContent = msg.title = name;
   const surfTxt = applySurfaces();
-  buildParts(); applyPalette(); setBg($("bg").value); hideWelds();
+  buildFilter(); applyPalette(); setBg($("bg").value); hideWelds();
   setTimeout(() => { analyze(); $("connInfo").textContent += surfTxt; }, 60);
   if ($("edges").checked) setTimeout(addEdges, 120);
   invalidate();
@@ -1271,44 +1318,412 @@ function autoVideo(record) {
 $("autoPlay").onclick = () => autoVideo(false);
 $("autoRec").onclick = () => autoVideo(true);
 
-// ---- Parts panel: show / hide parts by name, slide open/closed, lock, and filter ----
+// ---- Filter panel: Name | Parts | Assemblies | Profiles. One visibility state per element, shared by every mode ----
+// Group indexes are built once per model (Name at once, the property-based modes in idle chunks right after load);
+// the list is virtualized, so models with thousands of parts keep a small DOM.
 let partsLocked = true, partsTimer = null;
 const LOCK_ICON = {
   on:  '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
   off: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>',
 };
-function setPartVisible(meshes, on) {
-  meshes.forEach(m => m.visible = on);
-  edgeGroup.children.forEach(e => { if (e.userData.list === meshes) e.visible = on; });
-  renderer.shadowMap.needsUpdate = true; invalidate();
+const ISO_ICON = '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>';
+const FMODES = [["name", "Name"], ["parts", "Parts"], ["asm", "Assemblies"], ["prof", "Profiles"]];
+const ROWH = 38, KIDH = 30;
+let fx = null;   // filter state of the open model
+let fMode = "name", fQuery = "", fSel = null;
+const natCmp = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }).compare;
+const normKey = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+// property names that carry marks in Tekla (and similar) exports
+const PART_MARK_KEYS = new Set(["partpos", "partposition", "partmark", "partnumber", "piecemark", "partpositioncode"]);
+const PRELIM_KEYS = new Set(["preliminarymark"]);
+const ASM_MARK_KEYS = new Set(["assemblypos", "assemblyposition", "assemblymark", "assemblynumber", "assemblycastunitmark", "assemblycastunitpos",
+  "assemblycastunitposition", "castunitmark", "castunitpos", "assemblypositioncode", "assemblycastunitpositioncode", "assemblyposno"]);
+const PROFILE_KEYS = new Set(["profile", "profilename"]);
+const tonnes = kg => kg >= 1000 ? fmt(kg/1000, 2) + " t" : fmt(kg, 0) + " kg";
+const metres = mm => fmt(mm/1000, mm >= 100000 ? 0 : 1) + " m";
+
+function buildPsetIndex() {
+  if (psetIndex) return psetIndex;
+  psetIndex = new Map();
+  const rels = ifc.GetLineIDsWithType(modelID, T.IFCRELDEFINESBYPROPERTIES);
+  for (let i = 0; i < rels.size(); i++) {
+    const rel = ifc.GetLine(modelID, rels.get(i));
+    const def = rel.RelatingPropertyDefinition && rel.RelatingPropertyDefinition.value;
+    if (def == null) continue;
+    for (const o of rel.RelatedObjects || []) (psetIndex.get(o.value) || psetIndex.set(o.value, []).get(o.value)).push(def);
+  }
+  return psetIndex;
 }
-function buildParts() {
+// light property reader for indexing: psets are read unflattened, the (heavily shared) property lines are cached
+function quickProps(eid, cache) {
+  const out = [];
+  for (const pid of buildPsetIndex().get(eid) || []) {
+    let s; try { s = ifc.GetLine(modelID, pid, false); } catch (e) { continue; }
+    for (const h of (s && s.HasProperties) || []) {
+      let p = cache.get(h.value);
+      if (p === undefined) {
+        p = null;
+        try { const l = ifc.GetLine(modelID, h.value, false); if (l && l.Name) p = [l.Name.value, l.NominalValue ? l.NominalValue.value : null]; } catch (e) {}
+        cache.set(h.value, p);
+      }
+      if (p) out.push(p);
+    }
+  }
+  return out;
+}
+const filled = v => v != null && String(v).trim() !== "";
+function pickProp(props, keys) { for (const [n, v] of props) if (filled(v) && keys.has(normKey(n))) return String(v).trim(); return null; }
+function profileFromRep(eid) {   // IfcProfileDef name of an extruded body, read without flattening (breps stay cheap)
+  const L = h => { try { return h && h.value != null ? ifc.GetLine(modelID, h.value, false) : null; } catch (e) { return null; } };
+  const walk = (items, depth) => {
+    for (const h of items || []) {
+      const it = L(h); if (!it) continue;
+      if (it.SweptArea) { const p = L(it.SweptArea); if (p && p.ProfileName && filled(p.ProfileName.value)) return p.ProfileName.value; }
+      if (it.MappingSource && depth < 3) { const ms = L(it.MappingSource), mr = ms && L(ms.MappedRepresentation); const r = mr && walk(mr.Items, depth + 1); if (r) return r; }
+      if (it.FirstOperand && depth < 3) { const r = walk([it.FirstOperand], depth + 1); if (r) return r; }
+    }
+    return null;
+  };
+  try {
+    const ln = ifc.GetLine(modelID, eid, false), pds = L(ln.Representation);
+    for (const rh of (pds && pds.Representations) || []) { const r = L(rh); const p = r && walk(r.Items, 0); if (p) return p; }
+  } catch (e) {}
+  return null;
+}
+
+function setVisible(ids, on) {   // element indexes -> visible/hidden, then everything that depends on it
+  const v = on ? 1 : 0;
+  for (const i of ids) if (fx.vis[i] !== v) { fx.vis[i] = v; for (const m of fx.meshes[i]) m.visible = on; }
+  visChanged();
+}
+function visChanged() {
+  fx.ver++;
+  fx.nVis = 0; for (let i = 0; i < fx.vis.length; i++) fx.nVis += fx.vis[i];
+  // fit view frames what is shown (lights, ground and clipping keep the whole model)
+  modelBox.makeEmpty();
+  for (let i = 0; i < elems.length; i++) if (fx.vis[i]) modelBox.union(elems[i].box);
+  if (modelBox.isEmpty() && model) modelBox.copy(fx.fullBox);
+  refreshEdgeVisibility();
+  renderer.shadowMap.needsUpdate = true; invalidate();
+  renderRows(); updateFoot();
+}
+function refreshEdgeVisibility() {   // outlines are merged per part name; partly hidden names get a trimmed copy
+  for (const ls of edgeGroup.children) {
+    const u = ls.userData, list = u.list;
+    let n = 0; for (const m of list) if (m.visible) n++;
+    if (n === u.shown) continue;
+    u.shown = n; ls.visible = n > 0;
+    const attr = ls.geometry.attributes.position;
+    if (n === list.length) { if (attr.array !== u.full) ls.geometry.setAttribute("position", new THREE.BufferAttribute(u.full, 3)); }
+    else if (n > 0) {
+      let tot = 0; list.forEach((m, k) => { if (m.visible) tot += u.ranges[k*2+1]; });
+      const a = new Float32Array(tot); let o = 0;
+      list.forEach((m, k) => { if (m.visible) { a.set(u.full.subarray(u.ranges[k*2], u.ranges[k*2] + u.ranges[k*2+1]), o); o += u.ranges[k*2+1]; } });
+      ls.geometry.setAttribute("position", new THREE.BufferAttribute(a, 3));
+    }
+    ls.geometry.computeBoundingSphere();
+  }
+}
+
+function makeGroup(key, label, ids, extra = {}) {
+  let len = 0, wt = 0;
+  const info = fx.info;
+  if (info) for (const i of ids) { len += info[i].len; wt += info[i].wt; }
+  return { key, label, ids, len, wt, ...extra };
+}
+function groupBy(ids, keyOf) {
+  const m = new Map();
+  for (const i of ids) { const k = keyOf(i); (m.get(k) || m.set(k, []).get(k)).push(i); }
+  return m;
+}
+const allIds = () => elems.map((e, i) => i);
+
+function buildNameMode() {
+  const groups = [...groupBy(allIds(), i => elems[i].name)].map(([n, ids]) => makeGroup("n:" + n, n, ids))
+    .sort((a, b) => b.ids.length - a.ids.length || natCmp(a.label, b.label));
+  groups.forEach(g => { g.kidsFn = () => {   // part marks when the model has them, else profiles
+    const byMark = fx.info && fx.hasPartMarks;
+    return [...groupBy(g.ids, i => byMark ? (fx.info[i].pmark || "(no part mark)") : (fx.info ? fx.info[i].prof : elems[i].desc || "Unknown"))]
+      .map(([k, ids]) => makeGroup(g.key + "/" + k, k, ids)).sort((a, b) => natCmp(a.label, b.label));
+  }; });
+  return { groups, note: "" };
+}
+function subFor(g, mode) {
+  const n = g.ids.length, info = fx.info;
+  const w = info && g.wt > 0 ? " · " + tonnes(g.wt) : "";
+  if (mode === "name") return n + (n === 1 ? " part" : " parts") + w;
+  if (mode === "prof") return n + " pcs" + (g.len > 0 ? " · " + metres(g.len) : "") + w;
+  return g.sub || "";
+}
+
+async function buildPropertyModes(tok) {
+  const t0 = performance.now(); let tick = performance.now(), busy = 0;
+  const cache = new Map(), n = elems.length, info = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const e = elems[i], props = quickProps(e.id, cache);
+    let len = null, wt = null;
+    for (const [k, v] of props) {   // same rule as the report: first Length / Weight number
+      if (k === "Length" && len == null && typeof v === "number") len = v;
+      if (k === "Weight" && wt == null && typeof v === "number") wt = v;
+    }
+    const fast = e.type === T.IFCMECHANICALFASTENER;
+    const f = fast ? { len: 0, wt: 0 } : partFigures(e, { len, wt });
+    let prof = pickProp(props, PROFILE_KEYS) || (filled(e.desc) ? e.desc.trim() : null);
+    if (!prof) { try { const ln = ifc.GetLine(modelID, e.id); if (ln.ObjectType && filled(ln.ObjectType.value)) prof = ln.ObjectType.value.trim(); } catch (er) {} }
+    if (!prof && !fast && !e.bolt) prof = profileFromRep(e.id);
+    if (!prof && (fast || e.bolt)) { const bs = props.find(p => p[0] === "Bolt size" && typeof p[1] === "number"); prof = bs ? "Bolt Ø" + fmt(bs[1], 1) : "Bolts"; }
+    info[i] = { pmark: pickProp(props, PART_MARK_KEYS) || pickProp(props, PRELIM_KEYS), amark: pickProp(props, ASM_MARK_KEYS),
+      prof: prof || "Unknown", len: fast ? 0 : f.len, wt: fast ? 0 : f.wt, fast, bolt: fast || e.bolt };
+    if (performance.now() - tick > 30) {
+      busy += performance.now() - tick;
+      if (fx) fx.progress = i / n; updateFoot();
+      await sleep(0); tick = performance.now();
+      if (tok !== fx?.tok) return;
+    }
+  }
+  busy += performance.now() - tick;
+  if (tok !== fx?.tok) return;
+  fx.info = info; fx.hasPartMarks = info.some(x => x.pmark);
+  const ids = allIds();
+
+  // Parts: by part mark; without marks, one row per part (bolts, nuts and washers in one row)
+  let parts;
+  if (fx.hasPartMarks) {
+    const groups = [...groupBy(ids, i => info[i].pmark || "")].map(([k, g]) => {
+      const gr = makeGroup("p:" + k, k || "(no part mark)", g, { last: !k });
+      const names = [...new Set(g.map(i => elems[i].name))], profs = [...new Set(g.map(i => info[i].prof))];
+      gr.sub = (names.length === 1 ? names[0] : names.length + " names") + " · " + (profs.length === 1 ? profs[0] : profs.length + " profiles") + " · " + g.length + " pcs" + (gr.wt > 0 ? " · " + tonnes(gr.wt) : "");
+      return gr;
+    }).sort((a, b) => (a.last - b.last) || natCmp(a.label, b.label));
+    parts = { groups, note: "" };
+  } else {
+    const single = ids.filter(i => !info[i].bolt), bolts = ids.filter(i => info[i].bolt);
+    const groups = single.sort((a, b) => natCmp(elems[a].name, elems[b].name) || natCmp(info[a].prof, info[b].prof) || elems[a].id - elems[b].id)
+      .map(i => makeGroup("e:" + elems[i].id, elems[i].name, [i], { one: true, sub: info[i].prof + " · #" + elems[i].id + (info[i].wt > 0 ? " · " + fmt(info[i].wt, 1) + " kg" : "") }));
+    if (bolts.length) groups.push(makeGroup("p:bolts", "Bolts, nuts & washers", bolts, { sub: bolts.length + " pcs", last: true }));
+    parts = { groups, note: "No part marks in this model: one row per part." };
+  }
+
+  // Assemblies: IfcElementAssembly via IfcRelAggregates, else the parts' own assembly mark property
+  let asm = { groups: [], note: "", empty: "" };
+  const asmIds = new Set();
+  try { const v = ifc.GetLineIDsWithType(modelID, T.IFCELEMENTASSEMBLY); for (let k = 0; k < v.size(); k++) asmIds.add(v.get(k)); } catch (e) {}
+  const eIdx = new Map(elems.map((e, i) => [e.id, i]));
+  if (asmIds.size) {
+    const parent = new Map();
+    const rels = ifc.GetLineIDsWithType(modelID, T.IFCRELAGGREGATES);
+    for (let k = 0; k < rels.size(); k++) {
+      const r = ifc.GetLine(modelID, rels.get(k));
+      const a = r.RelatingObject && r.RelatingObject.value;
+      if (!asmIds.has(a)) continue;
+      for (const o of r.RelatedObjects || []) parent.set(o.value, a);
+    }
+    const isTop = a => !asmIds.has(parent.get(a));
+    const top = id => { let a = parent.get(id), s = 0; while (a != null && asmIds.has(parent.get(a)) && s++ < 20) a = parent.get(a); return asmIds.has(a) ? a : null; };
+    const members = new Map();   // top-level assembly id -> element indexes (sub-assemblies roll up into it)
+    for (const [id, i] of eIdx) {
+      const a = asmIds.has(id) && isTop(id) ? id : top(id);   // an assembly with geometry of its own belongs to itself
+      if (a != null) (members.get(a) || members.set(a, []).get(a)).push(i);
+    }
+    const amark = new Map();
+    for (const a of asmIds) {
+      if (!isTop(a)) continue;
+      if (!members.has(a)) members.set(a, []);
+      const props = quickProps(a, cache);
+      let mk = pickProp(props, ASM_MARK_KEYS);
+      if (!mk) { try { const l = ifc.GetLine(modelID, a); mk = (l.Tag && filled(l.Tag.value) && !/^ID[0-9a-f-]{20,}$/i.test(l.Tag.value) ? l.Tag.value : null) || (l.Name && l.Name.value) || ("#" + a); } catch (e) { mk = "#" + a; } }
+      amark.set(a, String(mk).trim());
+    }
+    const byMark = new Map();
+    for (const [a, list] of members) { if (!list.length) continue; const mk = amark.get(a); (byMark.get(mk) || byMark.set(mk, []).get(mk)).push([a, list]); }
+    const inAsm = new Set(); members.forEach(l => l.forEach(i => inAsm.add(i)));
+    asm.groups = [...byMark].map(([mk, insts]) => asmGroup(mk, insts));
+    const loose = ids.filter(i => !inAsm.has(i));
+    asm.groups.sort((a, b) => natCmp(a.label, b.label));
+    if (loose.length) asm.groups.push(makeGroup("a:-", "(not in an assembly)", loose, { sub: loose.length + " parts", last: true }));
+    asm.note = amark.size + " assemblies (IfcElementAssembly via IfcRelAggregates)";
+  } else if (info.some(x => x.amark)) {
+    const byMark = groupBy(ids.filter(i => info[i].amark), i => info[i].amark);
+    asm.groups = [...byMark].map(([mk, list]) => asmGroup(mk, [[null, list]])).sort((a, b) => natCmp(a.label, b.label));
+    const loose = ids.filter(i => !info[i].amark);
+    if (loose.length) asm.groups.push(makeGroup("a:-", "(no assembly mark)", loose, { sub: loose.length + " parts", last: true }));
+    asm.note = "Grouped by the parts' assembly mark property";
+  } else {
+    asm.empty = "This model has no assemblies.<br><small>No IfcElementAssembly and no assembly mark property on the parts. In Tekla, export the IFC with <b>Assemblies</b> switched on to group by assembly here.</small>";
+  }
+
+  // Profiles
+  const prof = { groups: [...groupBy(ids, i => info[i].prof)].map(([k, g]) => makeGroup("f:" + k, k, g, { last: k === "Unknown" }))
+    .sort((a, b) => (a.last - b.last) || b.wt - a.wt || b.ids.length - a.ids.length || natCmp(a.label, b.label)), note: "" };
+  prof.groups.forEach(g => { g.kidsFn = () => [...groupBy(g.ids, i => elems[i].name)].map(([k, l]) => makeGroup(g.key + "/" + k, k, l)).sort((a, b) => b.ids.length - a.ids.length); });
+
+  if (tok !== fx?.tok) return;
+  // the Name rows can now show weights too
+  fx.modes.name.groups.forEach(g => { g.len = 0; g.wt = 0; for (const i of g.ids) { g.len += info[i].len; g.wt += info[i].wt; } g.kids = null; });
+  Object.assign(fx.modes, { parts, asm, prof });
+  fx.ready = true; fx.progress = 1;
+  console.log("filter index", Math.round(performance.now() - t0) + " ms elapsed, " + Math.round(busy) + " ms busy", { parts: parts.groups.length, asm: asm.groups.length, prof: prof.groups.length });
+  applyQuery(); updateFoot();
+}
+function asmGroup(mk, insts) {   // insts: [[assemblyId, element indexes]] sharing one mark
+  const info = fx.info, ids = insts.flatMap(x => x[1]);
+  const g = makeGroup("a:" + mk, mk, ids);
+  let main = -1, mw = -1; for (const i of insts[0][1]) if (!info[i].bolt && info[i].wt > mw) { mw = info[i].wt; main = i; }
+  const parts = ids.filter(i => !info[i].bolt).length;
+  g.sub = (insts.length > 1 ? insts.length + " × · " : "") + (main >= 0 ? info[main].prof + " · " : "") + parts + " parts" + (g.wt > 0 ? " · " + tonnes(g.wt) : "");
+  if (insts.length > 1 && insts[0][0] != null) g.kidsFn = () => insts.map(([a, l]) => makeGroup(g.key + "/" + a, mk + "  #" + a, l));
+  return g;
+}
+
+function buildFilter() {
   const box = $("parts");
   box.innerHTML = ""; box.style.display = "block";
-  const head = document.createElement("div"); head.className = "ph2";
-  head.innerHTML = '<b>Parts</b><button id="pAll" title="Show all">All</button><button id="pNone" title="Hide all">None</button><button id="pLock" class="on" title="Locked: panel stays open. Unlock: it slides away when you move off it.">' + LOCK_ICON.on + '</button><button id="pHide" title="Hide panel"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>';
-  const fl = document.createElement("input"); fl.className = "fl"; fl.placeholder = "Filter parts...";
-  const list = document.createElement("div"); list.className = "plist";
-  const labels = [...byName.entries()].sort((a,b) => b[1].length - a[1].length).map(([name, meshes]) => {
-    const l = document.createElement("label"); l.style.display = "block";
-    const c = document.createElement("input"); c.type = "checkbox"; c.checked = true;
-    c.onchange = () => setPartVisible(meshes, c.checked);
-    l.append(c, " " + name + " (" + meshes.length + ")");
-    return l;
-  });
-  list.append(...labels);
-  const tab = document.createElement("div"); tab.className = "tab"; tab.textContent = "Parts"; tab.onclick = () => box.classList.remove("closed");
-  box.append(head, fl, list, tab);
-  fl.oninput = () => { const q = fl.value.toLowerCase(); labels.forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? "block" : "none"); };
-  const setAll = on => labels.forEach(l => { if (l.style.display === "none") return; const c = l.querySelector("input"); if (c.checked !== on) { c.checked = on; c.onchange(); } });
-  $("pAll").onclick = () => setAll(true); $("pNone").onclick = () => setAll(false);
+  const meshes = elems.map(() => []), eIdx = new Map(elems.map((e, i) => [e.id, i]));
+  for (const m of model.children) { const i = eIdx.get(m.userData.eid); if (i != null) meshes[i].push(m); }
+  elems.forEach((e, i) => { e.bolt = meshes[i].some(m => m.userData.bolt); });
+  fx = { tok: (fx?.tok || 0) + 1, meshes, vis: new Uint8Array(elems.length).fill(1), ver: 0, nVis: elems.length, info: null, ready: false, progress: 0,
+    modes: {}, fullBox: modelBox.clone(), expanded: new Set(), rows: [], scroll: {} };
+  fx.modes.name = buildNameMode();
+  box.innerHTML = `
+    <div class="ph2"><b>Filter</b><button id="pLock" class="ic on" title="Locked: panel stays open. Unlock: it slides away when you move off it.">${LOCK_ICON.on}</button><button id="pHide" class="ic" title="Hide panel"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+    <div class="fseg" role="tablist">${FMODES.map(([k, l]) => `<button data-m="${k}" role="tab">${l}</button>`).join("")}</div>
+    <div class="fsearch"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><input id="fq" type="search" placeholder="Search…" autocomplete="off" spellcheck="false"></div>
+    <div class="ftools"><button data-a="all" title="Show every row in the list (search results only, while searching)">All</button><button data-a="none" title="Hide every row in the list">None</button><button data-a="inv" title="Swap shown and hidden for the rows in the list">Invert</button><span class="sp"></span><button data-a="reset" class="rst" title="Show all parts again (welds stay hidden)"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4"/></svg>Show all</button></div>
+    <div class="plist" id="fList"><div class="fsp"></div><div class="fwin"></div></div>
+    <div class="ffoot" id="fFoot"></div>
+    <div class="tab">Filter</div>`;
+  const list = $("fList");
+  box.querySelector(".tab").onclick = () => box.classList.remove("closed");
+  box.querySelectorAll(".fseg button").forEach(b => b.onclick = () => setFilterMode(b.dataset.m));
+  let qt = null;
+  $("fq").oninput = e => { clearTimeout(qt); qt = setTimeout(() => { fQuery = e.target.value.trim().toLowerCase(); applyQuery(); list.scrollTop = 0; }, 120); };
+  $("fq").onkeydown = e => { if (e.key === "Escape") { e.stopPropagation(); e.target.value = ""; fQuery = ""; applyQuery(); e.target.blur(); } };
+  box.querySelector(".ftools").onclick = e => { const b = e.target.closest("button"); if (b) toolAction(b.dataset.a); };
+  list.onscroll = () => { if (!fx.raf) fx.raf = requestAnimationFrame(() => { fx.raf = 0; renderRows(); }); };
+  list.onclick = rowClick;
   $("pHide").onclick = () => box.classList.add("closed");
   $("pLock").onclick = e => { partsLocked = !partsLocked; e.currentTarget.classList.toggle("on", partsLocked); e.currentTarget.innerHTML = partsLocked ? LOCK_ICON.on : LOCK_ICON.off; };
   box.onmouseleave = () => { if (!partsLocked) partsTimer = setTimeout(() => box.classList.add("closed"), 1200); };
   box.onmouseenter = () => clearTimeout(partsTimer);
   box.classList.add("closed");
+  fSel = null;
+  setFilterMode(fMode, true);
+  const tok = fx.tok;
+  setTimeout(() => { if (fx && fx.tok === tok) buildPropertyModes(tok).catch(err => { console.error(err); if (fx) { fx.failed = true; updateFoot(); } }); }, 400);
 }
-function hideWelds() { $("parts").querySelectorAll("label").forEach(l => { if (/weld/i.test(l.textContent)) { const c = l.querySelector("input"); c.checked = false; c.onchange(); } }); }
+function setFilterMode(m, keepScroll) {
+  const list = $("fList");
+  if (fx.rows.length) fx.scroll[fMode] = list.scrollTop;
+  fMode = m;
+  $("parts").querySelectorAll(".fseg button").forEach(b => { const on = b.dataset.m === m; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+  $("fq").placeholder = "Search " + FMODES.find(x => x[0] === m)[1].toLowerCase() + "…";
+  applyQuery();
+  list.scrollTop = fx.scroll[m] || 0; renderRows();
+}
+function modeData() { return fx.modes[fMode]; }
+function applyQuery() {   // flat list of visible rows: top-level groups matching the search, plus open children
+  const md = modeData(), rows = [];
+  if (md) for (const g of md.groups) {
+    if (fQuery) { if (g._s == null) g._s = (g.label + " " + (g.sub || "")).toLowerCase(); if (!g._s.includes(fQuery)) continue; }
+    rows.push({ g, d: 0 });
+    if (fx.expanded.has(g.key)) { if (!g.kids) g.kids = g.kidsFn ? g.kidsFn() : []; for (const k of g.kids) rows.push({ g: k, d: 1 }); }
+  }
+  fx.rows = rows;
+  let y = 0; for (const r of rows) { r.y = y; y += r.d ? KIDH : ROWH; }
+  fx.height = y;
+  renderRows(); updateFoot();
+}
+function visState(g) {   // 0 hidden, 1 partly, 2 shown (cached until visibility changes)
+  if (g._v !== fx.ver) { let n = 0; for (const i of g.ids) n += fx.vis[i]; g._n = n; g._v = fx.ver; }
+  return g._n === 0 ? 0 : g._n === g.ids.length ? 2 : 1;
+}
+function renderRows() {
+  if (!fx) return;
+  const list = $("fList"); if (!list) return;
+  const md = modeData(), win = list.querySelector(".fwin");
+  list.querySelector(".fsp").style.height = fx.height + "px";
+  if (!md) { win.innerHTML = `<div class="fmsg"><span class="spin"></span>Reading properties… ${Math.round(fx.progress*100)}%</div>`; return; }
+  if (md.empty) { win.innerHTML = `<div class="fmsg">${md.empty}</div>`; return; }
+  if (!fx.rows.length) { win.innerHTML = `<div class="fmsg">${fQuery ? "Nothing matches “" + esc(fQuery) + "”" : "Nothing to list"}</div>`; return; }
+  const top = list.scrollTop, bot = top + (list.clientHeight || 400), rows = fx.rows;
+  let lo = 0, hi = rows.length;   // first row at or above the viewport (binary search on y)
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (rows[mid].y + ROWH < top) lo = mid + 1; else hi = mid; }
+  const start = Math.max(0, lo - 6);
+  let h = "";
+  for (let k = start; k < rows.length && rows[k].y < bot + 6*ROWH; k++) {
+    const { g, d, y } = rows[k], st = visState(g), exp = !d && (g.kidsFn);
+    const sub = d ? (g.ids.length + " pcs" + (fx.info && g.wt > 0 ? " · " + tonnes(g.wt) : "")) : subFor(g, fMode);
+    h += `<div class="fr${d ? " kid" : ""}${fSel === g.key ? " sel" : ""}${st === 0 ? " off" : ""}" data-k="${k}" style="top:${y}px">`
+      + (exp ? `<span class="tw${fx.expanded.has(g.key) ? " open" : ""}" data-x="1" title="Expand"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>` : `<span class="tw none"></span>`)
+      + `<span class="cb s${st}" data-c="1" role="checkbox" aria-checked="${st === 2 ? "true" : st === 1 ? "mixed" : "false"}" title="Show / hide"></span>`
+      + `<span class="nm"><b title="${esc(g.label)}">${esc(g.label)}</b>${d ? "" : `<small>${esc(sub)}</small>`}</span>`
+      + (d ? `<span class="ct">${esc(sub)}</span>` : g.one ? "" : `<span class="ct">${fmt(g.ids.length, 0)}</span>`)
+      + `<button class="iso" data-i="1" title="Isolate: show only this (or double-click the row)">${ISO_ICON}</button></div>`;
+  }
+  win.innerHTML = h;
+}
+function updateFoot() {
+  const f = $("fFoot"); if (!f || !fx) return;
+  const md = modeData();
+  let t = `<b>${fmt(fx.nVis, 0)}</b> of ${fmt(elems.length, 0)} parts shown`;
+  if (md && !md.empty) t += ` · ${fmt(md.groups.length, 0)} ${md.groups.length === 1 ? "row" : "rows"}`;
+  if (!fx.ready && !fx.failed) t += ` · reading properties ${Math.round(fx.progress*100)}%`;
+  if (fx.failed) t += " · properties unavailable";
+  else if (md && md.note) t += `<br><span>${esc(md.note)}</span>`;
+  f.innerHTML = t;
+  if (!md) renderRows();
+}
+function rowAt(e) { const r = e.target.closest(".fr"); return r ? fx.rows[+r.dataset.k] : null; }
+function rowClick(e) {
+  const row = rowAt(e); if (!row) return;
+  const g = row.g;
+  if (e.target.closest("[data-x]")) { fx.expanded.has(g.key) ? fx.expanded.delete(g.key) : fx.expanded.add(g.key); applyQuery(); return; }
+  if (e.target.closest("[data-c]")) { setVisible(g.ids, visState(g) !== 2); return; }
+  if (e.target.closest("[data-i]")) { isolate(g); return; }
+  // double-click = isolate (detected here: the first click re-renders the row, which can swallow a native dblclick)
+  const now = performance.now(), dbl = fx.lastClick && fx.lastClick.key === g.key && now - fx.lastClick.t < 400;
+  fx.lastClick = dbl ? null : { key: g.key, t: now };
+  if (dbl) isolate(g); else selectGroup(g);
+}
+function markSelRows() { const w = $("fList"); if (w) w.querySelectorAll(".fr").forEach(r => { const row = fx.rows[+r.dataset.k]; r.classList.toggle("sel", !!row && row.g.key === fSel); }); }
+function isolate(g) {
+  fx.vis.fill(0); for (const m of model.children) m.visible = false;
+  for (const i of g.ids) { fx.vis[i] = 1; for (const m of fx.meshes[i]) m.visible = true; }
+  visChanged(); selectGroup(g, true);
+  flyTo(goal.theta, goal.phi);
+}
+function toolAction(a) {
+  if (!fx) return;
+  if (a === "reset") { resetVisibility(); return; }
+  const md = modeData(); if (!md || md.empty) return;
+  const ids = [];
+  for (const r of fx.rows) if (!r.d) for (const i of r.g.ids) ids.push(i);
+  if (a === "all" || a === "none") { setVisible(fQuery ? ids : allIds(), a === "all"); return; }
+  const set = fQuery ? ids : allIds();   // invert
+  for (const i of set) { fx.vis[i] ^= 1; for (const m of fx.meshes[i]) m.visible = !!fx.vis[i]; }
+  visChanged();
+}
+function resetVisibility() { setVisible(allIds(), true); hideWelds(); }
+function hideWelds() { if (fx) setVisible(allIds().filter(i => /weld/i.test(elems[i].name)), false); }
+function selectGroup(g, quiet) {   // highlight the group's parts (same highlight as a clicked part); one part opens its full properties
+  if (g.ids.length === 1) { selectPart(fx.meshes[g.ids[0]][0]); fSel = g.key; markSelRows(); return; }
+  clearSel(); fSel = g.key;
+  for (const i of g.ids) for (const m of fx.meshes[i]) { selMeshes.add(m); m.material = hiMat(m.userData.mat); }
+  invalidate(); markSelRows();
+  if (quiet && $("props").style.display === "none") return;
+  const info = fx.info, n = g.ids.length, st = visState(g);
+  const row = (a, b) => b === "" || b == null ? "" : `<div class="r"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
+  const top = (fn, lim = 6) => { const c = new Map(); for (const i of g.ids) { const k = fn(i); c.set(k, (c.get(k) || 0) + 1); }
+    return [...c].sort((a, b) => b[1] - a[1]).slice(0, lim).map(([k, v]) => row(k, v + " pcs")).join("") + (c.size > lim ? row("…", (c.size - lim) + " more") : ""); };
+  const mname = FMODES.find(x => x[0] === fMode)[1];
+  let h = `<div class="ph"><div><div class="t">${esc(g.label)}</div><div class="s">${esc(mname)} · ${fmt(n, 0)} parts</div></div><button id="propsClose" title="Close">&times;</button></div>`;
+  if (info) h += `<div class="big"><div><small>Total length</small><b>${metres(g.len)}</b></div><div><small>Total weight</small><b>${tonnes(g.wt)}</b></div></div>`;
+  h += `<div class="sec"><h4>Group</h4>${row("Parts", fmt(n, 0))}${row("Shown", st === 2 ? "all" : st === 0 ? "none" : fmt(g._n, 0) + " of " + fmt(n, 0))}${g.sub ? row("Summary", g.sub) : ""}</div>`;
+  if (fMode !== "name") h += `<div class="sec"><h4>By name</h4>${top(i => elems[i].name)}</div>`;
+  if (info && fMode !== "prof") h += `<div class="sec"><h4>By profile</h4>${top(i => info[i].prof)}</div>`;
+  const panel = $("props"); panel.innerHTML = h; panel.style.display = "block";
+  $("propsClose").onclick = closeProps;
+}
 
 // ---- Automatic photos at 1350x1080 (no UI, no labels: raw renders, supersampled 2x) ----
 async function savePhotos() {
@@ -1483,7 +1898,7 @@ async function addEdges() {
   let t0 = performance.now();
   const v3 = new THREE.Vector3();
   for (const [name, list] of byName) {
-    const chunks = []; let total = 0;
+    const chunks = [], ranges = []; let total = 0;
     for (const m of list) {
       let arr = edgeCache.get(m.geometry);
       if (!arr) {
@@ -1496,14 +1911,14 @@ async function addEdges() {
       }
       const out = new Float32Array(arr.length);
       for (let i = 0; i < arr.length; i += 3) { v3.set(arr[i], arr[i+1], arr[i+2]).applyMatrix4(m.matrix); out[i] = v3.x; out[i+1] = v3.y; out[i+2] = v3.z; }
-      chunks.push(out); total += out.length;
+      ranges.push(total, out.length); chunks.push(out); total += out.length;
       if (performance.now() - t0 > 14) { await sleep(0); t0 = performance.now(); if (tok !== edgeToken) return; }
     }
     if (tok !== edgeToken || !chunks.length) continue;
     const all = new Float32Array(total); let o = 0; chunks.forEach(c => { all.set(c, o); o += c.length; });
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(all, 3));
-    const ls = new THREE.LineSegments(g, edgeMatFor(edgeColor(list))); ls.userData.list = list; ls.visible = list[0].visible !== false; ls.frustumCulled = false;
-    edgeGroup.add(ls); invalidate();
+    const ls = new THREE.LineSegments(g, edgeMatFor(edgeColor(list))); ls.userData = { list, full: all, ranges, shown: list.length }; ls.frustumCulled = false;
+    edgeGroup.add(ls); refreshEdgeVisibility(); invalidate();
   }
 }
 $("edges").onchange = ev => { if (ev.target.checked) addEdges(); else { edgeToken++; disposeEdges(); } };
@@ -1511,17 +1926,7 @@ $("edges").onchange = ev => { if (ev.target.checked) addEdges(); else { edgeToke
 // ---- Properties: one index of property sets per model, built on first use ----
 let psetIndex = null;
 function getPsets(eid) {
-  if (!psetIndex) {
-    psetIndex = new Map();
-    const rels = ifc.GetLineIDsWithType(modelID, T.IFCRELDEFINESBYPROPERTIES);
-    for (let i = 0; i < rels.size(); i++) {
-      const rel = ifc.GetLine(modelID, rels.get(i));
-      const def = rel.RelatingPropertyDefinition && rel.RelatingPropertyDefinition.value;
-      if (def == null) continue;
-      for (const o of rel.RelatedObjects || []) (psetIndex.get(o.value) || psetIndex.set(o.value, []).get(o.value)).push(def);
-    }
-  }
-  return (psetIndex.get(eid) || []).map(pid => { try { return ifc.GetLine(modelID, pid, true); } catch (e) { return null; } }).filter(Boolean);
+  return (buildPsetIndex().get(eid) || []).map(pid => { try { return ifc.GetLine(modelID, pid, true); } catch (e) { return null; } }).filter(Boolean);
 }
 function readProps(eid) {
   let len = null, wt = null; const groups = [];
@@ -1587,6 +1992,7 @@ function clearSel() {
   if (!selMeshes.size) return;
   selMeshes.forEach(m => { m.material = m.userData.mat; });
   selMeshes.clear(); selEid = null; invalidate();
+  if (fSel != null) { fSel = null; if (fx) markSelRows(); }
 }
 function closeProps() { clearSel(); $("props").style.display = "none"; }
 function pickAt(cx, cy) {
