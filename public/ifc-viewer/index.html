@@ -9,7 +9,7 @@
 <style>
   :root {
     --panel:rgba(22,24,27,.86); --panel-solid:#17191c; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
-    --text:#e8eaed; --muted:#9aa0a6; --faint:#6f757c; --accent:#f0a23b; --accent-hi:#f6b55c; --accent-ink:#1d1306; --danger:#ef4444;
+    --text:#e8eaed; --muted:#9aa0a6; --faint:#6f757c; --accent:#f0a23b; --accent-hi:#f6b55c; --accent-ink:#1d1306; --danger:#ef4444; --cubew:112px;
     --r:12px; --h:34px;
   }
   * { box-sizing:border-box; }
@@ -45,15 +45,25 @@
   kbd { font:inherit; font-size:10.5px; padding:0 5px; border:1px solid var(--line2); border-bottom-width:2px; border-radius:4px; color:var(--muted); }
 
   /* ---- top bar ---- */
-  #top { top:12px; left:12px; right:12px; height:56px; display:flex; align-items:center; gap:12px; padding:0 12px 0 14px; }
+  #top { top:12px; left:12px; right:calc(12px + var(--cubew) + 10px); height:56px; display:flex; align-items:center; gap:12px; padding:0 12px 0 14px; }
   #brand img { height:30px; width:auto; display:block; }
   .sep { width:1px; height:26px; background:var(--line); flex:none; }
   #msg { color:var(--muted); font-size:12.5px; min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .seg { display:inline-flex; padding:3px; gap:2px; background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:10px; }
   .seg button { height:28px; border:0; background-color:transparent; color:var(--muted); padding:0 12px; border-radius:7px; }
   .seg button:hover { color:var(--text); background-color:rgba(255,255,255,.1); }
-  #views { margin-left:auto; }
+  #dimTools { margin-left:auto; }
   .disp { display:flex; align-items:center; gap:8px; margin-left:auto; }
+
+  /* ---- view cube ---- */
+  #vcube { position:absolute; z-index:3; top:12px; right:12px; width:var(--cubew); display:flex; flex-direction:column; align-items:center; gap:4px; user-select:none; -webkit-user-select:none; touch-action:none; }
+  #vcube canvas { width:var(--cubew); height:var(--cubew); display:block; cursor:pointer; }
+  #vcube .vb { display:flex; gap:4px; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:10px; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  #vcube .vb button { width:30px; height:26px; padding:0; justify-content:center; background-color:transparent; border-color:transparent; color:var(--muted); }
+  #vcube .vb button:hover { color:var(--accent); background-color:rgba(255,255,255,.08); }
+  #vcube .vpc { height:24px; padding:0 8px; font-size:11px; border-radius:8px; background:var(--panel); color:var(--accent); border-color:var(--line2); }
+  #vcube .vpc[hidden] { display:none; }
+  body.cube-below #top { right:12px; }   /* not enough room beside the top bar: the cube drops below it */
 
   /* ---- bottom dock ---- */
   #rec { left:50%; bottom:12px; transform:translateX(-50%); width:max-content; max-width:calc(100% - 24px); padding:10px 12px 8px; display:flex; flex-direction:column; gap:8px; }
@@ -89,7 +99,7 @@
 
   /* ---- properties panel ---- */
   ::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.2); border-radius:8px; }
-  #props { top:80px; right:12px; width:320px; max-height:calc(100vh - 240px); overflow:auto; display:none; padding:0; }
+  #props { top:calc(var(--cubeb, 150px) + 10px); right:12px; width:320px; max-height:calc(100vh - var(--cubeb, 150px) - 170px); overflow:auto; display:none; padding:0; }
   #props .ph { display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel-solid); border-radius:var(--r) var(--r) 0 0; }
   #props .ph .t { font-size:15px; font-weight:700; line-height:1.3; word-break:break-word; }
   #props .ph .s { color:var(--accent); font-size:12px; margin-top:2px; }
@@ -121,20 +131,39 @@
   #parts:not(.closed) .tab { display:none; }
   #parts .tab:hover { color:var(--accent); }
 
+  /* ---- dimensions (measure) tool ---- */
+  .seg button.on { background-color:var(--accent); color:var(--accent-ink); }
+  .seg button.on:hover { background-color:var(--accent-hi); color:var(--accent-ink); }
+  #dimTools { margin-left:12px; }
+  #dims { position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  #dims svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; filter:drop-shadow(0 0 1.5px rgba(0,0,0,.7)); }
+  #dims .dl { stroke:var(--accent); stroke-width:1.5; fill:none; }
+  #dims .rb { stroke-dasharray:4 4; opacity:.85; }
+  #dims .dp { fill:var(--accent); stroke:#1b1d20; stroke-width:1.5; }
+  #dims .sn { fill:none; stroke:var(--accent-hi); stroke-width:1.5; }
+  #dims .sn.surf { stroke:#fff; }
+  .dlbl { position:absolute; transform:translate(-50%,-50%); pointer-events:auto; cursor:pointer; padding:3px 9px; border-radius:8px; background:rgba(27,29,32,.94); color:var(--text); border:1px solid var(--line2); box-shadow:0 2px 8px rgba(0,0,0,.35); text-align:center; white-space:nowrap; line-height:1.25; font-size:11px; font-variant-numeric:tabular-nums; user-select:none; }
+  .dlbl b { display:block; font-size:12px; font-weight:650; }
+  .dlbl small { display:block; font-size:10.5px; color:var(--muted); }
+  .dlbl:hover { border-color:var(--danger); }
+  body.measuring canvas { cursor:crosshair; }
+
   /* ---- narrow screens ---- */
+  @media (max-width:1180px) { #dimTools .lbl { display:none; } }
   @media (max-width:1240px) { .hints { display:none; } }
   @media (max-width:1100px) { #rec .lbl.opt { display:none; } }
   @media (max-width:980px) { #msg, #top .sep { display:none; } }
   @media (max-width:760px) { #rec .lbl { display:none; } .disp .switch { font-size:0; gap:0; } }
   @media (max-width:720px) {
     #top { height:auto; flex-wrap:wrap; padding:8px 10px; row-gap:8px; }
-    #views { margin-left:0; } .disp { margin-left:0; }
+    #dimTools { margin-left:0; } .disp { margin-left:0; }
     #rec { left:12px; right:12px; transform:none; width:auto; padding:10px 12px 8px; }
     #rec .groups { flex-direction:column; align-items:stretch; gap:8px; }
     .vsep { display:none; }
     .grp2 { flex-direction:row; align-items:center; gap:10px; }
     .grp2 .ttl { width:74px; flex:none; }
     #parts, #props, #toast { top:160px; bottom:auto; }
+    #props { top:calc(var(--cubeb, 160px) + 10px); }
     #props { width:calc(100% - 24px); max-height:calc(100vh - 420px); }
     #parts .plist { max-height:calc(100vh - 500px); }
   }
@@ -148,6 +177,15 @@
 </script>
 </head>
 <body class="busy">
+<div id="vcube" aria-label="View cube">
+  <canvas id="vcCanvas" width="112" height="112" title="Click a face, edge or corner to look from there · drag to orbit"></canvas>
+  <div class="vb">
+    <button id="vcL" title="Rotate view 90° left"><svg class="i" viewBox="0 0 24 24"><path d="M9 7H5V3M5 7a8 8 0 1 1-1 7"/></svg></button>
+    <button id="vcHome" title="Home: fit the model in the default 3D view"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v10h12V10M10 20v-6h4v6"/></svg></button>
+    <button id="vcR" title="Rotate view 90° right"><svg class="i" viewBox="0 0 24 24"><path d="M15 7h4V3M19 7a8 8 0 1 0 1 7"/></svg></button>
+  </div>
+  <button id="vpClear" class="vpc" hidden title="Remove the fixed view point (Shift+V or Esc)">Clear view point</button>
+</div>
 <div id="top" class="panel">
   <div id="brand"><img src="/ifc-viewer/logo-full.svg" alt="CivSteel"></div>
   <span class="sep"></span>
@@ -156,8 +194,9 @@
     <svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Open IFC
   </label>
   <span id="msg">No model loaded</span>
-  <div id="views" class="seg" role="group" aria-label="Camera view">
-    <button data-v="iso" title="Isometric view">3D</button><button data-v="top" title="Plan view">Top</button><button data-v="front" title="Front elevation">Front</button><button data-v="side" title="Side elevation">Side</button><button data-v="fit" title="Fit the whole model in the current view (F)"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <div id="dimTools" class="seg" role="group" aria-label="Dimensions">
+    <button id="dimBtn" title="Dimensions: measure between two points (D) · Shift disables snapping · Esc cancels a point"><svg class="i" viewBox="0 0 24 24"><path d="M3 15l12-12 6 6-12 12z"/><path d="M7 11l2 2M10 8l2 2M13 5l2 2"/></svg><span class="lbl">Dimensions</span></button>
+    <button id="dimClear" title="Remove all dimensions (Delete)" hidden>Clear</button>
   </div>
   <div class="disp">
     <label class="switch" title="Show part outlines"><input type="checkbox" id="edges" checked> Outlines</label>
@@ -167,6 +206,8 @@
   </div>
   <a id="back" class="btn ghost" href="/" title="Back to julkarnaeem.com">&larr; Website</a>
 </div>
+
+<div id="dims"><svg></svg></div>
 
 <div id="empty">
   <div class="card">
@@ -318,6 +359,7 @@ function draw(withAO = true) {
   }
   if (withAO && aoOn && model) composer.render(); else renderer.render(scene, camera);
   vpMarker.visible = mv;
+  if (!capturing) updateDims(withAO);   // dimension overlay follows the camera
 }
 function setRenderSize(w, h, ratio, updateStyle = true) {   // one place that keeps renderer, composer and AO buffers in step
   renderer.setPixelRatio(ratio); renderer.setSize(w, h, updateStyle);
@@ -438,10 +480,10 @@ function pan(dx, dy) {
 }
 function zoomAt(f, cx, cy) {
   const r = goal.radius * f;
-  if ((f < 1 && r < modelSize*0.0005) || (f > 1 && r > modelSize*8)) return;
+  if ((f < 1 && r < modelSize*0.002) || (f > 1 && r > modelSize*8)) return;   // same floor as applyCamera, so the target never keeps sliding while the radius is clamped
   const anchor = pickPoint(cx, cy) || rayPoint(cx, cy, goal.radius);
   goal.t.sub(anchor).multiplyScalar(f).add(anchor);   // scaling the rig about the anchor keeps it under the cursor
-  goal.radius = r;
+  goal.radius = r; panDepth *= f;   // a pan in progress keeps its speed after a wheel tick
 }
 addEventListener("pointermove", e => { lastX = e.clientX; lastY = e.clientY; });
 
@@ -458,7 +500,7 @@ function wantedMode(e) {
   if (e.buttons & 2) return "pan";
   return null;
 }
-function endDrag() { if (dragMode === "rotate" && !fixedVP) showMarker(null); dragMode = null; }
+function endDrag() { if (dragMode === "rotate" && !fixedVP) showMarker(null); dragMode = null; panDepth = 0; pivotOnModel = false; }
 el.addEventListener("pointerdown", e => {
   try { el.setPointerCapture(e.pointerId); } catch (err) {}
   pts.set(e.pointerId, e);
@@ -494,14 +536,23 @@ el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end)
 function startPickVP() {
   if (!model) return;
   pickingVP = true; el.style.cursor = "crosshair";
-  toast("Click a point on the model to set the view point · click empty space to clear it", 5000);
+  toast("Click a point on the model to set the view point · click empty space (or Shift+V / Esc) to remove it", 5000);
 }
 function setViewPointAt(cx, cy) {
   pickingVP = false; el.style.cursor = "";
   fixedVP = pickPoint(cx, cy);
-  showMarker(fixedVP);
+  showMarker(fixedVP); vpUi();
   toast(fixedVP ? "View point set: rotation turns round it (V to change)" : "View point cleared: rotation turns round the cursor", 2500);
 }
+function clearViewPoint(quiet) {
+  const had = !!fixedVP;
+  fixedVP = null; pickingVP = false; el.style.cursor = ""; pivotOnModel = false; panDepth = 0;
+  if (!dragMode) showMarker(null);
+  vpUi();
+  if (had && !quiet) toast("View point removed: rotation turns round the cursor", 2000);
+  return had;
+}
+function vpUi() { const b = $("vpClear"); if (b) { b.hidden = !fixedVP; if (typeof vcLayout === "function") vcLayout(); } }
 function toggleParallel() {
   parallel = !parallel;
   if (goal.fov !== FOV_ELEV) setLens(baseFov());
@@ -512,8 +563,10 @@ addEventListener("keydown", e => {
   const k = e.key, cx = innerWidth/2, cy = innerHeight/2;
   if (k === "p" || k === "P") { if (e.ctrlKey || e.metaKey) { e.preventDefault(); toggleParallel(); } return; }   // instead of the print dialog
   if (e.ctrlKey && !k.startsWith("Arrow")) return;
+  if ((k === "v" || k === "V") && e.shiftKey) { clearViewPoint(); return; }   // Shift+V removes the view point
   if (k === "v" || k === "V") { pickingVP ? (pickingVP = false, el.style.cursor = "") : startPickVP(); return; }
   if (k === "Escape" && pickingVP) { pickingVP = false; el.style.cursor = ""; return; }
+  if (k === "Escape" && fixedVP && !anim && !measuring) { clearViewPoint(); return; }   // Esc removes the view point
   if (k === "PageUp" || k === "PageDown") { e.preventDefault(); zoomAt(k === "PageUp" ? 1/1.25 : 1.25, cx, cy); return; }
   if (k === "Home") { e.preventDefault(); flyTo(goal.theta, goal.phi); return; }
   if (k.startsWith("Arrow")) {
@@ -580,30 +633,237 @@ function orbitFit(ph, opts = {}) {   // one radius that keeps the model in frame
   for (let i = 0; i < 16; i++) r = Math.max(r, fitView(i/16*Math.PI*2, ph, { ...opts, center: false }).radius);
   return r;
 }
-// each button cycles round the model when clicked again: 4 iso corners, front/back, both sides, plan turned 90°
 const P = Math.PI;
-const VIEWS = {
-  iso:   { fov: FOV_3D,   list: [["Isometric", -P/4, P/3], ["Isometric", P/4, P/3], ["Isometric", 3*P/4, P/3], ["Isometric", -3*P/4, P/3]] },
-  top:   { fov: FOV_ELEV, list: [["Plan", 0, 0.001], ["Plan (turned)", P/2, 0.001]] },
-  front: { fov: FOV_ELEV, list: [["Front elevation", -P/2, P/2], ["Back elevation", P/2, P/2]] },
-  side:  { fov: FOV_ELEV, list: [["Right elevation", 0, P/2], ["Left elevation", P, P/2]] },
-};
-let lastView = null, viewStep = 0;
 function flyTo(th, ph, fov = goal.fov) {   // smooth move to a view that fits the model on screen
   if (!model) return;
   const f = fitView(th, ph, { insets: viewInsets(), fov });
   goal.theta = th + P*2*Math.round((goal.theta - th)/(P*2));   // nearest equivalent angle: no extra spins
   goal.phi = ph; goal.radius = f.radius; goal.t.copy(f.t); goal.fov = fov;
 }
-document.querySelectorAll("button[data-v]").forEach(b => b.onclick = () => {
-  const v = b.dataset.v;
-  if (v === "fit") { flyTo(goal.theta, goal.phi); return; }
-  viewStep = v === lastView ? viewStep + 1 : 0; lastView = v;
-  const view = VIEWS[v], [name, th, ph] = view.list[viewStep % view.list.length];
-  flyTo(th, ph, Math.min(view.fov, baseFov()));   // in parallel mode every view uses the parallel lens
-  if (model) toast(name, 1200);
-});
 addEventListener("keydown", e => { if ((e.key === "f" || e.key === "F") && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) flyTo(goal.theta, goal.phi); });
+
+// ---- Dimensions (measure) tool: D toggles; click point A then B; snaps to vertices unless Shift is held ----
+// drawn as a DOM/SVG overlay above the canvas (never part of the render, so photos and video stay clean)
+const SVGNS = "http://www.w3.org/2000/svg", SNAP_PX = 14;
+const dimSvg = $("dims").querySelector("svg");
+const mkSvg = (tag, cls) => { const n = document.createElementNS(SVGNS, tag); n.setAttribute("class", cls); n.style.display = "none"; dimSvg.appendChild(n); return n; };
+const dimPrev = mkSvg("line", "dl rb"), dimDotA = mkSvg("circle", "dp"), dimSnapV = mkSvg("rect", "sn"), dimSnapS = mkSvg("circle", "sn surf");
+dimDotA.setAttribute("r", 3.5); dimSnapS.setAttribute("r", 4.5);
+for (const a of ["width", "height"]) dimSnapV.setAttribute(a, 10);
+const dims = [];   // { a, b, g, line, c1, c2, lbl, occ }: a and b are world points
+let measuring = false, dimA = null, dimHover = null, noSnap = false;   // dimHover: { p, snapped }
+const dimRay = new THREE.Raycaster(), dimTmp = new THREE.Vector3();
+function dimScreen(p) {   // world point -> screen px (ok = in front of the camera)
+  dimTmp.copy(p).applyMatrix4(camera.matrixWorldInverse);
+  const ok = dimTmp.z < -camera.near;
+  const v = dimTmp.copy(p).project(camera), r = el.getBoundingClientRect();
+  return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height, ok };
+}
+function dimPick(cx, cy, snap) {   // point under the cursor: nearest vertex of the hit triangle when close, else the surface point
+  if (!model) return null;
+  const r = el.getBoundingClientRect();
+  dimRay.setFromCamera(new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera);
+  dimRay.near = 0; dimRay.far = Infinity;
+  const hit = dimRay.intersectObjects(model.children.filter(m => m.visible), false)[0];
+  if (!hit) return null;
+  let p = hit.point.clone(), snapped = false;
+  if (snap && hit.face) {
+    const pos = hit.object.geometry.attributes.position;
+    let best = SNAP_PX;
+    for (const i of [hit.face.a, hit.face.b, hit.face.c]) {
+      const w = hit.object.localToWorld(new THREE.Vector3().fromBufferAttribute(pos, i)), s = dimScreen(w);
+      const d = Math.hypot(s.x - cx, s.y - cy);
+      if (s.ok && d < best) { best = d; p = w; snapped = true; }
+    }
+  }
+  return { p, snapped };
+}
+function dimOccluded(p) {   // is the point hidden behind the model, seen from the camera?
+  const o = camera.position, d = p.distanceTo(o);
+  dimRay.set(o, p.clone().sub(o).normalize()); dimRay.near = 0; dimRay.far = d;
+  const h = dimRay.intersectObjects(model.children.filter(m => m.visible), false)[0];
+  return !!h && h.distance < d - modelSize*0.002;
+}
+function dimText(a, b) {   // model units -> "6,250 mm" (metres from 10 m up) plus the axis parts; IFC X = x, Y = -z, Z = y here
+  const d = [Math.abs(b.x - a.x), Math.abs(b.z - a.z), Math.abs(b.y - a.y)].map(v => v * unitToMm), tot = a.distanceTo(b) * unitToMm;
+  const m = tot >= 10000, f = v => m ? (v / 1000).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : Math.round(v).toLocaleString("en-US");
+  return `<b>${f(tot)} ${m ? "m" : "mm"}</b><small>dX ${f(d[0])} · dY ${f(d[1])} · dZ ${f(d[2])} ${m ? "m" : "mm"}</small>`;
+}
+function dimUi() { $("dimClear").hidden = !dims.length; }
+function addDim(a, b) {
+  const g = mkSvg("g", ""), line = document.createElementNS(SVGNS, "line"), c1 = document.createElementNS(SVGNS, "circle"), c2 = document.createElementNS(SVGNS, "circle");
+  line.setAttribute("class", "dl"); c1.setAttribute("class", "dp"); c2.setAttribute("class", "dp"); c1.setAttribute("r", 3.5); c2.setAttribute("r", 3.5);
+  g.append(line, c1, c2); g.style.display = "";
+  const lbl = document.createElement("div"); lbl.className = "dlbl"; lbl.title = "Click to remove this dimension";
+  lbl.innerHTML = dimText(a, b); $("dims").appendChild(lbl);
+  const d = { a: a.clone(), b: b.clone(), g, line, c1, c2, lbl, occ: false };
+  lbl.addEventListener("click", e => { e.stopPropagation(); removeDim(d); });
+  lbl.addEventListener("contextmenu", e => { e.preventDefault(); e.stopPropagation(); removeDim(d); });
+  dims.push(d); dimUi();
+}
+function removeDim(d) {
+  const i = dims.indexOf(d); if (i < 0) return;
+  dims.splice(i, 1); d.g.remove(); d.lbl.remove(); dimUi(); updateDims(false);
+}
+function clearDims() { while (dims.length) { const d = dims.pop(); d.g.remove(); d.lbl.remove(); } dimA = null; dimUi(); updateDims(false); }
+function setMeasure(on, quiet) {
+  if (on && !model) { toast("Open an IFC model first", 2000); return; }
+  measuring = on; dimA = null; dimHover = null;
+  document.body.classList.toggle("measuring", on); $("dimBtn").classList.toggle("on", on); dimUi(); updateDims(false);
+  if (on && !quiet) toast("Dimensions: click point A, then point B · Shift = no snap · Esc cancels · Delete clears", 4500);
+}
+function dimsReset() { clearDims(); setMeasure(false, true); }
+function updateDims(settled) {   // reposition everything for the current camera; occlusion is only re-tested when the view is at rest
+  const put = (n, x, y) => { n.setAttribute("cx", x); n.setAttribute("cy", y); };
+  for (const d of dims) {
+    const A = dimScreen(d.a), B = dimScreen(d.b);
+    if (settled && model && A.ok && B.ok) d.occ = dimOccluded(d.a) && dimOccluded(d.b);
+    const show = !!model && A.ok && B.ok && !d.occ;
+    d.g.style.display = show ? "" : "none"; d.lbl.style.display = show ? "" : "none";
+    if (!show) continue;
+    d.line.setAttribute("x1", A.x); d.line.setAttribute("y1", A.y); d.line.setAttribute("x2", B.x); d.line.setAttribute("y2", B.y);
+    put(d.c1, A.x, A.y); put(d.c2, B.x, B.y);
+    d.lbl.style.left = (A.x + B.x) / 2 + "px"; d.lbl.style.top = (A.y + B.y) / 2 + "px";
+  }
+  const sa = dimA && dimScreen(dimA), sh = measuring && dimHover && dimScreen(dimHover.p);
+  dimDotA.style.display = sa && sa.ok ? "" : "none"; if (sa) put(dimDotA, sa.x, sa.y);
+  const hv = sh && sh.ok;
+  dimSnapV.style.display = hv && dimHover.snapped ? "" : "none"; dimSnapS.style.display = hv && !dimHover.snapped ? "" : "none";
+  if (hv) { put(dimSnapS, sh.x, sh.y); dimSnapV.setAttribute("x", sh.x - 5); dimSnapV.setAttribute("y", sh.y - 5); }
+  const rb = sa && sa.ok && hv;
+  dimPrev.style.display = rb ? "" : "none";
+  if (rb) { dimPrev.setAttribute("x1", sa.x); dimPrev.setAttribute("y1", sa.y); dimPrev.setAttribute("x2", sh.x); dimPrev.setAttribute("y2", sh.y); }
+}
+function dimClick(e) {
+  const h = dimPick(e.clientX, e.clientY, !e.shiftKey);
+  if (!h) return;
+  if (!dimA) dimA = h.p;
+  else { if (dimA.distanceTo(h.p) > 1e-9) addDim(dimA, h.p); dimA = null; }
+  dimHover = h; updateDims(true);
+}
+let hoverEv = null, hoverRaf = 0;
+el.addEventListener("pointermove", e => {
+  noSnap = e.shiftKey;
+  if (!measuring || capturing || e.buttons) { if (dimHover) { dimHover = null; updateDims(false); } return; }
+  hoverEv = e;
+  if (!hoverRaf) hoverRaf = requestAnimationFrame(runHover);
+});
+function runHover() {
+  hoverRaf = 0;
+  if (!measuring || capturing || !hoverEv) return;
+  dimHover = dimPick(hoverEv.clientX, hoverEv.clientY, !noSnap); updateDims(false);
+}
+el.addEventListener("pointerleave", () => { if (dimHover) { dimHover = null; updateDims(false); } });
+const shiftChanged = e => { if (e.key === "Shift" && noSnap !== (e.type === "keydown")) { noSnap = e.type === "keydown"; if (measuring && hoverEv && !hoverRaf) hoverRaf = requestAnimationFrame(runHover); } };
+addEventListener("keydown", shiftChanged); addEventListener("keyup", shiftChanged);
+addEventListener("blur", () => { noSnap = false; });
+$("dimBtn").onclick = e => { setMeasure(!measuring); e.currentTarget.blur(); };
+$("dimClear").onclick = e => { clearDims(); e.currentTarget.blur(); };
+addEventListener("keydown", e => {
+  if (!model || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if ((e.key === "d" || e.key === "D") && !e.ctrlKey && !e.metaKey && !e.altKey) setMeasure(!measuring);
+  else if (e.key === "Delete") clearDims();
+  else if (e.key === "Escape" && measuring && dimA) { dimA = null; updateDims(false); }
+});
+
+
+// ---- ViewCube: top right; mirrors the main camera, click a face / edge / corner to fly there (uses flyTo, so the model stays fitted) ----
+const vcCanvas = $("vcCanvas");
+const vcRenderer = new THREE.WebGLRenderer({ canvas: vcCanvas, antialias:true, alpha:true });
+vcRenderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); vcRenderer.setSize(112, 112, false);
+const vcScene = new THREE.Scene(), vcCam = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+const VC_BASE = 0x23262b, VC_EDGE = 0x5a6068, VC_HOT = 0xf0a23b;
+const vcPick = [], vcRoot = new THREE.Group(); vcScene.add(vcRoot);
+const VC_NAMES = { "0,1,0":"TOP", "0,-1,0":"BOTTOM", "-1,0,0":"FRONT", "1,0,0":"BACK", "0,0,1":"RIGHT", "0,0,-1":"LEFT" };   // same directions as the old Front / Side buttons: FRONT looks from -X
+function vcLabel(txt) {
+  const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
+  g.fillStyle = "#e8eaed"; g.font = "600 " + (txt.length > 4 ? 30 : 36) + "px Inter, 'Segoe UI', system-ui, Arial, sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(txt, 64, 66);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+{
+  const THK = 0.2, MID = 1 - 2*THK, edgeMat = new THREE.LineBasicMaterial({ color: VC_EDGE, transparent:true, opacity:.9 });
+  for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+    if (!x && !y && !z) continue;
+    const d = [x, y, z], size = d.map(v => v ? THK : MID), pos = d.map(v => v*(0.5 - THK/2));
+    const geo = new THREE.BoxGeometry(size[0], size[1], size[2]);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: VC_BASE, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1 }));
+    m.position.set(pos[0], pos[1], pos[2]); m.userData.dir = new THREE.Vector3(x, y, z); m.userData.n = Math.abs(x)+Math.abs(y)+Math.abs(z);
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    vcRoot.add(m); vcPick.push(m);
+    const name = VC_NAMES[d.join(",")];
+    if (name) {   // label plane on face centres, upright (up = +Y; top and bottom read with up = +X, as seen from the front)
+      const n = new THREE.Vector3(x, y, z), u = y ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0), r = new THREE.Vector3().crossVectors(u, n);
+      const pl = new THREE.Mesh(new THREE.PlaneGeometry(MID, MID), new THREE.MeshBasicMaterial({ map: vcLabel(name), transparent:true, depthWrite:false }));
+      pl.matrix.makeBasis(r, u, n); pl.matrix.setPosition(n.clone().multiplyScalar(0.5 + 0.004)); pl.matrixAutoUpdate = false;
+      m.userData.label = pl; vcRoot.add(pl);
+    }
+  }
+}
+let vcHover = null, vcDirty = true;
+const vcRay = new THREE.Raycaster(), vcQ = new THREE.Quaternion();
+function vcSetHover(m) {
+  if (m === vcHover) return;
+  const paint = (mesh, hot) => { mesh.material.color.setHex(hot ? VC_HOT : VC_BASE); };
+  if (vcHover) paint(vcHover, false);
+  vcHover = m; if (m) paint(m, true); vcDirty = true;
+}
+function vcHit(e) {
+  const r = vcCanvas.getBoundingClientRect();
+  vcRay.setFromCamera(new THREE.Vector2(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1), vcCam);
+  const h = vcRay.intersectObjects(vcPick, false)[0]; return h ? h.object : null;
+}
+function vcRender() {   // called every frame from the main loop; only draws when the camera or hover changed
+  if (!vcDirty && vcQ.equals(camera.quaternion)) return;
+  vcQ.copy(camera.quaternion); vcCam.quaternion.copy(camera.quaternion);
+  vcCam.position.set(0, 0, 3.6).applyQuaternion(camera.quaternion);
+  vcRenderer.render(vcScene, vcCam); vcDirty = false;
+}
+// snap: faces are orthogonal views (near-orthographic lens, as the old Top/Front/Side buttons); edges and corners use the 3D lens
+function vcSnap(dir) {
+  if (!model) return;
+  const d = dir.clone().normalize(), n = Math.abs(dir.x) + Math.abs(dir.y) + Math.abs(dir.z);
+  let th, ph;
+  if (!dir.x && !dir.z) { th = Math.round(goal.theta/(P/2))*(P/2); ph = dir.y > 0 ? 0.001 : P - 0.001; }   // plan / underside: keep the current heading, squared up
+  else { th = Math.atan2(d.x, d.z); ph = Math.acos(d.y); if (!dir.y) ph = P/2; }
+  if (anim && !recorder) stopAnim();
+  if (goal.fov !== baseFov() && n > 1) setLens(baseFov());
+  flyTo(th, ph, n === 1 ? Math.min(FOV_ELEV, baseFov()) : baseFov());
+  toast(n === 1 ? VC_NAMES[[dir.x, dir.y, dir.z].join(",")] : n === 2 ? "Edge view" : "Isometric view", 1000);
+}
+let vcDown = null;
+vcCanvas.addEventListener("pointermove", e => {
+  if (vcDown) {
+    const dx = e.clientX - vcDown.x, dy = e.clientY - vcDown.y;
+    if (!vcDown.drag && Math.hypot(e.clientX - vcDown.sx, e.clientY - vcDown.sy) > 4 && model) { vcDown.drag = true; beginRotate(innerWidth/2, innerHeight/2); if (anim && !recorder) stopAnim(); vcSetHover(null); }
+    if (vcDown.drag) rotate(dx, dy);
+    vcDown.x = e.clientX; vcDown.y = e.clientY; return;
+  }
+  vcSetHover(vcHit(e));
+});
+vcCanvas.addEventListener("pointerleave", () => { if (!vcDown) vcSetHover(null); });
+vcCanvas.addEventListener("pointerdown", e => { if (e.button !== 0) return; try { vcCanvas.setPointerCapture(e.pointerId); } catch (err) {} vcDown = { x:e.clientX, y:e.clientY, sx:e.clientX, sy:e.clientY, drag:false, hit:vcHit(e) }; });
+const vcUp = e => {
+  if (!vcDown) return; const d = vcDown; vcDown = null;
+  if (d.drag) { if (!fixedVP) showMarker(null); }
+  else if (e.type === "pointerup" && d.hit) vcSnap(d.hit.userData.dir);
+  vcSetHover(e.type === "pointerup" ? vcHit(e) : null);
+};
+vcCanvas.addEventListener("pointerup", vcUp); vcCanvas.addEventListener("pointercancel", vcUp);
+$("vpClear").onclick = () => clearViewPoint();
+$("vcHome").onclick = () => flyTo(-P/4, P/3, baseFov());
+$("vcL").onclick = () => flyTo(goal.theta - P/2, goal.phi, goal.fov);
+$("vcR").onclick = () => flyTo(goal.theta + P/2, goal.phi, goal.fov);
+function vcLayout() {   // wide screens: cube sits right of the top bar; narrow (wrapped bar): cube drops below it. Side panels start under it.
+  const top = $("top"), body = document.body;
+  body.classList.remove("cube-below");   // measure the bar in the side-by-side layout (same task, so nothing flickers)
+  const below = innerWidth <= 720 || top.scrollWidth > top.clientWidth + 1;
+  body.classList.toggle("cube-below", below);
+  const box = $("vcube"); box.style.top = below ? Math.round(top.getBoundingClientRect().bottom + 8) + "px" : "12px";
+  document.documentElement.style.setProperty("--cubeb", Math.round(box.getBoundingClientRect().bottom) + "px");
+}
+addEventListener("resize", vcLayout); vcLayout(); setTimeout(vcLayout, 300);
+setInterval(() => { if (!capturing) vcLayout(); }, 1000);   // the bar's content changes (file name, dimension buttons)
 
 const lastPos = new THREE.Vector3(NaN, NaN, NaN), lastTgt = lastPos.clone();
 let aoPending = false;
@@ -620,6 +880,7 @@ let anim = null, recorder = null;   // walkthrough playback / video recording st
   }
   applyCamera();
   moved = moved || !camera.position.equals(lastPos) || !target.equals(lastTgt);
+  vcRender();
   if (dirty || comp || moved || aoPending) {
     const fast = moved || !!comp || !!anim;   // recordings stay fast so the video keeps its frame rate
     draw(!fast);
@@ -764,7 +1025,7 @@ function frameModel() {
   modelSize = size;
   unitToMm = size > 500 ? 1 : 1000;   // a structure is not 500 m across, so a bigger number means the geometry is already in mm
   camera.near = size/1000; camera.far = size*50; camera.updateProjectionMatrix();
-  setFovNow(baseFov()); lastView = null;
+  setFovNow(baseFov());
   theta = -P/4; phi = P/3;
   const f = fitView(theta, phi, { insets: viewInsets() }); radius = f.radius; target.copy(f.t);
   placeLights(box);
@@ -789,7 +1050,8 @@ function unloadModel() {
   if (ground) { scene.remove(ground); ground.geometry.dispose(); ground.material.dispose(); ground = null; }
   if (modelID != null) { try { ifc.CloseModel(modelID); } catch (e) {} modelID = null; }
   psetIndex = null; model = null; elems = []; byName.clear(); shots = [];
-  fixedVP = null; pickingVP = false; el.style.cursor = ""; showMarker(null);
+  clearViewPoint(true); dragMode = null; pts.clear(); downAt = null;
+  dimsReset();
 }
 async function showModel(name, buf) {
   if (loading) return false;
@@ -836,7 +1098,7 @@ function download(blob, name) {
   a.href = url; a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
-function setUiHidden(hidden) { ["top","rec","parts","props"].forEach(id => { $(id).style.visibility = hidden ? "hidden" : ""; }); }
+function setUiHidden(hidden) { ["top","rec","parts","props","dims","vcube"].forEach(id => { $(id).style.visibility = hidden ? "hidden" : ""; }); }
 function restoreViewport() {
   setRenderSize(innerWidth, innerHeight, VIEW_RATIO);
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); invalidate();
@@ -1363,6 +1625,7 @@ el.addEventListener("pointerup", e => {
   if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) { downAt = null; return; }
   downAt = null;
   if (pickingVP) { setViewPointAt(e.clientX, e.clientY); return; }
+  if (measuring) { if (!capturing) dimClick(e); return; }   // measure mode: a click places a point instead of selecting
   const m = pickAt(e.clientX, e.clientY);
   if (m) selectPart(m); else closeProps();
 });
