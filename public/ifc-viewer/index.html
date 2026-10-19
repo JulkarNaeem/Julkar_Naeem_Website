@@ -1134,13 +1134,15 @@ function boxUV(geo, tile) {   // world-axis projection from the dominant normal
   }
   geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
 }
+// one brick texture tile is 8 courses; 1200 mm gives 150 mm courses: about twice real size, so the bond still reads from a distance
+const BRICK_TILE_MM = 1200;
 function applySurfaces() {   // give masonry parts texture coordinates; one copy per shared geometry, not per part
   const clones = new Map(); let nc = 0, nb = 0;
   for (const m of model.children) {
     const kind = m.userData.kind; if (!kind) continue;
     const key = m.geometry.uuid + kind;
     let g = clones.get(key);
-    if (!g) { g = m.geometry.clone(); boxUV(g, kind === "brick" ? modelSize*0.012 : modelSize*0.05); clones.set(key, g); }
+    if (!g) { g = m.geometry.clone(); boxUV(g, kind === "brick" ? BRICK_TILE_MM/unitToMm : modelSize*0.05); clones.set(key, g); }
     m.geometry = g;
     kind === "brick" ? nb++ : nc++;
   }
