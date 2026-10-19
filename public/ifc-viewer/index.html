@@ -215,7 +215,7 @@
   </div>
   <div class="foot">
     <span id="connInfo">Load an IFC to find connections</span>
-    <span class="hints"><span><kbd>Wheel</kbd> zoom</span><span><kbd>Left</kbd> rotate</span><span><kbd>Right</kbd> / <kbd>Middle</kbd> pan</span><span><kbd>Click</kbd> part info</span><span><kbd>F</kbd> fit</span><span><kbd>Esc</kbd> stop · clear</span></span>
+    <span class="hints" title="Arrows pan · Ctrl+arrows rotate · Page Up/Down zoom · Home fit · Left drag rotates, right drag pans"><span><kbd>Middle</kbd> pan</span><span><kbd>Ctrl</kbd>+<kbd>Middle</kbd> rotate</span><span><kbd>Wheel</kbd> zoom</span><span><kbd>V</kbd> view point</span><span><kbd>Ctrl</kbd>+<kbd>P</kbd> parallel</span><span><kbd>F</kbd> fit</span><span><kbd>Esc</kbd> stop · clear</span></span>
   </div>
 </div>
 
@@ -300,16 +300,25 @@ composer.addPass(new OutputPass());
 {
   const ro = aoPass.renderOverride.bind(aoPass);
   aoPass.renderOverride = (...a) => {
-    const v = edgeGroup.visible, hidden = [];
-    edgeGroup.visible = false;
+    const v = edgeGroup.visible, mv = vpMarker.visible, hidden = [];
+    edgeGroup.visible = false; vpMarker.visible = false;
     if (model) for (const m of model.children) if (m.visible && m.material.transparent) { m.visible = false; hidden.push(m); }
     ro(...a);
-    edgeGroup.visible = v; hidden.forEach(m => { m.visible = true; });
+    edgeGroup.visible = v; vpMarker.visible = mv; hidden.forEach(m => { m.visible = true; });
   };
 }
 let aoOn = true;
 // AO costs a second pass over every part, so it is drawn on still frames only (and on photos); moving frames skip it
-function draw(withAO = true) { if (withAO && aoOn && model) composer.render(); else renderer.render(scene, camera); }
+function draw(withAO = true) {
+  const mv = vpMarker.visible;
+  if (capturing) vpMarker.visible = false;   // the view point marker never shows in photos or videos
+  else if (mv) {   // constant size on screen: about 6% of the view height
+    const d = camera.position.distanceTo(vpMarker.position) * Math.tan(camera.fov*Math.PI/360);
+    vpMarker.scale.setScalar(d * 0.12);
+  }
+  if (withAO && aoOn && model) composer.render(); else renderer.render(scene, camera);
+  vpMarker.visible = mv;
+}
 function setRenderSize(w, h, ratio, updateStyle = true) {   // one place that keeps renderer, composer and AO buffers in step
   renderer.setPixelRatio(ratio); renderer.setSize(w, h, updateStyle);
   composer.setPixelRatio(ratio); composer.setSize(w, h);
@@ -325,9 +334,11 @@ addEventListener("resize", () => {
   setRenderSize(innerWidth, innerHeight, VIEW_RATIO); invalidate();
 });
 
-// ---- Own simple camera controls (Tekla style) ----
-// wheel = zoom, Ctrl + middle button = rotate, middle button (or Shift + middle) = pan
-// left button drag = rotate too (for trackpads); touch: 1 finger rotate, 2 fingers pan/zoom
+// ---- Camera navigation, Tekla Structures style ----
+// middle drag = pan · Ctrl or Shift + middle drag = rotate · wheel = zoom at the cursor
+// rotation turns round the point picked under the cursor, or round the fixed view point set with V
+// left drag also rotates and right drag pans (trackpads); touch: 1 finger rotates, 2 fingers pan and zoom
+// keys: arrows pan · Ctrl/Shift + arrows rotate · Page Up/Down zoom · Home or F fit · V view point · Ctrl+P perspective/parallel
 const target = new THREE.Vector3();
 let theta = -Math.PI/4, phi = Math.PI/3, radius = 50;   // phi: 0 = looking straight down
 const goal = { theta, phi, radius, t: target.clone(), fov: FOV_3D };
@@ -346,38 +357,110 @@ function setCameraNow(st) {
   theta = goal.theta = st.theta; phi = goal.phi = st.phi; radius = goal.radius = st.radius; target.copy(st.t); goal.t.copy(st.t);
   if (st.fov && st.fov !== camera.fov) setFovNow(st.fov);
 }
-function rotate(dx, dy) {
-  if (goal.fov !== FOV_3D) {   // leaving a plan/elevation: back to normal perspective, same apparent size
-    goal.radius *= Math.tan(goal.fov*Math.PI/360) / Math.tan(FOV_3D*Math.PI/360); goal.fov = FOV_3D;
-  }
-  goal.theta -= dx*0.006; goal.phi -= dy*0.006; goal.phi = Math.min(Math.max(goal.phi, 0.001), Math.PI-0.001);
-}
 function setFovNow(f) { goal.fov = camera.fov = f; camera.updateProjectionMatrix(); }
+const FOV_PAR = 4;   // "parallel" projection (Ctrl+P): a very long lens, close to orthographic
+let parallel = false;
+const baseFov = () => parallel ? FOV_PAR : FOV_3D;
+function setLens(f) {   // new field of view, same picture size at the target
+  if (goal.fov === f) return;
+  goal.radius *= Math.tan(goal.fov*Math.PI/360) / Math.tan(f*Math.PI/360); goal.fov = f;
+}
+const orbitPos = (th, ph, r, t, out = new THREE.Vector3()) =>
+  out.set(t.x + r*Math.sin(ph)*Math.sin(th), t.y + r*Math.cos(ph), t.z + r*Math.sin(ph)*Math.cos(th));
+
+// navigation picks use the camera where it is heading (goal), not the eased one on screen: wheel ticks and drags
+// arrive while the camera is still moving, and every change is applied to the goal
+const ray = new THREE.Raycaster(), goalCam = new THREE.PerspectiveCamera();
+function syncGoalCam() {
+  goalCam.fov = goal.fov; goalCam.aspect = camera.aspect; goalCam.near = camera.near; goalCam.far = camera.far; goalCam.updateProjectionMatrix();
+  orbitPos(goal.theta, goal.phi, goal.radius, goal.t, goalCam.position); goalCam.lookAt(goal.t); goalCam.updateMatrixWorld();
+  return goalCam;
+}
+function aimRay(cx, cy) { ray.setFromCamera(new THREE.Vector2((cx/innerWidth)*2-1, -(cy/innerHeight)*2+1), syncGoalCam()); }
+function pickPoint(cx, cy) {   // point on the model under a screen position (null over empty space)
+  if (!model) return null;
+  aimRay(cx, cy);
+  const hit = ray.intersectObjects(model.children.filter(m => m.visible), false)[0];
+  return hit ? hit.point.clone() : null;
+}
+function rayPoint(cx, cy, dist) { aimRay(cx, cy); return ray.ray.at(dist, new THREE.Vector3()); }   // fallback over empty space
+
+// view point marker: small X/Y/Z triad at the rotation centre (IFC axes: Y runs into the screen, Z is up)
+const vpMarker = (() => {
+  const g = new THREE.Group();
+  const mat = color => new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true });
+  const shaft = new THREE.CylinderGeometry(0.035, 0.035, 0.8, 10).translate(0, 0.4, 0), tip = new THREE.ConeGeometry(0.09, 0.22, 14).translate(0, 0.9, 0);
+  const axis = (color, rotate) => { const a = new THREE.Group(); a.add(new THREE.Mesh(shaft, mat(color)), new THREE.Mesh(tip, mat(color))); rotate(a); return a; };
+  g.add(axis(0xef4444, a => a.rotation.z = -Math.PI/2),   // IFC X
+        axis(0x22c55e, a => a.rotation.x = -Math.PI/2),   // IFC Y (into the screen in three.js terms)
+        axis(0x3b82f6, () => {}));                        // IFC Z (up)
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), mat(0x111111)), new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 14), mat(0xf0a23b)));
+  let order = 999; g.traverse(o => { o.renderOrder = order++; });   // dark rim drawn before the orange ball
+  g.visible = false; scene.add(g);
+  return g;
+})();
+let fixedVP = null, pickingVP = false;   // fixed view point set with V; while picking, the next click sets it
+function showMarker(p) { if (p) vpMarker.position.copy(p); vpMarker.visible = !!p; invalidate(); }
+
+// rotate the whole camera rig round a pivot: yaw about the vertical, pitch about the screen's horizontal axis
+const pivot = new THREE.Vector3();
+let pivotOnModel = false;
+function beginRotate(cx, cy) {
+  const p = fixedVP || pickPoint(cx, cy);
+  pivotOnModel = !!p;
+  pivot.copy(p || goal.t);
+  showMarker(pivot);
+}
+function rotate(dx, dy) {
+  if (goal.fov !== baseFov()) setLens(baseFov());   // leaving a plan/elevation: back to the 3D lens, same picture size
+  const yaw = -dx*0.006;
+  const newPhi = Math.min(Math.max(goal.phi - dy*0.006, 0.001), Math.PI - 0.001), pitch = newPhi - goal.phi;
+  if (pivotOnModel) {
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw)
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(Math.cos(goal.theta), 0, -Math.sin(goal.theta)), pitch));
+    goal.t.sub(pivot).applyQuaternion(q).add(pivot);   // the look-at point swings round the pivot with the camera
+  }
+  goal.theta += yaw; goal.phi = newPhi;
+}
+
+// pan and zoom keep the point under the cursor exactly where it is on screen
+let panDepth = 0;
+function beginPan(cx, cy) {
+  const p = pickPoint(cx, cy), fwd = goalCam.getWorldDirection(new THREE.Vector3());
+  panDepth = p ? p.sub(goalCam.position).dot(fwd) : goal.radius;
+}
 function pan(dx, dy) {
-  camera.updateMatrixWorld();
-  const k = goal.radius * 2*Math.tan(camera.fov*Math.PI/360) / innerHeight;
-  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-  const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+  const c = syncGoalCam();
+  const k = (panDepth || goal.radius) * 2*Math.tan(goal.fov*Math.PI/360) / innerHeight;
+  const right = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 0);
+  const up = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 1);
   goal.t.addScaledVector(right, -dx*k).addScaledVector(up, dy*k);
 }
-function zoom(f) {
-  // zoom toward the point under the cursor; move the target so zooming never gets stuck at a minimum distance
-  const nr = goal.radius * f;
-  if (f < 1 && nr < modelSize*0.002) return;
-  if (f > 1 && nr > modelSize*4) return;   // keep the model from drifting out of sight
-  const ndc = new THREE.Vector2((lastX/innerWidth)*2-1, -(lastY/innerHeight)*2+1);
-  const dir = new THREE.Vector3(ndc.x, ndc.y, 0.5).unproject(camera).sub(camera.position).normalize();
-  goal.t.addScaledVector(dir, (goal.radius - nr)*0.6);
-  goal.radius = nr;
+function zoomAt(f, cx, cy) {
+  const r = goal.radius * f;
+  if ((f < 1 && r < modelSize*0.0005) || (f > 1 && r > modelSize*8)) return;
+  const anchor = pickPoint(cx, cy) || rayPoint(cx, cy, goal.radius);
+  goal.t.sub(anchor).multiplyScalar(f).add(anchor);   // scaling the rig about the anchor keeps it under the cursor
+  goal.radius = r;
 }
 addEventListener("pointermove", e => { lastX = e.clientX; lastY = e.clientY; });
 
 el.addEventListener("contextmenu", e => e.preventDefault());
 el.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
-el.addEventListener("wheel", e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.12 : 1/1.12); }, { passive:false });
+el.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.deltaY > 0 ? 1.15 : 1/1.15, e.clientX, e.clientY); }, { passive:false });
 const pts = new Map();
+let dragMode = null;   // "rotate" | "pan" | "pinch" for the current drag
+function wantedMode(e) {
+  if (pts.size >= 2) return "pinch";
+  if (e.pointerType !== "mouse") return "rotate";
+  if (e.buttons & 4) return e.ctrlKey || e.shiftKey ? "rotate" : "pan";   // middle button, as in Tekla
+  if (e.buttons & 1) return "rotate";
+  if (e.buttons & 2) return "pan";
+  return null;
+}
+function endDrag() { if (dragMode === "rotate" && !fixedVP) showMarker(null); dragMode = null; }
 el.addEventListener("pointerdown", e => {
-  el.setPointerCapture(e.pointerId);
+  try { el.setPointerCapture(e.pointerId); } catch (err) {}
   pts.set(e.pointerId, e);
   if (anim && !recorder) stopAnim();   // any manual input cancels playback
 });
@@ -385,23 +468,61 @@ el.addEventListener("pointermove", e => {
   if (!pts.has(e.pointerId)) return;
   const prev = pts.get(e.pointerId);
   const dx = e.clientX - prev.clientX, dy = e.clientY - prev.clientY;
-  if (pts.size === 1) {
-    if (e.pointerType === "mouse") {
-      if (e.buttons & 4) { (e.ctrlKey ? rotate : pan)(dx, dy); }   // middle button
-      else if (e.buttons & 1) rotate(dx, dy);                       // left button
-      else if (e.buttons & 2) pan(dx, dy);                          // right button
-    } else rotate(dx, dy);
-  } else if (pts.size === 2) {
+  pts.set(e.pointerId, e);
+  if (!dx && !dy) return;
+  const mode = wantedMode(e);
+  if (mode !== dragMode) {   // pick the pivot / pan depth where the drag (or the switch to Ctrl) starts
+    endDrag(); dragMode = mode;
+    if (mode === "rotate") beginRotate(prev.clientX, prev.clientY);
+    if (mode === "pan") beginPan(prev.clientX, prev.clientY);
+  }
+  if (mode === "rotate") rotate(dx, dy);
+  else if (mode === "pan") pan(dx, dy);
+  else if (mode === "pinch") {
     const other = [...pts.values()].find(p => p.pointerId !== e.pointerId);
     const d0 = Math.hypot(prev.clientX-other.clientX, prev.clientY-other.clientY);
     const d1 = Math.hypot(e.clientX-other.clientX, e.clientY-other.clientY);
-    if (d1 > 0) zoom(d0/d1);
+    if (!panDepth) beginPan((e.clientX + other.clientX)/2, (e.clientY + other.clientY)/2);
+    if (d1 > 0) zoomAt(d0/d1, (e.clientX + other.clientX)/2, (e.clientY + other.clientY)/2);
     pan(dx/2, dy/2);
   }
-  pts.set(e.pointerId, e);
 });
-const end = e => pts.delete(e.pointerId);
+const end = e => { pts.delete(e.pointerId); if (!pts.size) endDrag(); };
 el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+
+// V: pick a fixed view point (rotation centre) on the model; picking empty space goes back to "rotate about the cursor"
+function startPickVP() {
+  if (!model) return;
+  pickingVP = true; el.style.cursor = "crosshair";
+  toast("Click a point on the model to set the view point · click empty space to clear it", 5000);
+}
+function setViewPointAt(cx, cy) {
+  pickingVP = false; el.style.cursor = "";
+  fixedVP = pickPoint(cx, cy);
+  showMarker(fixedVP);
+  toast(fixedVP ? "View point set: rotation turns round it (V to change)" : "View point cleared: rotation turns round the cursor", 2500);
+}
+function toggleParallel() {
+  parallel = !parallel;
+  if (goal.fov !== FOV_ELEV) setLens(baseFov());
+  toast(parallel ? "Parallel view" : "Perspective view", 1500);
+}
+addEventListener("keydown", e => {
+  if (!model || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const k = e.key, cx = innerWidth/2, cy = innerHeight/2;
+  if (k === "p" || k === "P") { if (e.ctrlKey || e.metaKey) { e.preventDefault(); toggleParallel(); } return; }   // instead of the print dialog
+  if (e.ctrlKey && !k.startsWith("Arrow")) return;
+  if (k === "v" || k === "V") { pickingVP ? (pickingVP = false, el.style.cursor = "") : startPickVP(); return; }
+  if (k === "Escape" && pickingVP) { pickingVP = false; el.style.cursor = ""; return; }
+  if (k === "PageUp" || k === "PageDown") { e.preventDefault(); zoomAt(k === "PageUp" ? 1/1.25 : 1.25, cx, cy); return; }
+  if (k === "Home") { e.preventDefault(); flyTo(goal.theta, goal.phi); return; }
+  if (k.startsWith("Arrow")) {
+    e.preventDefault();
+    const sx = k === "ArrowLeft" ? -1 : k === "ArrowRight" ? 1 : 0, sy = k === "ArrowUp" ? -1 : k === "ArrowDown" ? 1 : 0;
+    if (e.ctrlKey || e.shiftKey) { beginRotate(cx, cy); rotate(sx*30, sy*30); if (!fixedVP) setTimeout(() => { if (!dragMode) showMarker(null); }, 600); }
+    else { beginPan(cx, cy); pan(-sx*60, -sy*60); }
+  }
+});
 
 // ---- Fit to view: camera distance and target that show the whole model for a given direction ----
 const modelBox = new THREE.Box3();
@@ -479,7 +600,7 @@ document.querySelectorAll("button[data-v]").forEach(b => b.onclick = () => {
   if (v === "fit") { flyTo(goal.theta, goal.phi); return; }
   viewStep = v === lastView ? viewStep + 1 : 0; lastView = v;
   const view = VIEWS[v], [name, th, ph] = view.list[viewStep % view.list.length];
-  flyTo(th, ph, view.fov);
+  flyTo(th, ph, Math.min(view.fov, baseFov()));   // in parallel mode every view uses the parallel lens
   if (model) toast(name, 1200);
 });
 addEventListener("keydown", e => { if ((e.key === "f" || e.key === "F") && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) flyTo(goal.theta, goal.phi); });
@@ -641,7 +762,7 @@ function frameModel() {
   modelSize = size;
   unitToMm = size > 500 ? 1 : 1000;   // a structure is not 500 m across, so a bigger number means the geometry is already in mm
   camera.near = size/1000; camera.far = size*50; camera.updateProjectionMatrix();
-  setFovNow(FOV_3D); lastView = null;
+  setFovNow(baseFov()); lastView = null;
   theta = -P/4; phi = P/3;
   const f = fitView(theta, phi, { insets: viewInsets() }); radius = f.radius; target.copy(f.t);
   placeLights(box);
@@ -666,6 +787,7 @@ function unloadModel() {
   if (ground) { scene.remove(ground); ground.geometry.dispose(); ground.material.dispose(); ground = null; }
   if (modelID != null) { try { ifc.CloseModel(modelID); } catch (e) {} modelID = null; }
   psetIndex = null; model = null; elems = []; byName.clear(); shots = [];
+  fixedVP = null; pickingVP = false; el.style.cursor = ""; showMarker(null);
 }
 async function showModel(name, buf) {
   if (loading) return false;
@@ -1222,6 +1344,7 @@ el.addEventListener("pointerdown", e => { downAt = e.button === 0 ? { x: e.clien
 el.addEventListener("pointerup", e => {
   if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 4) { downAt = null; return; }
   downAt = null;
+  if (pickingVP) { setViewPointAt(e.clientX, e.clientY); return; }
   const m = pickAt(e.clientX, e.clientY);
   if (m) selectPart(m); else closeProps();
 });
